@@ -1,16 +1,22 @@
 import type { Metadata } from "next";
-import { Bebas_Neue } from "next/font/google";
+import { Spline_Sans, Geist } from "next/font/google";
 import "./globals.css";
 
-const bebasNeue = Bebas_Neue({
-  weight: "400",
-  variable: "--font-bebas-neue",
+const splineSans = Spline_Sans({
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-spline-sans",
+  subsets: ["latin"],
+});
+
+const geist = Geist({
+  weight: ["400", "500"],
+  variable: "--font-geist",
   subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
-  title: "Joshua Harrington - Portfolio",
-  description: "Portfolio of Joshua Harrington - Photojournalist",
+  title: "Joshua Isaiah - Creative Director",
+  description: "Joshua Isaiah - Creative Director | Asun Media",
 };
 
 export default function RootLayout({
@@ -20,7 +26,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${bebasNeue.variable} antialiased`}>
+      <body className={`${splineSans.variable} ${geist.variable} antialiased`}>
         {children}
       </body>
     </html>
