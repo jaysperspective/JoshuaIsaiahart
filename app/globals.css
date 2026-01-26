@@ -1,12 +1,14 @@
 @import "tailwindcss";
 
 :root {
-  --background: #1a1a1a;
+  --background: #181818;
   --foreground: #1a1a1a;
-  --card-white: #ffffff;
-  --card-gray: #a8a29e;
+  --card-white: #fafafa;
+  --card-gray: #b6b1ad;
   --text-dark: #1a1a1a;
-  --text-muted: #525252;
+  --text-muted: #6b6b6b;
+  --text-contact: #5f6b7a;
+  --text-subtitle: #2f2f2f;
 }
 
 @theme inline {
@@ -31,13 +33,19 @@ body {
 
 /* Card styles */
 .card {
-  border-radius: 16px;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border-radius: 20px;
+  transition: transform 200ms ease, box-shadow 200ms ease;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
 }
 
 .card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+}
+
+.card:focus-visible {
+  outline: none;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35), 0 0 0 2px rgba(255, 255, 255, 0.2);
 }
 
 .card-white {
