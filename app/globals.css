@@ -29,12 +29,6 @@ body {
   min-height: 100vh;
 }
 
-/* Dot pattern background */
-.dot-pattern {
-  background-image: radial-gradient(circle, #2a2a2a 1px, transparent 1px);
-  background-size: 24px 24px;
-}
-
 /* Card styles */
 .card {
   border-radius: 16px;

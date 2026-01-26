@@ -2,14 +2,14 @@ import Link from "next/link";
 
 export default function Home() {
   return (
-    <div className="min-h-screen dot-pattern flex items-center justify-center p-6">
+    <div className="min-h-screen bg-[#1a1a1a] flex items-center justify-center p-6">
       <div className="flex flex-col gap-4 w-full max-w-xl">
         {/* Personal Card */}
         <Link href="/about" className="card card-white p-8 cursor-pointer">
           <h1 className="font-heading text-4xl font-bold tracking-tight mb-1">
             Joshua Isaiah
           </h1>
-          <p className="font-heading text-xl text-[#525252] mb-8">
+          <p className="font-heading text-xl text-[#525252] mb-16">
             Creative Director
           </p>
 
