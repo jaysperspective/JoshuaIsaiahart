@@ -107,16 +107,18 @@ export default function WorkPage() {
     (img) => img.id !== coverImage?.id
   ) || [];
 
-  const visibleImages = isExpanded ? otherImages : otherImages.slice(0, 5);
-  const hasMoreImages = otherImages.length > 5;
+  // Always show max 5 images (cover + 4 others)
+  const visibleImages = otherImages.slice(0, 4);
+  const totalImages = selectedGallery?.images.length || 0;
+  const hasMoreImages = totalImages > 5;
 
   return (
-    <div className="min-h-screen bg-[#181818] p-8">
+    <div className="min-h-screen bg-[#181818] p-6 md:p-12 lg:p-16">
       <div className="max-w-7xl mx-auto">
         {/* Back button */}
         <Link
           href="/"
-          className="text-white font-body text-sm flex items-center gap-2 hover:text-gray-300 transition-colors mb-4 w-fit"
+          className="text-white font-body text-sm flex items-center gap-2 hover:text-gray-300 transition-colors mb-6 w-fit"
         >
           <svg
             className="w-4 h-4"
@@ -134,14 +136,14 @@ export default function WorkPage() {
           Back
         </Link>
 
-        {/* Two-column layout */}
-        <div className="flex flex-col lg:flex-row gap-4">
+        {/* Two-column layout - same height */}
+        <div className="flex flex-col lg:flex-row gap-4 lg:items-stretch">
           {/* Left Column - Actions (narrow) */}
-          <div className="lg:w-72 flex-shrink-0">
-            <div className="card card-white p-6 h-fit">
+          <div className="lg:w-72 flex-shrink-0 flex">
+            <div className="card card-white p-6 flex flex-col w-full">
               {/* Title and Description */}
               {selectedGallery && (
-                <div className="mb-6">
+                <div className="mb-4">
                   <h1 className="font-heading text-lg font-bold">
                     {selectedGallery.title}
                   </h1>
@@ -153,7 +155,48 @@ export default function WorkPage() {
                 </div>
               )}
 
-              <div className="flex flex-col gap-2">
+              {/* Gallery selector */}
+              {galleries.length > 1 && (
+                <div className="mb-4">
+                  <h3 className="font-heading text-xs font-bold mb-2 text-gray-500 uppercase tracking-wide">
+                    Galleries
+                  </h3>
+                  <div className="flex flex-col gap-1.5">
+                    {galleries.map((gallery) => (
+                      <button
+                        key={gallery.id}
+                        onClick={() => setSelectedGallery(gallery)}
+                        className={`px-3 py-2 rounded-lg font-body text-sm transition-colors text-left ${
+                          selectedGallery?.id === gallery.id
+                            ? "bg-[#1a1a1a] text-white"
+                            : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+                        }`}
+                      >
+                        {gallery.title}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* View More Button - if gallery has more than 5 images */}
+              {hasMoreImages && (
+                <button
+                  onClick={() => setIsExpanded(true)}
+                  className="w-full px-4 py-2.5 rounded-xl font-body text-sm bg-[#1a1a1a] hover:bg-[#333] text-white flex items-center justify-center gap-2 transition-colors mb-4"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                  </svg>
+                  View All {totalImages} Images
+                </button>
+              )}
+
+              {/* Spacer to push buttons to bottom */}
+              <div className="flex-1" />
+
+              {/* Action buttons - always at bottom */}
+              <div className="flex flex-col gap-2 pt-4 border-t border-gray-100">
                 <button
                   onClick={handleDownload}
                   disabled={!selectedGallery?.downloadable}
@@ -192,37 +235,12 @@ export default function WorkPage() {
                   Purchase
                 </button>
               </div>
-
-              {/* Gallery selector */}
-              {galleries.length > 1 && (
-                <>
-                  <hr className="my-5 border-gray-200" />
-                  <h3 className="font-heading text-xs font-bold mb-2 text-gray-500 uppercase tracking-wide">
-                    Galleries
-                  </h3>
-                  <div className="flex flex-col gap-1.5">
-                    {galleries.map((gallery) => (
-                      <button
-                        key={gallery.id}
-                        onClick={() => setSelectedGallery(gallery)}
-                        className={`px-3 py-2 rounded-lg font-body text-sm transition-colors text-left ${
-                          selectedGallery?.id === gallery.id
-                            ? "bg-[#1a1a1a] text-white"
-                            : "bg-gray-100 hover:bg-gray-200 text-gray-700"
-                        }`}
-                      >
-                        {gallery.title}
-                      </button>
-                    ))}
-                  </div>
-                </>
-              )}
             </div>
           </div>
 
           {/* Right Column - Gallery (wide) */}
-          <div className="flex-1">
-            <div className="card card-gray p-6">
+          <div className="flex-1 flex">
+            <div className="card card-gray p-6 flex-1">
               {selectedGallery ? (
                 <>
                   {selectedGallery.images.length > 0 ? (
@@ -265,19 +283,6 @@ export default function WorkPage() {
                         ))}
                       </div>
 
-                      {/* Show More Button */}
-                      {hasMoreImages && (
-                        <button
-                          onClick={() => setIsExpanded(!isExpanded)}
-                          className="w-full mt-4 py-2.5 rounded-xl font-body text-sm bg-white/50 hover:bg-white/70 text-gray-700 transition-colors flex items-center justify-center gap-2"
-                        >
-                          {isExpanded ? (
-                            <>Show Less</>
-                          ) : (
-                            <>Show {otherImages.length - 5} More</>
-                          )}
-                        </button>
-                      )}
                     </>
                   ) : (
                     <p className="font-body text-gray-600 text-center py-12">
@@ -294,6 +299,48 @@ export default function WorkPage() {
           </div>
         </div>
       </div>
+
+      {/* Expanded Gallery View */}
+      {isExpanded && selectedGallery && (
+        <div className="fixed inset-0 bg-[#181818] z-40 overflow-auto">
+          <div className="p-6 md:p-12 lg:p-16">
+            <div className="max-w-7xl mx-auto">
+              <div className="flex items-center justify-between mb-6">
+                <button
+                  onClick={() => setIsExpanded(false)}
+                  className="text-white font-body text-sm flex items-center gap-2 hover:text-gray-300 transition-colors"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                  Back to Gallery
+                </button>
+                <h2 className="text-white font-heading text-lg font-bold">
+                  {selectedGallery.title} ({selectedGallery.images.length} images)
+                </h2>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {selectedGallery.images.map((image) => (
+                  <div
+                    key={image.id}
+                    className="group cursor-pointer"
+                    onClick={() => openLightbox(image)}
+                  >
+                    <div className="relative aspect-square rounded-xl overflow-hidden bg-gray-800">
+                      <img
+                        src={image.path}
+                        alt={image.caption || image.filename}
+                        className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Lightbox */}
       {lightboxImage && (
