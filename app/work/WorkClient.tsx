@@ -143,8 +143,8 @@ export default function WorkClient({ galleries }: WorkClientProps) {
   };
 
   return (
-    <div className="min-h-screen bg-[#181818] p-8">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-[#181818] px-4 py-8 flex flex-col items-center">
+      <div className="w-full max-w-3xl">
         {/* Back button */}
         <Link
           href="/"

@@ -12,7 +12,7 @@ async function getGalleries() {
         orderBy: { order: "asc" },
       },
     },
-    orderBy: { createdAt: "desc" },
+    orderBy: { createdAt: "asc" },
   });
 
   // Serialize dates for client component
