@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
+import { useSearchParams, useRouter } from "next/navigation";
 
 interface Image {
   id: string;
@@ -17,32 +18,63 @@ interface Gallery {
   coverImage: string | null;
   downloadable: boolean;
   images: Image[];
+  createdAt: string;
 }
 
 export default function WorkPage() {
   const [galleries, setGalleries] = useState<Gallery[]>([]);
-  const [selectedGallery, setSelectedGallery] = useState<Gallery | null>(null);
+  const [expandedGalleryId, setExpandedGalleryId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isExpanded, setIsExpanded] = useState(false);
   const [lightboxImage, setLightboxImage] = useState<Image | null>(null);
+  const [isAnimating, setIsAnimating] = useState(false);
 
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const galleryRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+
+  // Fetch galleries on mount
   useEffect(() => {
     fetchGalleries();
   }, []);
 
+  // Handle URL-driven initialization
   useEffect(() => {
-    setIsExpanded(false);
-  }, [selectedGallery?.id]);
+    const galleryParam = searchParams.get("gallery");
+    if (galleryParam && galleries.length > 0) {
+      const gallery = galleries.find(
+        (g) => g.id === galleryParam || slugify(g.title) === galleryParam
+      );
+      if (gallery) {
+        setExpandedGalleryId(gallery.id);
+        // Scroll to the gallery after a brief delay for rendering
+        setTimeout(() => {
+          const galleryEl = galleryRefs.current.get(gallery.id);
+          if (galleryEl) {
+            galleryEl.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+        }, 100);
+      }
+    }
+  }, [searchParams, galleries]);
+
+  const slugify = (text: string) => {
+    return text
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
+  };
 
   const fetchGalleries = async () => {
     try {
       const res = await fetch("/api/galleries");
       if (res.ok) {
         const data = await res.json();
-        setGalleries(data);
-        if (data.length > 0) {
-          setSelectedGallery(data[0]);
-        }
+        // Sort by createdAt descending (newest first)
+        const sorted = data.sort(
+          (a: Gallery, b: Gallery) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+        setGalleries(sorted);
       }
     } catch (error) {
       console.error("Failed to fetch galleries:", error);
@@ -51,24 +83,65 @@ export default function WorkPage() {
     }
   };
 
-  const handleDownload = () => {
-    if (!selectedGallery?.downloadable) return;
+  const updateURL = useCallback((galleryId: string | null, galleryTitle?: string) => {
+    if (galleryId && galleryTitle) {
+      const slug = slugify(galleryTitle);
+      router.push(`/work?gallery=${slug}`, { scroll: false });
+    } else {
+      router.push("/work", { scroll: false });
+    }
+  }, [router]);
+
+  const toggleGallery = (gallery: Gallery) => {
+    if (isAnimating) return;
+
+    setIsAnimating(true);
+
+    if (expandedGalleryId === gallery.id) {
+      // Collapse current gallery
+      setExpandedGalleryId(null);
+      updateURL(null);
+    } else {
+      // Expand new gallery (auto-collapses any open one)
+      setExpandedGalleryId(gallery.id);
+      updateURL(gallery.id, gallery.title);
+    }
+
+    // Reset animation lock after transition
+    setTimeout(() => setIsAnimating(false), 300);
+  };
+
+  const getCoverImage = (gallery: Gallery) => {
+    if (gallery.coverImage) {
+      return gallery.images.find((img) => img.path === gallery.coverImage) || gallery.images[0];
+    }
+    return gallery.images[0];
+  };
+
+  const getOtherImages = (gallery: Gallery) => {
+    const cover = getCoverImage(gallery);
+    return gallery.images.filter((img) => img.id !== cover?.id);
+  };
+
+  const handleDownload = (gallery: Gallery) => {
+    if (!gallery.downloadable) return;
     alert("Download functionality coming soon!");
   };
 
-  const handleEmail = () => {
-    const subject = encodeURIComponent(`Gallery: ${selectedGallery?.title || "Asun Media"}`);
-    const body = encodeURIComponent(`I'm interested in the "${selectedGallery?.title}" gallery.`);
+  const handleEmail = (gallery: Gallery) => {
+    const subject = encodeURIComponent(`Gallery: ${gallery.title}`);
+    const body = encodeURIComponent(`I'm interested in the "${gallery.title}" gallery.`);
     window.location.href = `mailto:JoshuaLHarrington@gmail.com?subject=${subject}&body=${body}`;
   };
 
-  const handlePurchase = () => {
-    const subject = encodeURIComponent(`Purchase Inquiry: ${selectedGallery?.title || "Image"}`);
-    const body = encodeURIComponent(`I'm interested in purchasing images from the "${selectedGallery?.title}" gallery.`);
+  const handlePurchase = (gallery: Gallery) => {
+    const subject = encodeURIComponent(`Purchase Inquiry: ${gallery.title}`);
+    const body = encodeURIComponent(`I'm interested in purchasing images from the "${gallery.title}" gallery.`);
     window.location.href = `mailto:JoshuaLHarrington@gmail.com?subject=${subject}&body=${body}`;
   };
 
-  const openLightbox = (image: Image) => {
+  const openLightbox = (image: Image, e: React.MouseEvent) => {
+    e.stopPropagation();
     setLightboxImage(image);
     document.body.style.overflow = "hidden";
   };
@@ -79,16 +152,16 @@ export default function WorkPage() {
   };
 
   const navigateLightbox = (direction: "prev" | "next") => {
-    if (!lightboxImage || !selectedGallery) return;
-    const currentIndex = selectedGallery.images.findIndex(
-      (img) => img.id === lightboxImage.id
-    );
+    if (!lightboxImage || !expandedGalleryId) return;
+    const gallery = galleries.find((g) => g.id === expandedGalleryId);
+    if (!gallery) return;
+
+    const currentIndex = gallery.images.findIndex((img) => img.id === lightboxImage.id);
     const newIndex =
       direction === "next"
-        ? (currentIndex + 1) % selectedGallery.images.length
-        : (currentIndex - 1 + selectedGallery.images.length) %
-          selectedGallery.images.length;
-    setLightboxImage(selectedGallery.images[newIndex]);
+        ? (currentIndex + 1) % gallery.images.length
+        : (currentIndex - 1 + gallery.images.length) % gallery.images.length;
+    setLightboxImage(gallery.images[newIndex]);
   };
 
   if (isLoading) {
@@ -99,229 +172,190 @@ export default function WorkPage() {
     );
   }
 
-  const coverImage = selectedGallery?.coverImage
-    ? selectedGallery.images.find((img) => img.path === selectedGallery.coverImage)
-    : selectedGallery?.images[0];
-
-  const otherImages = selectedGallery?.images.filter(
-    (img) => img.id !== coverImage?.id
-  ) || [];
-
-  // Show max 4 other images (5 total with cover)
-  const visibleImages = isExpanded ? otherImages : otherImages.slice(0, 4);
-  const hasMoreImages = otherImages.length > 4;
-
   return (
-    <div className="min-h-screen bg-[#181818] flex items-center justify-center p-8">
-      <div className="flex flex-col gap-4 w-full max-w-4xl">
+    <div className="min-h-screen bg-[#181818] p-8">
+      <div className="max-w-4xl mx-auto">
         {/* Back button */}
         <Link
           href="/"
-          className="text-white font-body text-sm flex items-center gap-2 hover:text-gray-300 transition-colors mb-2 self-start"
+          className="text-white font-body text-sm flex items-center gap-2 hover:text-gray-300 transition-colors mb-6 w-fit"
         >
-          <svg
-            className="w-4 h-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M15 19l-7-7 7-7"
-            />
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
           Back
         </Link>
 
-        {/* Gallery Card */}
-        <div className="card card-gray p-10">
-          {selectedGallery ? (
-            <>
-              {/* Cover + Grid Layout */}
-              <div className="flex flex-col md:flex-row gap-3">
-                {/* Cover Image - Left side */}
-                {coverImage && (
-                  <div
-                    className="md:w-1/2 relative aspect-square rounded-xl overflow-hidden bg-gray-200 cursor-pointer group"
-                    onClick={() => openLightbox(coverImage)}
-                  >
-                    <img
-                      src={coverImage.path}
-                      alt={coverImage.caption || coverImage.filename}
-                      className="w-full h-full object-cover transition-transform group-hover:scale-105"
-                    />
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
-                  </div>
-                )}
+        {/* Gallery List */}
+        <div className="flex flex-col gap-6">
+          {galleries.map((gallery) => {
+            const isExpanded = expandedGalleryId === gallery.id;
+            const coverImage = getCoverImage(gallery);
+            const otherImages = getOtherImages(gallery);
 
-                {/* Other Images - Right side 2x2 grid */}
-                {visibleImages.length > 0 && (
-                  <div className="md:w-1/2 grid grid-cols-2 gap-3">
-                    {visibleImages.slice(0, 4).map((image) => (
-                      <div
-                        key={image.id}
-                        className="group cursor-pointer"
-                        onClick={() => openLightbox(image)}
-                      >
-                        <div className="relative aspect-square rounded-xl overflow-hidden bg-gray-200">
-                          <img
-                            src={image.path}
-                            alt={image.caption || image.filename}
-                            className="w-full h-full object-cover transition-transform group-hover:scale-105"
-                          />
-                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+            return (
+              <div
+                key={gallery.id}
+                ref={(el) => {
+                  if (el) galleryRefs.current.set(gallery.id, el);
+                }}
+                className="flex flex-col gap-4"
+              >
+                {/* Cover Image Card */}
+                <div
+                  onClick={() => toggleGallery(gallery)}
+                  className="card card-gray p-6 cursor-pointer group transition-all duration-300 hover:shadow-lg"
+                >
+                  {coverImage ? (
+                    <div className="relative aspect-[16/9] rounded-xl overflow-hidden bg-gray-200">
+                      <img
+                        src={coverImage.path}
+                        alt={gallery.title}
+                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+                      />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
 
-              {/* Additional Images (when expanded) */}
-              {isExpanded && otherImages.length > 4 && (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">
-                  {otherImages.slice(4).map((image) => (
-                    <div
-                      key={image.id}
-                      className="group cursor-pointer"
-                      onClick={() => openLightbox(image)}
-                    >
-                      <div className="relative aspect-square rounded-xl overflow-hidden bg-gray-200">
-                        <img
-                          src={image.path}
-                          alt={image.caption || image.filename}
-                          className="w-full h-full object-cover transition-transform group-hover:scale-105"
-                        />
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
+                      {/* Expand/Collapse indicator */}
+                      <div className="absolute bottom-4 right-4 bg-black/50 backdrop-blur-sm text-white px-3 py-1.5 rounded-full font-body text-xs flex items-center gap-1.5 transition-all duration-300 group-hover:bg-black/70">
+                        {isExpanded ? (
+                          <>
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                            </svg>
+                            Collapse
+                          </>
+                        ) : (
+                          <>
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                            {gallery.images.length} images
+                          </>
+                        )}
                       </div>
                     </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Expand/Collapse Button */}
-              {hasMoreImages && (
-                <button
-                  onClick={() => setIsExpanded(!isExpanded)}
-                  className="w-full mt-4 py-3 rounded-xl font-body text-sm bg-white/50 hover:bg-white/70 text-gray-700 transition-colors flex items-center justify-center gap-2"
-                >
-                  {isExpanded ? (
-                    <>
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-                      </svg>
-                      Show Less
-                    </>
                   ) : (
-                    <>
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                      Show {otherImages.length - 4} More
-                    </>
+                    <div className="aspect-[16/9] rounded-xl bg-gray-300 flex items-center justify-center">
+                      <p className="text-gray-500 font-body">No cover image</p>
+                    </div>
                   )}
-                </button>
-              )}
 
-              {selectedGallery.images.length === 0 && (
-                <p className="font-body text-gray-600 text-center py-8">
-                  No images in this gallery yet.
-                </p>
-              )}
-            </>
-          ) : galleries.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="font-body text-gray-600">
-                No galleries available yet.
-              </p>
-            </div>
-          ) : null}
-        </div>
+                  {/* Gallery title overlay */}
+                  <div className="mt-4">
+                    <h2 className="font-heading text-xl font-bold text-gray-800">
+                      {gallery.title}
+                    </h2>
+                    {!isExpanded && gallery.description && (
+                      <p className="font-body text-gray-600 text-sm mt-1 line-clamp-2">
+                        {gallery.description}
+                      </p>
+                    )}
+                  </div>
+                </div>
 
-        {/* Actions Card - Below gallery */}
-        <div className="card card-white p-10">
-          {/* Title and Description */}
-          {selectedGallery && (
-            <div className="mb-6">
-              <h1 className="font-heading text-2xl font-bold">
-                {selectedGallery.title}
-              </h1>
-              {selectedGallery.description && (
-                <p className="font-body text-gray-600 mt-2">
-                  {selectedGallery.description}
-                </p>
-              )}
-            </div>
-          )}
+                {/* Expanded Content - Animated */}
+                <div
+                  className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                    isExpanded ? "max-h-[5000px] opacity-100" : "max-h-0 opacity-0"
+                  }`}
+                >
+                  {/* Image Grid */}
+                  {otherImages.length > 0 && (
+                    <div className="card card-gray p-6 mb-4">
+                      <div
+                        className={`grid grid-cols-2 md:grid-cols-3 gap-3 transition-opacity duration-300 ${
+                          isExpanded ? "opacity-100" : "opacity-0"
+                        }`}
+                        style={{ transitionDelay: isExpanded ? "150ms" : "0ms" }}
+                      >
+                        {otherImages.map((image, index) => (
+                          <div
+                            key={image.id}
+                            className="group/img cursor-pointer"
+                            onClick={(e) => openLightbox(image, e)}
+                            style={{
+                              animationDelay: `${index * 50}ms`,
+                              animation: isExpanded ? "fadeInUp 0.3s ease forwards" : "none"
+                            }}
+                          >
+                            <div className="relative aspect-square rounded-xl overflow-hidden bg-gray-200">
+                              <img
+                                src={image.path}
+                                alt={image.caption || image.filename}
+                                className="w-full h-full object-cover transition-transform duration-300 group-hover/img:scale-105"
+                              />
+                              <div className="absolute inset-0 bg-black/0 group-hover/img:bg-black/10 transition-colors duration-300" />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
-          <div className="flex flex-wrap gap-3">
-            {/* Download Gallery */}
-            <button
-              onClick={handleDownload}
-              disabled={!selectedGallery?.downloadable}
-              className={`px-5 py-3 rounded-xl font-body text-sm flex items-center gap-2 transition-colors ${
-                selectedGallery?.downloadable
-                  ? "bg-gray-100 hover:bg-gray-200 text-gray-800"
-                  : "bg-gray-50 text-gray-400 cursor-not-allowed"
-              }`}
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-              </svg>
-              Download Gallery
-              {!selectedGallery?.downloadable && (
-                <span className="text-xs text-gray-400 ml-1">(Unavailable)</span>
-              )}
-            </button>
-
-            {/* Email Gallery */}
-            <button
-              onClick={handleEmail}
-              className="px-5 py-3 rounded-xl font-body text-sm bg-gray-100 hover:bg-gray-200 text-gray-800 flex items-center gap-2 transition-colors"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-              </svg>
-              Email Gallery
-            </button>
-
-            {/* Purchase Image */}
-            <button
-              onClick={handlePurchase}
-              className="px-5 py-3 rounded-xl font-body text-sm bg-gray-100 hover:bg-gray-200 text-gray-800 flex items-center gap-2 transition-colors"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-              Purchase Image
-            </button>
-          </div>
-
-          {/* Gallery selector */}
-          {galleries.length > 1 && (
-            <>
-              <hr className="my-6 border-gray-200" />
-              <h3 className="font-heading text-sm font-bold mb-3 text-gray-600">
-                Select Gallery
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {galleries.map((gallery) => (
-                  <button
-                    key={gallery.id}
-                    onClick={() => setSelectedGallery(gallery)}
-                    className={`px-4 py-2 rounded-lg font-body text-sm transition-colors ${
-                      selectedGallery?.id === gallery.id
-                        ? "bg-[#1a1a1a] text-white"
-                        : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+                  {/* Actions Card */}
+                  <div
+                    className={`card card-white p-8 transition-opacity duration-300 ${
+                      isExpanded ? "opacity-100" : "opacity-0"
                     }`}
+                    style={{ transitionDelay: isExpanded ? "200ms" : "0ms" }}
                   >
-                    {gallery.title}
-                  </button>
-                ))}
+                    {/* Description */}
+                    {gallery.description && (
+                      <p className="font-body text-gray-600 mb-6">
+                        {gallery.description}
+                      </p>
+                    )}
+
+                    {/* Action Buttons */}
+                    <div className="flex flex-wrap gap-3">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleDownload(gallery); }}
+                        disabled={!gallery.downloadable}
+                        className={`px-5 py-3 rounded-xl font-body text-sm flex items-center gap-2 transition-colors ${
+                          gallery.downloadable
+                            ? "bg-gray-100 hover:bg-gray-200 text-gray-800"
+                            : "bg-gray-50 text-gray-400 cursor-not-allowed"
+                        }`}
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                        Download
+                        {!gallery.downloadable && (
+                          <span className="text-xs text-gray-400 ml-1">(N/A)</span>
+                        )}
+                      </button>
+
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleEmail(gallery); }}
+                        className="px-5 py-3 rounded-xl font-body text-sm bg-gray-100 hover:bg-gray-200 text-gray-800 flex items-center gap-2 transition-colors"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                        Email Gallery
+                      </button>
+
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handlePurchase(gallery); }}
+                        className="px-5 py-3 rounded-xl font-body text-sm bg-gray-100 hover:bg-gray-200 text-gray-800 flex items-center gap-2 transition-colors"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                        Purchase Image
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
-            </>
+            );
+          })}
+
+          {galleries.length === 0 && (
+            <div className="card card-gray p-10 text-center">
+              <p className="font-body text-gray-600">No galleries available yet.</p>
+            </div>
           )}
         </div>
       </div>
@@ -373,6 +407,7 @@ export default function WorkPage() {
           )}
         </div>
       )}
+
     </div>
   );
 }
