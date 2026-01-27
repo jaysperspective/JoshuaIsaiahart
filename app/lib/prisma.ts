@@ -1,18 +1,12 @@
-import { PrismaClient } from "@/app/generated/prisma/client";
-import { PrismaLibSql } from "@prisma/adapter-libsql";
+import { PrismaClient } from "@/app/generated/prisma";
 
-const adapter = new PrismaLibSql({
-  url: "file:./prisma/dev.db",
-});
-
-const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient | undefined;
-};
+const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
 
 export const prisma =
   globalForPrisma.prisma ??
   new PrismaClient({
-    adapter,
+    // With Prisma 7 + prisma.config.ts, the URL comes from config/env.
+    // No adapter needed for Postgres.
   });
 
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
