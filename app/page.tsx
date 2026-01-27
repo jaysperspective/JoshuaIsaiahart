@@ -56,6 +56,22 @@ export default function Home() {
 
           <ArrowIcon className="card-arrow" />
         </Link>
+
+        {/* URA Card */}
+        <a
+          href="https://airofuranus.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="card card-ura"
+        >
+          <div className="card-ura__inner">
+            <p className="card-ura__title">URA</p>
+            <h2 className="card-ura__subtitle">A Seasonal Orientation System</h2>
+            <p className="card-ura__caption">Knowing where you are changes how you move.</p>
+          </div>
+
+          <ArrowIcon className="card-arrow card-arrow--light" />
+        </a>
       </div>
     </div>
   );

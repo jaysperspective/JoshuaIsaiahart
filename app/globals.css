@@ -181,6 +181,58 @@ body {
   font-family: var(--font-geist), system-ui, sans-serif;
 }
 
+/* URA card */
+.card-ura {
+  background: #4a5d52;
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.card-ura__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.card-ura__title {
+  font-family: var(--font-spline-sans), system-ui, sans-serif;
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: #c4a962;
+  margin: 0;
+}
+
+.card-ura__subtitle {
+  font-family: var(--font-spline-sans), system-ui, sans-serif;
+  font-size: 1.75rem;
+  font-weight: 600;
+  line-height: 1.2;
+  color: #ffffff;
+  margin: 0;
+}
+
+.card-ura__caption {
+  font-family: var(--font-geist), system-ui, sans-serif;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.7);
+  margin: 8px 0 0 0;
+}
+
+.card-arrow--light {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.card:hover .card-arrow--light {
+  color: rgba(255, 255, 255, 0.8);
+}
+
 /* Gallery animations */
 @keyframes fadeInUp {
   from {
