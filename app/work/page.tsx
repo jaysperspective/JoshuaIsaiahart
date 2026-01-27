@@ -12,7 +12,12 @@ async function getGalleries() {
         orderBy: { order: "asc" },
       },
     },
-    orderBy: { createdAt: "asc" },
+    // Order by sortOrder first (nulls last), then by createdAt as fallback
+    // Note: sortOrder field pending schema migration
+    orderBy: [
+      { sortOrder: "asc" },
+      { createdAt: "asc" },
+    ] as any,
   });
 
   // Serialize dates for client component

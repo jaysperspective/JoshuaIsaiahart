@@ -17,6 +17,7 @@ interface Gallery {
   description: string | null;
   coverImage: string | null;
   downloadable: boolean;
+  sortOrder: number | null;
   images: Image[];
 }
 
@@ -359,6 +360,37 @@ export default function AdminPage() {
     if (e.target.files) {
       const files = Array.from(e.target.files);
       setNewImages((prev) => [...prev, ...files]);
+    }
+  };
+
+  const moveGallery = async (index: number, direction: "up" | "down") => {
+    const newIndex = direction === "up" ? index - 1 : index + 1;
+    if (newIndex < 0 || newIndex >= galleries.length) return;
+
+    // Create new array with swapped positions
+    const newGalleries = [...galleries];
+    [newGalleries[index], newGalleries[newIndex]] = [newGalleries[newIndex], newGalleries[index]];
+
+    // Update local state immediately for responsiveness
+    setGalleries(newGalleries);
+
+    // Persist to server
+    try {
+      const res = await fetch("/api/galleries/reorder", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          galleryIds: newGalleries.map((g) => g.id),
+        }),
+      });
+
+      if (!res.ok) {
+        console.error("Failed to reorder galleries");
+        fetchGalleries(); // Revert on error
+      }
+    } catch (error) {
+      console.error("Failed to reorder galleries:", error);
+      fetchGalleries(); // Revert on error
     }
   };
 
@@ -760,12 +792,35 @@ export default function AdminPage() {
               </p>
             ) : (
               <div className="space-y-4">
-                {galleries.map((gallery) => (
+                {galleries.map((gallery, index) => (
                   <div
                     key={gallery.id}
                     className="bg-white/80 rounded-xl p-4"
                   >
                     <div className="flex items-start justify-between">
+                      {/* Move Up/Down buttons */}
+                      <div className="flex flex-col gap-1 mr-3 flex-shrink-0">
+                        <button
+                          onClick={() => moveGallery(index, "up")}
+                          disabled={index === 0}
+                          className="p-1 rounded hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                          title="Move up"
+                        >
+                          <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => moveGallery(index, "down")}
+                          disabled={index === galleries.length - 1}
+                          className="p-1 rounded hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                          title="Move down"
+                        >
+                          <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </button>
+                      </div>
                       <div className="flex items-start gap-4 flex-1">
                         {gallery.coverImage ? (
                           <img

@@ -177,13 +177,13 @@ export default function WorkClient({ galleries }: WorkClientProps) {
                   className="card card-gray p-6 cursor-pointer group transition-all duration-300 hover:shadow-lg"
                 >
                   {coverImage ? (
-                    <div className="relative aspect-[16/9] rounded-xl overflow-hidden bg-gray-200">
+                    <div className="relative rounded-xl overflow-hidden bg-gray-200">
                       <img
                         src={coverImage.path}
                         alt={gallery.title}
-                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+                        className="w-full h-auto block transition-transform duration-300 group-hover:scale-[1.02]"
                       />
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 pointer-events-none" />
 
                       {/* Expand/Collapse indicator */}
                       <div className="absolute bottom-4 right-4 bg-black/50 backdrop-blur-sm text-white px-3 py-1.5 rounded-full font-body text-xs flex items-center gap-1.5 transition-all duration-300 group-hover:bg-black/70">
@@ -205,7 +205,7 @@ export default function WorkClient({ galleries }: WorkClientProps) {
                       </div>
                     </div>
                   ) : (
-                    <div className="aspect-[16/9] rounded-xl bg-gray-300 flex items-center justify-center">
+                    <div className="rounded-xl bg-gray-300 flex items-center justify-center py-20">
                       <p className="text-gray-500 font-body">No cover image</p>
                     </div>
                   )}

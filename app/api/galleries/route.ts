@@ -9,7 +9,12 @@ export async function GET() {
           orderBy: { order: "asc" },
         },
       },
-      orderBy: { createdAt: "desc" },
+      // Order by sortOrder first (nulls last), then by createdAt as fallback
+      // Note: sortOrder field pending schema migration
+      orderBy: [
+        { sortOrder: "asc" },
+        { createdAt: "asc" },
+      ] as any,
     });
     return NextResponse.json(galleries);
   } catch (error) {
@@ -33,12 +38,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Get the highest current sortOrder to place new gallery at the end
+    // Note: sortOrder field pending schema migration
+    const lastGallery = await prisma.gallery.findFirst({
+      orderBy: { sortOrder: "desc" } as any,
+      select: { sortOrder: true } as any,
+    });
+    const nextSortOrder = ((lastGallery as any)?.sortOrder ?? -1) + 1;
+
     const gallery = await prisma.gallery.create({
       data: {
         title,
         description: description || null,
         downloadable: downloadable || false,
-      },
+        sortOrder: nextSortOrder,
+      } as any,
     });
 
     return NextResponse.json(gallery, { status: 201 });
