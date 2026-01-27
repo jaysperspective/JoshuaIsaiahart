@@ -114,7 +114,7 @@ export default function WorkPage() {
 
   return (
     <div className="min-h-screen bg-[#181818] flex items-center justify-center p-8">
-      <div className="flex flex-col gap-4 w-full max-w-4xl">
+      <div className="flex flex-col gap-4 w-full max-w-6xl">
         {/* Back button */}
         <Link
           href="/"
@@ -136,8 +136,125 @@ export default function WorkPage() {
           Back
         </Link>
 
-        {/* Gallery Card */}
-        <div className="card card-gray p-10">
+        {/* Main Layout - Actions left, Gallery right */}
+        <div className="flex flex-col md:flex-row gap-4">
+          {/* Actions Card - Left side */}
+          <div className="card card-white p-8 md:w-80 flex-shrink-0 h-fit">
+            {/* Title and Description */}
+            {selectedGallery && (
+              <div className="mb-6">
+                <h1 className="font-heading text-xl font-bold">
+                  {selectedGallery.title}
+                </h1>
+                {selectedGallery.description && (
+                  <p className="font-body text-gray-600 mt-2 text-sm">
+                    {selectedGallery.description}
+                  </p>
+                )}
+              </div>
+            )}
+
+            <div className="flex flex-col gap-2">
+              {/* Download Gallery */}
+              <button
+                onClick={handleDownload}
+                disabled={!selectedGallery?.downloadable}
+                className={`w-full px-4 py-3 rounded-xl font-body text-sm flex items-center gap-2 transition-colors ${
+                  selectedGallery?.downloadable
+                    ? "bg-gray-100 hover:bg-gray-200 text-gray-800"
+                    : "bg-gray-50 text-gray-400 cursor-not-allowed"
+                }`}
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.5}
+                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                  />
+                </svg>
+                Download Gallery
+                {!selectedGallery?.downloadable && (
+                  <span className="text-xs text-gray-400 ml-auto">(Unavailable)</span>
+                )}
+              </button>
+
+              {/* Email Gallery */}
+              <button
+                onClick={handleEmail}
+                className="w-full px-4 py-3 rounded-xl font-body text-sm bg-gray-100 hover:bg-gray-200 text-gray-800 flex items-center gap-2 transition-colors"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.5}
+                    d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                  />
+                </svg>
+                Email Gallery
+              </button>
+
+              {/* Purchase Image */}
+              <button
+                onClick={handlePurchase}
+                className="w-full px-4 py-3 rounded-xl font-body text-sm bg-gray-100 hover:bg-gray-200 text-gray-800 flex items-center gap-2 transition-colors"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.5}
+                    d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
+                  />
+                </svg>
+                Purchase Image
+              </button>
+            </div>
+
+            {/* Gallery selector */}
+            {galleries.length > 1 && (
+              <>
+                <hr className="my-6 border-gray-200" />
+                <h3 className="font-heading text-sm font-bold mb-3 text-gray-600">
+                  Select Gallery
+                </h3>
+                <div className="flex flex-col gap-2">
+                  {galleries.map((gallery) => (
+                    <button
+                      key={gallery.id}
+                      onClick={() => setSelectedGallery(gallery)}
+                      className={`px-4 py-2 rounded-lg font-body text-sm transition-colors text-left ${
+                        selectedGallery?.id === gallery.id
+                          ? "bg-[#1a1a1a] text-white"
+                          : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+                      }`}
+                    >
+                      {gallery.title}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Gallery Card - Right side */}
+          <div className="card card-gray p-8 flex-1">
           {selectedGallery ? (
             <>
               {/* Cover + Grid Layout */}
@@ -259,121 +376,7 @@ export default function WorkPage() {
               </p>
             </div>
           ) : null}
-        </div>
-
-        {/* Actions Card - Now below gallery */}
-        <div className="card card-white p-10">
-          {/* Title and Description */}
-          {selectedGallery && (
-            <div className="mb-6">
-              <h1 className="font-heading text-2xl font-bold">
-                {selectedGallery.title}
-              </h1>
-              {selectedGallery.description && (
-                <p className="font-body text-gray-600 mt-2">
-                  {selectedGallery.description}
-                </p>
-              )}
-            </div>
-          )}
-
-          <div className="flex flex-wrap gap-3">
-            {/* Download Gallery */}
-            <button
-              onClick={handleDownload}
-              disabled={!selectedGallery?.downloadable}
-              className={`px-5 py-3 rounded-xl font-body text-sm flex items-center gap-2 transition-colors ${
-                selectedGallery?.downloadable
-                  ? "bg-gray-100 hover:bg-gray-200 text-gray-800"
-                  : "bg-gray-50 text-gray-400 cursor-not-allowed"
-              }`}
-            >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                />
-              </svg>
-              Download Gallery
-              {!selectedGallery?.downloadable && (
-                <span className="text-xs text-gray-400 ml-1">(Unavailable)</span>
-              )}
-            </button>
-
-            {/* Email Gallery */}
-            <button
-              onClick={handleEmail}
-              className="px-5 py-3 rounded-xl font-body text-sm bg-gray-100 hover:bg-gray-200 text-gray-800 flex items-center gap-2 transition-colors"
-            >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                />
-              </svg>
-              Email Gallery
-            </button>
-
-            {/* Purchase Image */}
-            <button
-              onClick={handlePurchase}
-              className="px-5 py-3 rounded-xl font-body text-sm bg-gray-100 hover:bg-gray-200 text-gray-800 flex items-center gap-2 transition-colors"
-            >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
-                />
-              </svg>
-              Purchase Image
-            </button>
           </div>
-
-          {/* Gallery selector */}
-          {galleries.length > 1 && (
-            <>
-              <hr className="my-6 border-gray-200" />
-              <h3 className="font-heading text-sm font-bold mb-3 text-gray-600">
-                Select Gallery
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {galleries.map((gallery) => (
-                  <button
-                    key={gallery.id}
-                    onClick={() => setSelectedGallery(gallery)}
-                    className={`px-4 py-2 rounded-lg font-body text-sm transition-colors ${
-                      selectedGallery?.id === gallery.id
-                        ? "bg-[#1a1a1a] text-white"
-                        : "bg-gray-100 hover:bg-gray-200 text-gray-700"
-                    }`}
-                  >
-                    {gallery.title}
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
         </div>
       </div>
 
