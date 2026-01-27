@@ -19,35 +19,21 @@ interface Gallery {
   images: Image[];
 }
 
-function ArrowIcon({ className = "" }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      width="16"
-      height="16"
-      viewBox="0 0 20 20"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path
-        d="M5.5 14.5L14.5 5.5M14.5 5.5H7.5M14.5 5.5V12.5"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
 export default function WorkPage() {
   const [galleries, setGalleries] = useState<Gallery[]>([]);
   const [selectedGallery, setSelectedGallery] = useState<Gallery | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [lightboxImage, setLightboxImage] = useState<Image | null>(null);
 
   useEffect(() => {
     fetchGalleries();
   }, []);
+
+  // Reset expanded state when gallery changes
+  useEffect(() => {
+    setIsExpanded(false);
+  }, [selectedGallery?.id]);
 
   const fetchGalleries = async () => {
     try {
@@ -83,6 +69,29 @@ export default function WorkPage() {
     window.location.href = `mailto:JoshuaLHarrington@gmail.com?subject=${subject}&body=${body}`;
   };
 
+  const openLightbox = (image: Image) => {
+    setLightboxImage(image);
+    document.body.style.overflow = "hidden";
+  };
+
+  const closeLightbox = () => {
+    setLightboxImage(null);
+    document.body.style.overflow = "";
+  };
+
+  const navigateLightbox = (direction: "prev" | "next") => {
+    if (!lightboxImage || !selectedGallery) return;
+    const currentIndex = selectedGallery.images.findIndex(
+      (img) => img.id === lightboxImage.id
+    );
+    const newIndex =
+      direction === "next"
+        ? (currentIndex + 1) % selectedGallery.images.length
+        : (currentIndex - 1 + selectedGallery.images.length) %
+          selectedGallery.images.length;
+    setLightboxImage(selectedGallery.images[newIndex]);
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#181818] flex items-center justify-center">
@@ -90,6 +99,18 @@ export default function WorkPage() {
       </div>
     );
   }
+
+  // Get cover image and other images
+  const coverImage = selectedGallery?.coverImage
+    ? selectedGallery.images.find((img) => img.path === selectedGallery.coverImage)
+    : selectedGallery?.images[0];
+
+  const otherImages = selectedGallery?.images.filter(
+    (img) => img.id !== coverImage?.id
+  ) || [];
+
+  const displayedImages = isExpanded ? otherImages : otherImages.slice(0, 4);
+  const hasMoreImages = otherImages.length > 4;
 
   return (
     <div className="min-h-screen bg-[#181818] flex items-center justify-center p-8">
@@ -115,9 +136,121 @@ export default function WorkPage() {
           Back
         </Link>
 
-        {/* Actions Card */}
+        {/* Gallery Card */}
+        <div className="card card-gray p-10">
+          {selectedGallery ? (
+            <>
+              {/* Cover Image - Large */}
+              {coverImage && (
+                <div
+                  className="relative aspect-[16/9] rounded-xl overflow-hidden bg-gray-200 mb-4 cursor-pointer group"
+                  onClick={() => openLightbox(coverImage)}
+                >
+                  <img
+                    src={coverImage.path}
+                    alt={coverImage.caption || coverImage.filename}
+                    className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
+                </div>
+              )}
+
+              {/* Other Images Grid */}
+              {displayedImages.length > 0 && (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {displayedImages.map((image) => (
+                    <div
+                      key={image.id}
+                      className="group cursor-pointer"
+                      onClick={() => openLightbox(image)}
+                    >
+                      <div className="relative aspect-square rounded-xl overflow-hidden bg-gray-200">
+                        <img
+                          src={image.path}
+                          alt={image.caption || image.filename}
+                          className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                        />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Expand/Collapse Button */}
+              {hasMoreImages && (
+                <button
+                  onClick={() => setIsExpanded(!isExpanded)}
+                  className="w-full mt-4 py-3 rounded-xl font-body text-sm bg-white/50 hover:bg-white/70 text-gray-700 transition-colors flex items-center justify-center gap-2"
+                >
+                  {isExpanded ? (
+                    <>
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 15l7-7 7 7"
+                        />
+                      </svg>
+                      Show Less
+                    </>
+                  ) : (
+                    <>
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 9l-7 7-7-7"
+                        />
+                      </svg>
+                      Show {otherImages.length - 4} More
+                    </>
+                  )}
+                </button>
+              )}
+
+              {selectedGallery.images.length === 0 && (
+                <p className="font-body text-gray-600 text-center py-8">
+                  No images in this gallery yet.
+                </p>
+              )}
+            </>
+          ) : galleries.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="font-body text-gray-600">
+                No galleries available yet.
+              </p>
+            </div>
+          ) : null}
+        </div>
+
+        {/* Actions Card - Now below gallery */}
         <div className="card card-white p-10">
-          <h2 className="font-heading text-xl font-bold mb-6">Actions</h2>
+          {/* Title and Description */}
+          {selectedGallery && (
+            <div className="mb-6">
+              <h1 className="font-heading text-2xl font-bold">
+                {selectedGallery.title}
+              </h1>
+              {selectedGallery.description && (
+                <p className="font-body text-gray-600 mt-2">
+                  {selectedGallery.description}
+                </p>
+              )}
+            </div>
+          )}
 
           <div className="flex flex-wrap gap-3">
             {/* Download Gallery */}
@@ -217,58 +350,96 @@ export default function WorkPage() {
             </>
           )}
         </div>
-
-        {/* Gallery Card */}
-        <div className="card card-gray p-10">
-          {selectedGallery ? (
-            <>
-              <div className="mb-6">
-                <h1 className="font-heading text-2xl font-bold text-center">
-                  {selectedGallery.title}
-                </h1>
-                {selectedGallery.description && (
-                  <p className="font-body text-gray-700 mt-2 text-center">
-                    {selectedGallery.description}
-                  </p>
-                )}
-              </div>
-
-              {selectedGallery.images.length > 0 ? (
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  {selectedGallery.images.map((image) => (
-                    <div key={image.id} className="group">
-                      <div className="relative aspect-[4/3] rounded-xl overflow-hidden bg-gray-200">
-                        <img
-                          src={image.path}
-                          alt={image.caption || image.filename}
-                          className="w-full h-full object-cover transition-transform group-hover:scale-105"
-                        />
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
-                        <ArrowIcon className="absolute top-3 right-3 text-white opacity-0 group-hover:opacity-70 transition-opacity" />
-                      </div>
-                      {image.caption && (
-                        <p className="font-body text-sm text-gray-700 mt-2 text-center">
-                          {image.caption}
-                        </p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="font-body text-gray-600 text-center py-8">
-                  No images in this gallery yet.
-                </p>
-              )}
-            </>
-          ) : galleries.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="font-body text-gray-600">
-                No galleries available yet.
-              </p>
-            </div>
-          ) : null}
-        </div>
       </div>
+
+      {/* Lightbox */}
+      {lightboxImage && (
+        <div
+          className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center"
+          onClick={closeLightbox}
+        >
+          {/* Close button */}
+          <button
+            onClick={closeLightbox}
+            className="absolute top-6 right-6 text-white/70 hover:text-white transition-colors z-10"
+          >
+            <svg
+              className="w-8 h-8"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+
+          {/* Previous button */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              navigateLightbox("prev");
+            }}
+            className="absolute left-6 text-white/70 hover:text-white transition-colors z-10"
+          >
+            <svg
+              className="w-10 h-10"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
+            </svg>
+          </button>
+
+          {/* Next button */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              navigateLightbox("next");
+            }}
+            className="absolute right-6 text-white/70 hover:text-white transition-colors z-10"
+          >
+            <svg
+              className="w-10 h-10"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 5l7 7-7 7"
+              />
+            </svg>
+          </button>
+
+          {/* Image */}
+          <img
+            src={lightboxImage.path}
+            alt={lightboxImage.caption || lightboxImage.filename}
+            className="max-h-[90vh] max-w-[90vw] object-contain"
+            onClick={(e) => e.stopPropagation()}
+          />
+
+          {/* Caption */}
+          {lightboxImage.caption && (
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-white font-body text-center bg-black/50 px-4 py-2 rounded-lg">
+              {lightboxImage.caption}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

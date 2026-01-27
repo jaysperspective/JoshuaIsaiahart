@@ -39,6 +39,8 @@ export default function AdminPage() {
     step: "idle",
     message: "",
   });
+  const [addingImagesToGallery, setAddingImagesToGallery] = useState<string | null>(null);
+  const [newImages, setNewImages] = useState<File[]>([]);
 
   const fetchGalleries = useCallback(async () => {
     try {
@@ -237,6 +239,94 @@ export default function AdminPage() {
       fetchGalleries();
     } catch (error) {
       console.error("Failed to update gallery:", error);
+    }
+  };
+
+  const deleteImage = async (galleryId: string, imageId: string) => {
+    if (!confirm("Delete this image?")) return;
+
+    try {
+      const res = await fetch(`/api/galleries/${galleryId}/images?imageId=${imageId}`, {
+        method: "DELETE",
+      });
+
+      if (res.ok) {
+        fetchGalleries();
+      } else {
+        console.error("Failed to delete image");
+      }
+    } catch (error) {
+      console.error("Failed to delete image:", error);
+    }
+  };
+
+  const setCoverImage = async (galleryId: string, imagePath: string) => {
+    try {
+      await fetch(`/api/galleries/${galleryId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ coverImage: imagePath }),
+      });
+      fetchGalleries();
+    } catch (error) {
+      console.error("Failed to set cover image:", error);
+    }
+  };
+
+  const uploadMoreImages = async (galleryId: string) => {
+    if (newImages.length === 0) return;
+
+    setUploadStatus({
+      step: "uploading",
+      message: `Uploading ${newImages.length} image(s)...`,
+    });
+
+    try {
+      const formData = new FormData();
+      newImages.forEach((file) => {
+        formData.append("files", file);
+      });
+
+      const res = await fetch(`/api/galleries/${galleryId}/images`, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (res.ok) {
+        setUploadStatus({
+          step: "success",
+          message: `Added ${newImages.length} image(s) to gallery!`,
+        });
+        setNewImages([]);
+        setAddingImagesToGallery(null);
+        fetchGalleries();
+
+        setTimeout(() => {
+          setUploadStatus((prev) =>
+            prev.step === "success" ? { step: "idle", message: "" } : prev
+          );
+        }, 5000);
+      } else {
+        const errorText = await res.text();
+        setUploadStatus({
+          step: "error",
+          message: "Failed to upload images",
+          details: errorText,
+        });
+      }
+    } catch (error) {
+      setUploadStatus({
+        step: "error",
+        message: "Failed to upload images",
+        details: error instanceof Error ? error.message : String(error),
+      });
+    }
+  };
+
+  const handleNewImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const files = Array.from(e.target.files);
+      setNewImages((prev) => [...prev, ...files]);
     }
   };
 
@@ -627,7 +717,7 @@ export default function AdminPage() {
                         <button
                           onClick={() => setEditingGallery(gallery)}
                           className="text-gray-500 hover:text-blue-500 p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                          title="Edit"
+                          title="Edit Title/Description"
                         >
                           <svg
                             className="w-5 h-5"
@@ -646,7 +736,7 @@ export default function AdminPage() {
                         <button
                           onClick={() => deleteGallery(gallery.id)}
                           className="text-gray-500 hover:text-red-500 p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                          title="Delete"
+                          title="Delete Gallery"
                         >
                           <svg
                             className="w-5 h-5"
@@ -664,6 +754,123 @@ export default function AdminPage() {
                         </button>
                       </div>
                     </div>
+
+                    {/* Gallery Images */}
+                    {gallery.images.length > 0 && (
+                      <div className="mt-4 pt-4 border-t border-gray-200">
+                        <p className="font-body text-xs text-gray-500 mb-2">
+                          Click image to set as cover. Current cover has blue border.
+                        </p>
+                        <div className="grid grid-cols-4 md:grid-cols-6 gap-2">
+                          {gallery.images.map((image) => (
+                            <div key={image.id} className="relative group">
+                              <img
+                                src={image.path}
+                                alt={image.filename}
+                                onClick={() => setCoverImage(gallery.id, image.path)}
+                                className={`w-full aspect-square object-cover rounded-lg cursor-pointer transition-all ${
+                                  gallery.coverImage === image.path
+                                    ? "ring-2 ring-blue-500"
+                                    : "hover:ring-2 hover:ring-gray-300"
+                                }`}
+                              />
+                              <button
+                                onClick={() => deleteImage(gallery.id, image.id)}
+                                className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                                title="Delete image"
+                              >
+                                <svg
+                                  className="w-3 h-3"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M6 18L18 6M6 6l12 12"
+                                  />
+                                </svg>
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Add More Images */}
+                    {addingImagesToGallery === gallery.id ? (
+                      <div className="mt-4 pt-4 border-t border-gray-200">
+                        <div className="flex items-center gap-2 mb-2">
+                          <label className="flex-1">
+                            <input
+                              type="file"
+                              multiple
+                              accept="image/*"
+                              onChange={handleNewImageSelect}
+                              className="hidden"
+                            />
+                            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:border-gray-400 transition-colors">
+                              <p className="font-body text-sm text-gray-500">
+                                Click to select images ({newImages.length} selected)
+                              </p>
+                            </div>
+                          </label>
+                        </div>
+                        {newImages.length > 0 && (
+                          <div className="flex flex-wrap gap-2 mb-2">
+                            {newImages.map((file, idx) => (
+                              <span
+                                key={idx}
+                                className="text-xs bg-gray-100 px-2 py-1 rounded"
+                              >
+                                {file.name}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => uploadMoreImages(gallery.id)}
+                            disabled={newImages.length === 0 || isUploading}
+                            className="px-4 py-2 bg-[#1a1a1a] text-white rounded-lg font-body text-sm hover:bg-[#333] transition-colors disabled:opacity-50"
+                          >
+                            Upload
+                          </button>
+                          <button
+                            onClick={() => {
+                              setAddingImagesToGallery(null);
+                              setNewImages([]);
+                            }}
+                            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-body text-sm hover:bg-gray-300 transition-colors"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setAddingImagesToGallery(gallery.id)}
+                        className="mt-3 text-sm text-blue-500 hover:text-blue-600 font-body flex items-center gap-1"
+                      >
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 4v16m8-8H4"
+                          />
+                        </svg>
+                        Add more images
+                      </button>
+                    )}
+
                     <div className="mt-3 pt-3 border-t border-gray-200 flex items-center">
                       <label className="flex items-center gap-2 cursor-pointer">
                         <input
