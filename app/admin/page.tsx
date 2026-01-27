@@ -41,6 +41,7 @@ export default function AdminPage() {
   });
   const [addingImagesToGallery, setAddingImagesToGallery] = useState<string | null>(null);
   const [newImages, setNewImages] = useState<File[]>([]);
+  const [draggedImage, setDraggedImage] = useState<{ galleryId: string; imageId: string } | null>(null);
 
   const fetchGalleries = useCallback(async () => {
     try {
@@ -328,6 +329,60 @@ export default function AdminPage() {
       const files = Array.from(e.target.files);
       setNewImages((prev) => [...prev, ...files]);
     }
+  };
+
+  const handleImageDragStart = (galleryId: string, imageId: string) => {
+    setDraggedImage({ galleryId, imageId });
+  };
+
+  const handleImageDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleImageDrop = async (galleryId: string, targetImageId: string) => {
+    if (!draggedImage || draggedImage.galleryId !== galleryId) {
+      setDraggedImage(null);
+      return;
+    }
+
+    const gallery = galleries.find((g) => g.id === galleryId);
+    if (!gallery) return;
+
+    const images = [...gallery.images];
+    const draggedIndex = images.findIndex((img) => img.id === draggedImage.imageId);
+    const targetIndex = images.findIndex((img) => img.id === targetImageId);
+
+    if (draggedIndex === -1 || targetIndex === -1 || draggedIndex === targetIndex) {
+      setDraggedImage(null);
+      return;
+    }
+
+    // Reorder array
+    const [removed] = images.splice(draggedIndex, 1);
+    images.splice(targetIndex, 0, removed);
+
+    // Update local state immediately for responsiveness
+    setGalleries((prev) =>
+      prev.map((g) =>
+        g.id === galleryId ? { ...g, images } : g
+      )
+    );
+
+    // Save to server
+    try {
+      await fetch(`/api/galleries/${galleryId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          imageOrder: images.map((img) => img.id),
+        }),
+      });
+    } catch (error) {
+      console.error("Failed to reorder images:", error);
+      fetchGalleries(); // Revert on error
+    }
+
+    setDraggedImage(null);
   };
 
   const isUploading = uploadStatus.step === "creating" || uploadStatus.step === "uploading";
@@ -759,23 +814,36 @@ export default function AdminPage() {
                     {gallery.images.length > 0 && (
                       <div className="mt-4 pt-4 border-t border-gray-200">
                         <p className="font-body text-xs text-gray-500 mb-2">
-                          Click image to set as cover. Current cover has blue border.
+                          Drag to reorder. Click to set as cover. Blue border = cover.
                         </p>
                         <div className="grid grid-cols-4 md:grid-cols-6 gap-2">
                           {gallery.images.map((image) => (
-                            <div key={image.id} className="relative group">
+                            <div
+                              key={image.id}
+                              className={`relative group ${
+                                draggedImage?.imageId === image.id ? "opacity-50" : ""
+                              }`}
+                              draggable
+                              onDragStart={() => handleImageDragStart(gallery.id, image.id)}
+                              onDragOver={handleImageDragOver}
+                              onDrop={() => handleImageDrop(gallery.id, image.id)}
+                              onDragEnd={() => setDraggedImage(null)}
+                            >
                               <img
                                 src={image.path}
                                 alt={image.filename}
                                 onClick={() => setCoverImage(gallery.id, image.path)}
-                                className={`w-full aspect-square object-cover rounded-lg cursor-pointer transition-all ${
+                                className={`w-full aspect-square object-cover rounded-lg cursor-grab active:cursor-grabbing transition-all ${
                                   gallery.coverImage === image.path
                                     ? "ring-2 ring-blue-500"
                                     : "hover:ring-2 hover:ring-gray-300"
                                 }`}
                               />
                               <button
-                                onClick={() => deleteImage(gallery.id, image.id)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  deleteImage(gallery.id, image.id);
+                                }}
                                 className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
                                 title="Delete image"
                               >

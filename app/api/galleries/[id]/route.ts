@@ -40,7 +40,19 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { title, description, downloadable, coverImage } = body;
+    const { title, description, downloadable, coverImage, imageOrder } = body;
+
+    // Update image order if provided
+    if (imageOrder && Array.isArray(imageOrder)) {
+      await Promise.all(
+        imageOrder.map((imageId: string, index: number) =>
+          prisma.image.update({
+            where: { id: imageId },
+            data: { order: index },
+          })
+        )
+      );
+    }
 
     const gallery = await prisma.gallery.update({
       where: { id },
@@ -49,6 +61,11 @@ export async function PUT(
         ...(description !== undefined && { description }),
         ...(downloadable !== undefined && { downloadable }),
         ...(coverImage !== undefined && { coverImage }),
+      },
+      include: {
+        images: {
+          orderBy: { order: "asc" },
+        },
       },
     });
 
