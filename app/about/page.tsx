@@ -35,9 +35,14 @@ interface Blog {
   createdAt: string;
 }
 
+interface Settings {
+  instagramUrl: string;
+  linkedinUrl: string;
+  youtubeUrl: string;
+}
+
 async function getBlogs(): Promise<Blog[]> {
   try {
-    // Note: Blog model pending schema migration
     const blogs = await (prisma as any).blog.findMany({
       orderBy: { createdAt: "desc" },
     });
@@ -48,8 +53,20 @@ async function getBlogs(): Promise<Blog[]> {
       createdAt: blog.createdAt.toISOString(),
     }));
   } catch {
-    // Return empty array if Blog model doesn't exist yet
     return [];
+  }
+}
+
+async function getSettings(): Promise<Settings> {
+  try {
+    const settings = await (prisma as any).settings.findFirst();
+    return {
+      instagramUrl: settings?.instagramUrl || "",
+      linkedinUrl: settings?.linkedinUrl || "",
+      youtubeUrl: settings?.youtubeUrl || "",
+    };
+  } catch {
+    return { instagramUrl: "", linkedinUrl: "", youtubeUrl: "" };
   }
 }
 
@@ -63,7 +80,9 @@ function formatDate(dateString: string) {
 }
 
 export default async function About() {
-  const blogs = await getBlogs();
+  const [blogs, settings] = await Promise.all([getBlogs(), getSettings()]);
+
+  const hasSocialLinks = settings.instagramUrl || settings.linkedinUrl || settings.youtubeUrl;
 
   return (
     <div className="min-h-screen bg-[#181818] px-4 py-8 flex flex-col items-center">
@@ -82,44 +101,13 @@ export default async function About() {
         {/* Artist Statement Card */}
         <div className="card card-white p-8 md:p-10">
           <div className="flex flex-col md:flex-row gap-8 md:gap-10">
-            {/* Left column: Image + Social Icons */}
+            {/* Left column: Image */}
             <div className="flex-shrink-0 md:w-[240px]">
               <img
                 src="/bioimage.png"
                 alt="Joshua Isaiah"
                 className="w-full h-auto rounded-xl border border-gray-200/60"
               />
-
-              {/* Social Icons */}
-              <div className="flex items-center justify-center gap-4 mt-4">
-                <a
-                  href="https://instagram.com/joshuaisaiah"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-[#6b6b6b] hover:text-[#1a1a1a] transition-colors"
-                  title="Instagram"
-                >
-                  <InstagramIcon className="w-5 h-5" />
-                </a>
-                <a
-                  href="https://linkedin.com/in/joshuaisaiah"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-[#6b6b6b] hover:text-[#1a1a1a] transition-colors"
-                  title="LinkedIn"
-                >
-                  <LinkedInIcon className="w-5 h-5" />
-                </a>
-                <a
-                  href="https://youtube.com/@joshuaisaiah"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-[#6b6b6b] hover:text-[#1a1a1a] transition-colors"
-                  title="YouTube"
-                >
-                  <YouTubeIcon className="w-5 h-5" />
-                </a>
-              </div>
             </div>
 
             {/* Right column: Bio text */}
@@ -148,6 +136,45 @@ export default async function About() {
               </div>
             </div>
           </div>
+
+          {/* Social Icons - Bottom of card */}
+          {hasSocialLinks && (
+            <div className="flex items-center justify-center gap-5 mt-8 pt-6 border-t border-gray-200/60">
+              {settings.instagramUrl && (
+                <a
+                  href={settings.instagramUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[#6b6b6b] hover:text-[#1a1a1a] transition-colors"
+                  title="Instagram"
+                >
+                  <InstagramIcon className="w-5 h-5" />
+                </a>
+              )}
+              {settings.linkedinUrl && (
+                <a
+                  href={settings.linkedinUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[#6b6b6b] hover:text-[#1a1a1a] transition-colors"
+                  title="LinkedIn"
+                >
+                  <LinkedInIcon className="w-5 h-5" />
+                </a>
+              )}
+              {settings.youtubeUrl && (
+                <a
+                  href={settings.youtubeUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[#6b6b6b] hover:text-[#1a1a1a] transition-colors"
+                  title="YouTube"
+                >
+                  <YouTubeIcon className="w-5 h-5" />
+                </a>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Blog Feed Section */}

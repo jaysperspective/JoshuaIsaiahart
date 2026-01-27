@@ -36,6 +36,12 @@ interface Blog {
   createdAt: string;
 }
 
+interface Settings {
+  instagramUrl: string;
+  linkedinUrl: string;
+  youtubeUrl: string;
+}
+
 export default function AdminPage() {
   const [galleries, setGalleries] = useState<Gallery[]>([]);
   const [title, setTitle] = useState("");
@@ -58,6 +64,14 @@ export default function AdminPage() {
   const [blogTitle, setBlogTitle] = useState("");
   const [blogContent, setBlogContent] = useState("");
   const [isPostingBlog, setIsPostingBlog] = useState(false);
+
+  // Settings state
+  const [settings, setSettings] = useState<Settings>({
+    instagramUrl: "",
+    linkedinUrl: "",
+    youtubeUrl: "",
+  });
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
 
   const fetchGalleries = useCallback(async () => {
     try {
@@ -83,10 +97,27 @@ export default function AdminPage() {
     }
   }, []);
 
+  const fetchSettings = useCallback(async () => {
+    try {
+      const res = await fetch("/api/settings");
+      if (res.ok) {
+        const data = await res.json();
+        setSettings({
+          instagramUrl: data.instagramUrl || "",
+          linkedinUrl: data.linkedinUrl || "",
+          youtubeUrl: data.youtubeUrl || "",
+        });
+      }
+    } catch (error) {
+      console.error("Failed to fetch settings:", error);
+    }
+  }, []);
+
   useEffect(() => {
     fetchGalleries();
     fetchBlogs();
-  }, [fetchGalleries, fetchBlogs]);
+    fetchSettings();
+  }, [fetchGalleries, fetchBlogs, fetchSettings]);
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
@@ -420,6 +451,24 @@ export default function AdminPage() {
       fetchBlogs();
     } catch (error) {
       console.error("Failed to delete blog:", error);
+    }
+  };
+
+  const saveSettings = async () => {
+    setIsSavingSettings(true);
+    try {
+      const res = await fetch("/api/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(settings),
+      });
+      if (!res.ok) {
+        console.error("Failed to save settings");
+      }
+    } catch (error) {
+      console.error("Failed to save settings:", error);
+    } finally {
+      setIsSavingSettings(false);
     }
   };
 
@@ -835,6 +884,65 @@ export default function AdminPage() {
                   : "Create Gallery"}
               </button>
             )}
+          </div>
+
+          {/* Social Links Settings Card */}
+          <div className="card card-white p-10">
+            <h2 className="font-heading text-xl font-bold mb-2">
+              Social Links
+            </h2>
+            <p className="font-body text-[#6b6b6b] mb-6">
+              Update your social media links
+            </p>
+
+            <div className="space-y-4">
+              <div>
+                <label className="font-body text-sm text-gray-600 block mb-2">
+                  Instagram URL
+                </label>
+                <input
+                  type="url"
+                  value={settings.instagramUrl}
+                  onChange={(e) => setSettings({ ...settings, instagramUrl: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl font-body focus:outline-none focus:border-gray-400 transition-colors"
+                  placeholder="https://instagram.com/username"
+                />
+              </div>
+
+              <div>
+                <label className="font-body text-sm text-gray-600 block mb-2">
+                  LinkedIn URL
+                </label>
+                <input
+                  type="url"
+                  value={settings.linkedinUrl}
+                  onChange={(e) => setSettings({ ...settings, linkedinUrl: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl font-body focus:outline-none focus:border-gray-400 transition-colors"
+                  placeholder="https://linkedin.com/in/username"
+                />
+              </div>
+
+              <div>
+                <label className="font-body text-sm text-gray-600 block mb-2">
+                  YouTube URL
+                </label>
+                <input
+                  type="url"
+                  value={settings.youtubeUrl}
+                  onChange={(e) => setSettings({ ...settings, youtubeUrl: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl font-body focus:outline-none focus:border-gray-400 transition-colors"
+                  placeholder="https://youtube.com/@username"
+                />
+              </div>
+            </div>
+
+            <button
+              onClick={saveSettings}
+              disabled={isSavingSettings}
+              className="w-full mt-6 bg-[#1a1a1a] text-white py-3 rounded-xl font-body hover:bg-[#333] transition-colors disabled:opacity-50"
+            >
+              {isSavingSettings ? "Saving..." : "Save Links"}
+            </button>
           </div>
 
           {/* Blog Post Card - Reddit-style */}
