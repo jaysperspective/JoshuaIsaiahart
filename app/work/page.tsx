@@ -109,7 +109,7 @@ export default function WorkPage() {
     (img) => img.id !== coverImage?.id
   ) || [];
 
-  const displayedImages = isExpanded ? otherImages : otherImages.slice(0, 4);
+  const displayedImages = otherImages;
   const hasMoreImages = otherImages.length > 4;
 
   return (
@@ -140,25 +140,50 @@ export default function WorkPage() {
         <div className="card card-gray p-10">
           {selectedGallery ? (
             <>
-              {/* Cover Image - Large */}
-              {coverImage && (
-                <div
-                  className="relative aspect-[16/9] rounded-xl overflow-hidden bg-gray-200 mb-4 cursor-pointer group"
-                  onClick={() => openLightbox(coverImage)}
-                >
-                  <img
-                    src={coverImage.path}
-                    alt={coverImage.caption || coverImage.filename}
-                    className="w-full h-full object-cover transition-transform group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
-                </div>
-              )}
+              {/* Cover + Grid Layout */}
+              <div className="flex flex-col md:flex-row gap-3">
+                {/* Cover Image - Left side */}
+                {coverImage && (
+                  <div
+                    className="md:w-1/2 relative aspect-square rounded-xl overflow-hidden bg-gray-200 cursor-pointer group"
+                    onClick={() => openLightbox(coverImage)}
+                  >
+                    <img
+                      src={coverImage.path}
+                      alt={coverImage.caption || coverImage.filename}
+                      className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
+                  </div>
+                )}
 
-              {/* Other Images Grid */}
-              {displayedImages.length > 0 && (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {displayedImages.map((image) => (
+                {/* Other Images - Right side 2x2 grid */}
+                {displayedImages.length > 0 && (
+                  <div className="md:w-1/2 grid grid-cols-2 gap-3">
+                    {displayedImages.slice(0, 4).map((image) => (
+                      <div
+                        key={image.id}
+                        className="group cursor-pointer"
+                        onClick={() => openLightbox(image)}
+                      >
+                        <div className="relative aspect-square rounded-xl overflow-hidden bg-gray-200">
+                          <img
+                            src={image.path}
+                            alt={image.caption || image.filename}
+                            className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                          />
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Additional Images (when expanded) */}
+              {isExpanded && displayedImages.length > 4 && (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">
+                  {displayedImages.slice(4).map((image) => (
                     <div
                       key={image.id}
                       className="group cursor-pointer"
@@ -215,7 +240,7 @@ export default function WorkPage() {
                           d="M19 9l-7 7-7-7"
                         />
                       </svg>
-                      Show {otherImages.length - 4} More
+                      Show {displayedImages.length - 4} More
                     </>
                   )}
                 </button>
