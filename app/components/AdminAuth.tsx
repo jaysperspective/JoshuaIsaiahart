@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, ReactNode } from "react";
+import Link from "next/link";
 
 interface AdminAuthProps {
   children: ReactNode;
@@ -13,7 +14,6 @@ export default function AdminAuth({ children }: AdminAuthProps) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check if already authenticated (stored in sessionStorage)
     const auth = sessionStorage.getItem("adminAuth");
     if (auth === "true") {
       setIsAuthenticated(true);
@@ -52,7 +52,7 @@ export default function AdminAuth({ children }: AdminAuthProps) {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#181818] flex items-center justify-center">
-        <div className="text-white">Loading...</div>
+        <div className="text-white font-body">Loading...</div>
       </div>
     );
   }
@@ -60,26 +60,54 @@ export default function AdminAuth({ children }: AdminAuthProps) {
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-[#181818] flex items-center justify-center p-8">
-        <div className="bg-[#fafafa] rounded-[20px] p-10 w-full max-w-md">
-          <h1 className="font-heading text-2xl font-bold mb-6">Admin Login</h1>
-          <form onSubmit={handleSubmit}>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter password"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg mb-4 font-body"
-            />
-            {error && (
-              <p className="text-red-500 text-sm mb-4">{error}</p>
-            )}
-            <button
-              type="submit"
-              className="w-full bg-[#1a1a1a] text-white py-3 rounded-lg font-body hover:bg-[#333] transition-colors"
+        <div className="flex flex-col gap-4 w-full max-w-md">
+          {/* Back button */}
+          <Link
+            href="/"
+            className="text-white font-body text-sm flex items-center gap-2 hover:text-gray-300 transition-colors mb-2 self-start"
+          >
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
             >
-              Login
-            </button>
-          </form>
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
+            </svg>
+            Back
+          </Link>
+
+          {/* Login Card */}
+          <div className="card card-white p-10">
+            <h1 className="font-heading text-2xl font-bold mb-2">Admin Login</h1>
+            <p className="font-body text-[#6b6b6b] mb-8">
+              Enter your password to access the dashboard
+            </p>
+
+            <form onSubmit={handleSubmit}>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter password"
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl mb-4 font-body focus:outline-none focus:border-gray-400 transition-colors"
+              />
+              {error && (
+                <p className="text-red-500 text-sm mb-4 font-body">{error}</p>
+              )}
+              <button
+                type="submit"
+                className="w-full bg-[#1a1a1a] text-white py-3 rounded-xl font-body hover:bg-[#333] transition-colors"
+              >
+                Login
+              </button>
+            </form>
+          </div>
         </div>
       </div>
     );
@@ -88,7 +116,29 @@ export default function AdminAuth({ children }: AdminAuthProps) {
   return (
     <div className="min-h-screen bg-[#181818]">
       <div className="bg-[#1a1a1a] border-b border-gray-800 px-8 py-4 flex justify-between items-center">
-        <h1 className="text-white font-heading text-xl font-bold">Admin Dashboard</h1>
+        <div className="flex items-center gap-4">
+          <Link
+            href="/"
+            className="text-gray-400 hover:text-white font-body text-sm flex items-center gap-2 transition-colors"
+          >
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
+            </svg>
+            Home
+          </Link>
+          <span className="text-gray-600">|</span>
+          <h1 className="text-white font-heading text-xl font-bold">Admin Dashboard</h1>
+        </div>
         <button
           onClick={handleLogout}
           className="text-gray-400 hover:text-white font-body text-sm transition-colors"
