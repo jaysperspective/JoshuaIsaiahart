@@ -20,14 +20,25 @@ interface Gallery {
   images: Image[];
 }
 
+interface UploadStatus {
+  step: "idle" | "creating" | "uploading" | "success" | "error";
+  message: string;
+  details?: string;
+  uploadedCount?: number;
+  totalCount?: number;
+}
+
 export default function AdminPage() {
   const [galleries, setGalleries] = useState<Gallery[]>([]);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [isUploading, setIsUploading] = useState(false);
   const [editingGallery, setEditingGallery] = useState<Gallery | null>(null);
   const [dragActive, setDragActive] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState<UploadStatus>({
+    step: "idle",
+    message: "",
+  });
 
   const fetchGalleries = useCallback(async () => {
     try {
@@ -79,44 +90,110 @@ export default function AdminPage() {
     setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const clearStatus = () => {
+    setUploadStatus({ step: "idle", message: "" });
+  };
+
   const createGallery = async () => {
     if (!title.trim()) {
-      alert("Please enter a title");
+      setUploadStatus({
+        step: "error",
+        message: "Please enter a title",
+      });
       return;
     }
 
-    setIsUploading(true);
-
     try {
+      // Step 1: Create gallery
+      setUploadStatus({
+        step: "creating",
+        message: "Creating gallery...",
+      });
+
       const galleryRes = await fetch("/api/galleries", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title, description }),
       });
 
-      if (!galleryRes.ok) throw new Error("Failed to create gallery");
+      if (!galleryRes.ok) {
+        const errorText = await galleryRes.text();
+        throw new Error(`Failed to create gallery: ${galleryRes.status} - ${errorText}`);
+      }
 
       const gallery = await galleryRes.json();
+      console.log("Gallery created:", gallery);
 
+      // Step 2: Upload images if any
       if (selectedFiles.length > 0) {
-        const formData = new FormData();
-        selectedFiles.forEach((file) => formData.append("files", file));
+        setUploadStatus({
+          step: "uploading",
+          message: `Uploading ${selectedFiles.length} image(s)...`,
+          uploadedCount: 0,
+          totalCount: selectedFiles.length,
+        });
 
-        await fetch(`/api/galleries/${gallery.id}/images`, {
+        const formData = new FormData();
+        selectedFiles.forEach((file) => {
+          console.log("Adding file to upload:", file.name, file.size, file.type);
+          formData.append("files", file);
+        });
+
+        console.log("Sending upload request to:", `/api/galleries/${gallery.id}/images`);
+
+        const uploadRes = await fetch(`/api/galleries/${gallery.id}/images`, {
           method: "POST",
           body: formData,
         });
+
+        if (!uploadRes.ok) {
+          const errorText = await uploadRes.text();
+          console.error("Upload failed:", uploadRes.status, errorText);
+          setUploadStatus({
+            step: "error",
+            message: "Gallery created but image upload failed",
+            details: `Status: ${uploadRes.status}\nResponse: ${errorText}`,
+          });
+          fetchGalleries();
+          return;
+        }
+
+        const uploadedImages = await uploadRes.json();
+        console.log("Upload successful:", uploadedImages);
+
+        setUploadStatus({
+          step: "success",
+          message: `Gallery created with ${uploadedImages.length} image(s)!`,
+          uploadedCount: uploadedImages.length,
+          totalCount: selectedFiles.length,
+        });
+      } else {
+        setUploadStatus({
+          step: "success",
+          message: "Gallery created successfully!",
+        });
       }
 
+      // Reset form
       setTitle("");
       setDescription("");
       setSelectedFiles([]);
       fetchGalleries();
+
+      // Clear success message after 5 seconds
+      setTimeout(() => {
+        setUploadStatus((prev) =>
+          prev.step === "success" ? { step: "idle", message: "" } : prev
+        );
+      }, 5000);
+
     } catch (error) {
       console.error("Failed to create gallery:", error);
-      alert("Failed to create gallery");
-    } finally {
-      setIsUploading(false);
+      setUploadStatus({
+        step: "error",
+        message: "Failed to create gallery",
+        details: error instanceof Error ? error.message : String(error),
+      });
     }
   };
 
@@ -163,10 +240,120 @@ export default function AdminPage() {
     }
   };
 
+  const isUploading = uploadStatus.step === "creating" || uploadStatus.step === "uploading";
+
   return (
     <AdminAuth>
       <div className="min-h-[calc(100vh-60px)] flex items-start justify-center p-8">
         <div className="flex flex-col gap-4 w-full max-w-2xl">
+          {/* Status Message */}
+          {uploadStatus.step !== "idle" && (
+            <div
+              className={`rounded-xl p-4 ${
+                uploadStatus.step === "error"
+                  ? "bg-red-100 border border-red-300"
+                  : uploadStatus.step === "success"
+                  ? "bg-green-100 border border-green-300"
+                  : "bg-blue-100 border border-blue-300"
+              }`}
+            >
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-3">
+                  {/* Status Icon */}
+                  {isUploading && (
+                    <svg
+                      className="w-5 h-5 text-blue-600 animate-spin"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      />
+                    </svg>
+                  )}
+                  {uploadStatus.step === "success" && (
+                    <svg
+                      className="w-5 h-5 text-green-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                  )}
+                  {uploadStatus.step === "error" && (
+                    <svg
+                      className="w-5 h-5 text-red-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                  )}
+                  <div>
+                    <p
+                      className={`font-body font-medium ${
+                        uploadStatus.step === "error"
+                          ? "text-red-800"
+                          : uploadStatus.step === "success"
+                          ? "text-green-800"
+                          : "text-blue-800"
+                      }`}
+                    >
+                      {uploadStatus.message}
+                    </p>
+                    {uploadStatus.details && (
+                      <pre className="font-body text-xs text-red-700 mt-2 whitespace-pre-wrap bg-red-50 p-2 rounded">
+                        {uploadStatus.details}
+                      </pre>
+                    )}
+                  </div>
+                </div>
+                {(uploadStatus.step === "error" || uploadStatus.step === "success") && (
+                  <button
+                    onClick={clearStatus}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Create/Edit Gallery Card */}
           <div className="card card-white p-10">
             <h2 className="font-heading text-xl font-bold mb-2">
@@ -224,50 +411,61 @@ export default function AdminPage() {
 
             {/* Selected files */}
             {selectedFiles.length > 0 && (
-              <div className="mb-6 space-y-2">
-                {selectedFiles.map((file, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between bg-gray-100 rounded-xl px-4 py-3"
-                  >
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <svg
-                        className="w-5 h-5 text-gray-400 flex-shrink-0"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={1.5}
-                          d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                        />
-                      </svg>
-                      <span className="font-body text-sm truncate">
-                        {file.name}
-                      </span>
-                    </div>
-                    <button
-                      onClick={() => removeFile(index)}
-                      className="text-gray-400 hover:text-red-500 ml-2 p-1"
+              <div className="mb-6">
+                <p className="font-body text-sm text-gray-600 mb-2">
+                  {selectedFiles.length} file(s) selected
+                </p>
+                <div className="space-y-2 max-h-48 overflow-y-auto">
+                  {selectedFiles.map((file, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between bg-gray-100 rounded-xl px-4 py-3"
                     >
-                      <svg
-                        className="w-5 h-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <svg
+                          className="w-5 h-5 text-gray-400 flex-shrink-0"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={1.5}
+                            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                          />
+                        </svg>
+                        <div className="min-w-0">
+                          <span className="font-body text-sm truncate block">
+                            {file.name}
+                          </span>
+                          <span className="font-body text-xs text-gray-500">
+                            {(file.size / 1024 / 1024).toFixed(2)} MB
+                          </span>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => removeFile(index)}
+                        className="text-gray-400 hover:text-red-500 ml-2 p-1"
+                        disabled={isUploading}
                       >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={1.5}
-                          d="M6 18L18 6M6 6l12 12"
-                        />
-                      </svg>
-                    </button>
-                  </div>
-                ))}
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={1.5}
+                            d="M6 18L18 6M6 6l12 12"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 
@@ -289,6 +487,7 @@ export default function AdminPage() {
                 }
                 className="w-full px-4 py-3 border border-gray-300 rounded-xl font-body focus:outline-none focus:border-gray-400 transition-colors"
                 placeholder="Gallery title"
+                disabled={isUploading}
               />
             </div>
 
@@ -314,6 +513,7 @@ export default function AdminPage() {
                 className="w-full px-4 py-3 border border-gray-300 rounded-xl font-body resize-none focus:outline-none focus:border-gray-400 transition-colors"
                 rows={3}
                 placeholder="Gallery description"
+                disabled={isUploading}
               />
             </div>
 
@@ -337,9 +537,34 @@ export default function AdminPage() {
               <button
                 onClick={createGallery}
                 disabled={isUploading}
-                className="w-full bg-[#1a1a1a] text-white py-3 rounded-xl font-body hover:bg-[#333] transition-colors disabled:opacity-50"
+                className="w-full bg-[#1a1a1a] text-white py-3 rounded-xl font-body hover:bg-[#333] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                {isUploading ? "Creating..." : "Create Gallery"}
+                {isUploading && (
+                  <svg
+                    className="w-5 h-5 animate-spin"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    />
+                  </svg>
+                )}
+                {isUploading
+                  ? uploadStatus.step === "creating"
+                    ? "Creating Gallery..."
+                    : "Uploading Images..."
+                  : "Create Gallery"}
               </button>
             )}
           </div>
