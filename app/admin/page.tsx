@@ -29,6 +29,13 @@ interface UploadStatus {
   totalCount?: number;
 }
 
+interface Blog {
+  id: string;
+  title: string;
+  content: string;
+  createdAt: string;
+}
+
 export default function AdminPage() {
   const [galleries, setGalleries] = useState<Gallery[]>([]);
   const [title, setTitle] = useState("");
@@ -46,6 +53,12 @@ export default function AdminPage() {
   const [editingField, setEditingField] = useState<{ galleryId: string; field: "title" | "description" } | null>(null);
   const [editValue, setEditValue] = useState("");
 
+  // Blog state
+  const [blogs, setBlogs] = useState<Blog[]>([]);
+  const [blogTitle, setBlogTitle] = useState("");
+  const [blogContent, setBlogContent] = useState("");
+  const [isPostingBlog, setIsPostingBlog] = useState(false);
+
   const fetchGalleries = useCallback(async () => {
     try {
       const res = await fetch("/api/galleries");
@@ -58,9 +71,22 @@ export default function AdminPage() {
     }
   }, []);
 
+  const fetchBlogs = useCallback(async () => {
+    try {
+      const res = await fetch("/api/blogs");
+      if (res.ok) {
+        const data = await res.json();
+        setBlogs(data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch blogs:", error);
+    }
+  }, []);
+
   useEffect(() => {
     fetchGalleries();
-  }, [fetchGalleries]);
+    fetchBlogs();
+  }, [fetchGalleries, fetchBlogs]);
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
@@ -360,6 +386,40 @@ export default function AdminPage() {
     if (e.target.files) {
       const files = Array.from(e.target.files);
       setNewImages((prev) => [...prev, ...files]);
+    }
+  };
+
+  const createBlog = async () => {
+    if (!blogTitle.trim() || !blogContent.trim()) return;
+
+    setIsPostingBlog(true);
+    try {
+      const res = await fetch("/api/blogs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: blogTitle, content: blogContent }),
+      });
+
+      if (res.ok) {
+        setBlogTitle("");
+        setBlogContent("");
+        fetchBlogs();
+      }
+    } catch (error) {
+      console.error("Failed to create blog:", error);
+    } finally {
+      setIsPostingBlog(false);
+    }
+  };
+
+  const deleteBlog = async (id: string) => {
+    if (!confirm("Delete this post?")) return;
+
+    try {
+      await fetch(`/api/blogs/${id}`, { method: "DELETE" });
+      fetchBlogs();
+    } catch (error) {
+      console.error("Failed to delete blog:", error);
     }
   };
 
@@ -774,6 +834,84 @@ export default function AdminPage() {
                     : "Uploading Images..."
                   : "Create Gallery"}
               </button>
+            )}
+          </div>
+
+          {/* Blog Post Card - Reddit-style */}
+          <div className="card card-white p-10">
+            <h2 className="font-heading text-xl font-bold mb-2">
+              Create Post
+            </h2>
+            <p className="font-body text-[#6b6b6b] mb-6">
+              Share thoughts, updates, or reflections
+            </p>
+
+            <div className="mb-4">
+              <input
+                type="text"
+                value={blogTitle}
+                onChange={(e) => setBlogTitle(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl font-body focus:outline-none focus:border-gray-400 transition-colors"
+                placeholder="Title"
+                disabled={isPostingBlog}
+              />
+            </div>
+
+            <div className="mb-6">
+              <textarea
+                value={blogContent}
+                onChange={(e) => setBlogContent(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl font-body resize-none focus:outline-none focus:border-gray-400 transition-colors"
+                rows={5}
+                placeholder="What's on your mind?"
+                disabled={isPostingBlog}
+              />
+            </div>
+
+            <button
+              onClick={createBlog}
+              disabled={isPostingBlog || !blogTitle.trim() || !blogContent.trim()}
+              className="w-full bg-[#1a1a1a] text-white py-3 rounded-xl font-body hover:bg-[#333] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isPostingBlog ? "Posting..." : "Post"}
+            </button>
+
+            {/* Existing posts */}
+            {blogs.length > 0 && (
+              <div className="mt-8 pt-6 border-t border-gray-200">
+                <h3 className="font-heading text-sm font-semibold text-gray-600 mb-4">
+                  Recent Posts ({blogs.length})
+                </h3>
+                <div className="space-y-3">
+                  {blogs.map((blog) => (
+                    <div
+                      key={blog.id}
+                      className="flex items-start justify-between bg-gray-50 rounded-xl p-4"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-heading font-bold text-[#1a1a1a] truncate">
+                          {blog.title}
+                        </h4>
+                        <p className="font-body text-sm text-gray-500 line-clamp-2 mt-1">
+                          {blog.content}
+                        </p>
+                        <p className="font-body text-xs text-gray-400 mt-2">
+                          {new Date(blog.createdAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => deleteBlog(blog.id)}
+                        className="text-gray-400 hover:text-red-500 p-2 flex-shrink-0"
+                        title="Delete post"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
             )}
           </div>
 
