@@ -6,15 +6,25 @@ export default function Home() {
       <div className="home-stack">
         {/* Personal Card */}
         <Link href="/about" className="card card-white card-personal">
-          <div className="card-personal__top">
-            <h1 className="font-heading card-title">Joshua Isaiah</h1>
-            <p className="font-heading card-role">Creative Director</p>
+          <div className="card-personal__content">
+            <div className="card-personal__top">
+              <h1 className="font-heading card-title">Joshua Isaiah</h1>
+              <p className="font-heading card-role">Creative Director</p>
+            </div>
+
+            <div className="font-body card-contact">
+              <p>JoshuaLHarrington@gmail.com</p>
+              <p>+1 (434) 489-3932</p>
+              <p>joshuaisaiah.art</p>
+            </div>
           </div>
 
-          <div className="font-body card-contact">
-            <p>JoshuaLHarrington@gmail.com</p>
-            <p>+1 (434) 489-3932</p>
-            <p>joshuaisaiah.art</p>
+          <div className="card-personal__image">
+            <img
+              src="/homeimage.jpg"
+              alt="Joshua Isaiah at work"
+              className="card-image"
+            />
           </div>
         </Link>
 
