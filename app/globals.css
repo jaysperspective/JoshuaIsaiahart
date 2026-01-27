@@ -42,12 +42,14 @@ body {
 
 /* Card base */
 .card {
+  position: relative;
   display: block;
   width: 100%;
   border-radius: 20px;
-  padding: 40px;               /* HARD FIX: guarantees spacing */
+  padding: 40px;
   text-decoration: none;
   color: inherit;
+  cursor: pointer;
 
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
   transition: transform 200ms ease, box-shadow 200ms ease;
@@ -56,6 +58,21 @@ body {
 .card:hover {
   transform: translateY(-2px);
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+}
+
+/* Arrow indicator */
+.card-arrow {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  opacity: 0.35;
+  color: var(--text-dark);
+  transition: opacity 200ms ease, transform 200ms ease;
+}
+
+.card:hover .card-arrow {
+  opacity: 0.7;
+  transform: translate(2px, -2px);
 }
 
 .card:focus-visible {
