@@ -117,7 +117,7 @@ export default function VideographyClient({ videoProjects }: VideographyClientPr
       {/* Video Lightbox */}
       {lightboxVideo && (
         <div
-          className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4 overflow-y-auto"
           onClick={closeLightbox}
         >
           <button
@@ -130,36 +130,39 @@ export default function VideographyClient({ videoProjects }: VideographyClientPr
           </button>
 
           <div
-            className="w-full max-w-5xl aspect-video"
+            className="w-full max-w-5xl flex flex-col gap-4 my-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            {parseVideoUrl(lightboxVideo.videoUrl).service === 'direct' ? (
-              <video
-                src={lightboxVideo.videoUrl}
-                controls
-                autoPlay
-                className="w-full h-full rounded-xl"
-              />
-            ) : (
-              <iframe
-                src={getVideoEmbed(lightboxVideo) || ''}
-                className="w-full h-full rounded-xl"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              />
-            )}
-          </div>
+            {/* Video */}
+            <div className="aspect-video">
+              {parseVideoUrl(lightboxVideo.videoUrl).service === 'direct' ? (
+                <video
+                  src={lightboxVideo.videoUrl}
+                  controls
+                  autoPlay
+                  className="w-full h-full rounded-xl"
+                />
+              ) : (
+                <iframe
+                  src={getVideoEmbed(lightboxVideo) || ''}
+                  className="w-full h-full rounded-xl"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              )}
+            </div>
 
-          {/* Video info */}
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-center max-w-2xl">
-            <h3 className="text-white font-heading text-xl font-bold">
-              {lightboxVideo.title}
-            </h3>
-            {lightboxVideo.description && (
-              <p className="text-white/70 font-body text-sm mt-2">
-                {lightboxVideo.description}
-              </p>
-            )}
+            {/* Video info below */}
+            <div className="text-center px-4">
+              <h3 className="text-white font-heading text-xl font-bold">
+                {lightboxVideo.title}
+              </h3>
+              {lightboxVideo.description && (
+                <p className="text-white/70 font-body text-sm mt-2 max-h-32 overflow-y-auto">
+                  {lightboxVideo.description}
+                </p>
+              )}
+            </div>
           </div>
         </div>
       )}
