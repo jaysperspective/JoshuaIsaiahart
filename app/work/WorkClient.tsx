@@ -181,19 +181,22 @@ export default function WorkClient({ galleries, videoProjects }: WorkClientProps
   return (
     <div className="min-h-screen bg-[#181818] px-8 sm:px-12 py-8 flex flex-col items-center">
       <div className="w-full max-w-3xl">
-        {/* Back button */}
-        <Link
-          href="/"
-          className="text-white font-body text-sm flex items-center gap-2 hover:text-gray-300 transition-colors mb-6 w-fit"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-          Back
-        </Link>
+        {/* Navigation Bar */}
+        <div className="flex items-center justify-between mb-6">
+          {/* Tabs on the left */}
+          <WorkNavigation activeTab={activeTab} onTabChange={handleTabChange} />
 
-        {/* Navigation Tabs */}
-        <WorkNavigation activeTab={activeTab} onTabChange={handleTabChange} />
+          {/* Back button on the right */}
+          <Link
+            href="/"
+            className="text-white font-body text-sm flex items-center gap-2 hover:text-gray-300 transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            Back
+          </Link>
+        </div>
 
         {/* Tab Content */}
         {activeTab === "videography" && (
