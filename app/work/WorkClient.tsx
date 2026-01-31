@@ -183,10 +183,7 @@ export default function WorkClient({ galleries, videoProjects }: WorkClientProps
       <div className="w-full max-w-3xl">
         {/* Navigation Bar */}
         <div className="flex items-center justify-between mb-6">
-          {/* Tabs on the left */}
-          <WorkNavigation activeTab={activeTab} onTabChange={handleTabChange} />
-
-          {/* Back button on the right */}
+          {/* Back button on the left */}
           <Link
             href="/"
             className="text-white font-body text-sm flex items-center gap-2 hover:text-gray-300 transition-colors"
@@ -196,6 +193,9 @@ export default function WorkClient({ galleries, videoProjects }: WorkClientProps
             </svg>
             Back
           </Link>
+
+          {/* Tabs on the right */}
+          <WorkNavigation activeTab={activeTab} onTabChange={handleTabChange} />
         </div>
 
         {/* Tab Content */}
