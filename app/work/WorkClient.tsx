@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import WorkNavigation, { WorkTab } from "./WorkNavigation";
 import VideographyClient from "./VideographyClient";
@@ -179,24 +178,10 @@ export default function WorkClient({ galleries, videoProjects }: WorkClientProps
   };
 
   return (
-    <div className="min-h-screen bg-[#181818] px-8 sm:px-12 py-8 flex flex-col items-center">
+    <div className="min-h-screen bg-[#181818] px-8 sm:px-12 pt-8 pb-24 flex flex-col items-center">
       <div className="w-full max-w-3xl">
-        {/* Navigation Bar */}
-        <div className="flex items-center justify-between mb-6">
-          {/* Back button on the left */}
-          <Link
-            href="/"
-            className="text-white font-body text-sm flex items-center gap-2 hover:text-gray-300 transition-colors"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-            Back
-          </Link>
-
-          {/* Tabs on the right */}
-          <WorkNavigation activeTab={activeTab} onTabChange={handleTabChange} />
-        </div>
+        {/* Bottom Navigation */}
+        <WorkNavigation activeTab={activeTab} onTabChange={handleTabChange} />
 
         {/* Tab Content */}
         {activeTab === "videography" && (
