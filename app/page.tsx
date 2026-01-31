@@ -23,7 +23,7 @@ function ArrowIcon({ className = "" }: { className?: string }) {
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-[#181818] flex items-center justify-center p-8">
+    <div className="min-h-screen bg-[#181818] flex items-center justify-center px-6 sm:px-8 py-8">
       <div className="home-stack">
         {/* Personal Card */}
         <Link href="/about" className="card card-white card-personal">
