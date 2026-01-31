@@ -3,6 +3,8 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
+import WorkNavigation, { WorkTab } from "./WorkNavigation";
+import VideographyClient from "./VideographyClient";
 
 interface Image {
   id: string;
@@ -21,14 +23,25 @@ interface Gallery {
   createdAt: string;
 }
 
-interface WorkClientProps {
-  galleries: Gallery[];
+interface VideoProject {
+  id: string;
+  title: string;
+  description: string | null;
+  videoUrl: string;
+  thumbnailUrl: string | null;
+  createdAt: string;
 }
 
-export default function WorkClient({ galleries }: WorkClientProps) {
+interface WorkClientProps {
+  galleries: Gallery[];
+  videoProjects: VideoProject[];
+}
+
+export default function WorkClient({ galleries, videoProjects }: WorkClientProps) {
   const [expandedGalleryId, setExpandedGalleryId] = useState<string | null>(null);
   const [lightboxImage, setLightboxImage] = useState<Image | null>(null);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [activeTab, setActiveTab] = useState<WorkTab>("photography");
 
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -43,6 +56,11 @@ export default function WorkClient({ galleries }: WorkClientProps) {
 
   // Handle URL-driven initialization
   useEffect(() => {
+    const tabParam = searchParams.get("tab") as WorkTab | null;
+    if (tabParam && ["photography", "videography", "design", "book"].includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+
     const galleryParam = searchParams.get("gallery");
     if (galleryParam && galleries.length > 0) {
       const gallery = galleries.find(
@@ -61,6 +79,16 @@ export default function WorkClient({ galleries }: WorkClientProps) {
     }
   }, [searchParams, galleries]);
 
+  const handleTabChange = useCallback((tab: WorkTab) => {
+    setActiveTab(tab);
+    setExpandedGalleryId(null);
+    if (tab === "photography") {
+      router.push("/work", { scroll: false });
+    } else {
+      router.push(`/work?tab=${tab}`, { scroll: false });
+    }
+  }, [router]);
+
   const updateURL = useCallback((galleryId: string | null, galleryTitle?: string) => {
     if (galleryId && galleryTitle) {
       const slug = slugify(galleryTitle);
@@ -69,6 +97,14 @@ export default function WorkClient({ galleries }: WorkClientProps) {
       router.push("/work", { scroll: false });
     }
   }, [router]);
+
+  // Render placeholder for coming soon tabs
+  const renderComingSoon = (tabName: string) => (
+    <div className="card card-gray p-10 text-center">
+      <p className="font-heading text-xl font-bold text-gray-700 mb-2">{tabName}</p>
+      <p className="font-body text-gray-600">Coming soon</p>
+    </div>
+  );
 
   const toggleGallery = (gallery: Gallery) => {
     if (isAnimating) return;
@@ -156,7 +192,20 @@ export default function WorkClient({ galleries }: WorkClientProps) {
           Back
         </Link>
 
-        {/* Gallery List */}
+        {/* Navigation Tabs */}
+        <WorkNavigation activeTab={activeTab} onTabChange={handleTabChange} />
+
+        {/* Tab Content */}
+        {activeTab === "videography" && (
+          <VideographyClient videoProjects={videoProjects} />
+        )}
+
+        {activeTab === "design" && renderComingSoon("Design")}
+
+        {activeTab === "book" && renderComingSoon("Book")}
+
+        {/* Photography Gallery List */}
+        {activeTab === "photography" && (
         <div className="flex flex-col gap-6">
           {galleries.map((gallery) => {
             const isExpanded = expandedGalleryId === gallery.id;
@@ -328,6 +377,7 @@ export default function WorkClient({ galleries }: WorkClientProps) {
             </div>
           )}
         </div>
+        )}
       </div>
 
       {/* Lightbox */}

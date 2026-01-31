@@ -13,7 +13,6 @@ async function getGalleries() {
       },
     },
     // Order by sortOrder first (nulls last), then by createdAt as fallback
-    // Note: sortOrder field pending schema migration
     orderBy: [
       { sortOrder: "asc" },
       { createdAt: "asc" },
@@ -37,6 +36,29 @@ async function getGalleries() {
   }));
 }
 
+async function getVideoProjects() {
+  try {
+    const videoProjects = await (prisma as any).videoProject.findMany({
+      orderBy: [
+        { sortOrder: "asc" },
+        { createdAt: "asc" },
+      ],
+    });
+
+    return videoProjects.map((project: any) => ({
+      id: project.id,
+      title: project.title,
+      description: project.description,
+      videoUrl: project.videoUrl,
+      thumbnailUrl: project.thumbnailUrl,
+      createdAt: project.createdAt.toISOString(),
+    }));
+  } catch {
+    // VideoProject model may not exist yet
+    return [];
+  }
+}
+
 function LoadingFallback() {
   return (
     <div className="min-h-screen bg-[#181818] flex items-center justify-center">
@@ -46,11 +68,14 @@ function LoadingFallback() {
 }
 
 export default async function WorkPage() {
-  const galleries = await getGalleries();
+  const [galleries, videoProjects] = await Promise.all([
+    getGalleries(),
+    getVideoProjects(),
+  ]);
 
   return (
     <Suspense fallback={<LoadingFallback />}>
-      <WorkClient galleries={galleries} />
+      <WorkClient galleries={galleries} videoProjects={videoProjects} />
     </Suspense>
   );
 }

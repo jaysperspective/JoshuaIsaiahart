@@ -42,6 +42,15 @@ interface Settings {
   youtubeUrl: string;
 }
 
+interface VideoProject {
+  id: string;
+  title: string;
+  description: string | null;
+  videoUrl: string;
+  thumbnailUrl: string | null;
+  sortOrder: number | null;
+}
+
 export default function AdminPage() {
   const [galleries, setGalleries] = useState<Gallery[]>([]);
   const [title, setTitle] = useState("");
@@ -72,6 +81,16 @@ export default function AdminPage() {
     youtubeUrl: "",
   });
   const [isSavingSettings, setIsSavingSettings] = useState(false);
+
+  // Video projects state
+  const [videoProjects, setVideoProjects] = useState<VideoProject[]>([]);
+  const [videoTitle, setVideoTitle] = useState("");
+  const [videoDescription, setVideoDescription] = useState("");
+  const [videoUrl, setVideoUrl] = useState("");
+  const [videoThumbnail, setVideoThumbnail] = useState("");
+  const [isCreatingVideo, setIsCreatingVideo] = useState(false);
+  const [editingVideoField, setEditingVideoField] = useState<{ projectId: string; field: "title" | "description" | "videoUrl" | "thumbnailUrl" } | null>(null);
+  const [editVideoValue, setEditVideoValue] = useState("");
 
   const fetchGalleries = useCallback(async () => {
     try {
@@ -113,11 +132,24 @@ export default function AdminPage() {
     }
   }, []);
 
+  const fetchVideoProjects = useCallback(async () => {
+    try {
+      const res = await fetch("/api/video-projects");
+      if (res.ok) {
+        const data = await res.json();
+        setVideoProjects(data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch video projects:", error);
+    }
+  }, []);
+
   useEffect(() => {
     fetchGalleries();
     fetchBlogs();
     fetchSettings();
-  }, [fetchGalleries, fetchBlogs, fetchSettings]);
+    fetchVideoProjects();
+  }, [fetchGalleries, fetchBlogs, fetchSettings, fetchVideoProjects]);
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
@@ -500,6 +532,105 @@ export default function AdminPage() {
     } catch (error) {
       console.error("Failed to reorder galleries:", error);
       fetchGalleries(); // Revert on error
+    }
+  };
+
+  // Video project functions
+  const createVideoProject = async () => {
+    if (!videoTitle.trim() || !videoUrl.trim()) return;
+
+    setIsCreatingVideo(true);
+    try {
+      const res = await fetch("/api/video-projects", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: videoTitle,
+          description: videoDescription || null,
+          videoUrl,
+          thumbnailUrl: videoThumbnail || null,
+        }),
+      });
+
+      if (res.ok) {
+        setVideoTitle("");
+        setVideoDescription("");
+        setVideoUrl("");
+        setVideoThumbnail("");
+        fetchVideoProjects();
+      }
+    } catch (error) {
+      console.error("Failed to create video project:", error);
+    } finally {
+      setIsCreatingVideo(false);
+    }
+  };
+
+  const deleteVideoProject = async (id: string) => {
+    if (!confirm("Delete this video project?")) return;
+
+    try {
+      await fetch(`/api/video-projects/${id}`, { method: "DELETE" });
+      fetchVideoProjects();
+    } catch (error) {
+      console.error("Failed to delete video project:", error);
+    }
+  };
+
+  const startEditingVideo = (projectId: string, field: "title" | "description" | "videoUrl" | "thumbnailUrl", currentValue: string) => {
+    setEditingVideoField({ projectId, field });
+    setEditVideoValue(currentValue || "");
+  };
+
+  const saveVideoEdit = async () => {
+    if (!editingVideoField) return;
+
+    try {
+      await fetch(`/api/video-projects/${editingVideoField.projectId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          [editingVideoField.field]: editVideoValue,
+        }),
+      });
+      setEditingVideoField(null);
+      setEditVideoValue("");
+      fetchVideoProjects();
+    } catch (error) {
+      console.error("Failed to update video project:", error);
+    }
+  };
+
+  const cancelVideoEdit = () => {
+    setEditingVideoField(null);
+    setEditVideoValue("");
+  };
+
+  const moveVideoProject = async (index: number, direction: "up" | "down") => {
+    const newIndex = direction === "up" ? index - 1 : index + 1;
+    if (newIndex < 0 || newIndex >= videoProjects.length) return;
+
+    const newProjects = [...videoProjects];
+    [newProjects[index], newProjects[newIndex]] = [newProjects[newIndex], newProjects[index]];
+
+    setVideoProjects(newProjects);
+
+    try {
+      const res = await fetch("/api/video-projects/reorder", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          projectIds: newProjects.map((p) => p.id),
+        }),
+      });
+
+      if (!res.ok) {
+        console.error("Failed to reorder video projects");
+        fetchVideoProjects();
+      }
+    } catch (error) {
+      console.error("Failed to reorder video projects:", error);
+      fetchVideoProjects();
     }
   };
 
@@ -1019,6 +1150,264 @@ export default function AdminPage() {
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+          </div>
+
+          {/* Video Projects Card */}
+          <div className="card card-white p-10">
+            <h2 className="font-heading text-xl font-bold mb-2">
+              Add Video Project
+            </h2>
+            <p className="font-body text-[#6b6b6b] mb-6">
+              Paste a video link (YouTube, Vimeo, or direct URL)
+            </p>
+
+            <div className="space-y-4">
+              <div>
+                <label className="font-body text-sm text-gray-600 block mb-2">
+                  Title *
+                </label>
+                <input
+                  type="text"
+                  value={videoTitle}
+                  onChange={(e) => setVideoTitle(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl font-body focus:outline-none focus:border-gray-400 transition-colors"
+                  placeholder="Video title"
+                  disabled={isCreatingVideo}
+                />
+              </div>
+
+              <div>
+                <label className="font-body text-sm text-gray-600 block mb-2">
+                  Video URL *
+                </label>
+                <input
+                  type="url"
+                  value={videoUrl}
+                  onChange={(e) => setVideoUrl(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl font-body focus:outline-none focus:border-gray-400 transition-colors"
+                  placeholder="https://youtube.com/watch?v=... or https://vimeo.com/..."
+                  disabled={isCreatingVideo}
+                />
+              </div>
+
+              <div>
+                <label className="font-body text-sm text-gray-600 block mb-2">
+                  Description
+                </label>
+                <textarea
+                  value={videoDescription}
+                  onChange={(e) => setVideoDescription(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl font-body resize-none focus:outline-none focus:border-gray-400 transition-colors"
+                  rows={3}
+                  placeholder="Video description"
+                  disabled={isCreatingVideo}
+                />
+              </div>
+
+              <div>
+                <label className="font-body text-sm text-gray-600 block mb-2">
+                  Custom Thumbnail URL (optional)
+                </label>
+                <input
+                  type="url"
+                  value={videoThumbnail}
+                  onChange={(e) => setVideoThumbnail(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl font-body focus:outline-none focus:border-gray-400 transition-colors"
+                  placeholder="https://example.com/thumbnail.jpg"
+                  disabled={isCreatingVideo}
+                />
+                <p className="font-body text-xs text-gray-400 mt-1">
+                  Leave empty to auto-fetch from YouTube
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={createVideoProject}
+              disabled={isCreatingVideo || !videoTitle.trim() || !videoUrl.trim()}
+              className="w-full mt-6 bg-[#1a1a1a] text-white py-3 rounded-xl font-body hover:bg-[#333] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isCreatingVideo ? "Creating..." : "Add Video Project"}
+            </button>
+          </div>
+
+          {/* Video Projects List Card */}
+          <div className="card card-gray p-10">
+            <h2 className="font-heading text-xl font-bold mb-2 text-center">
+              Video Projects
+            </h2>
+            <p className="font-body text-[#2f2f2f] mb-6 text-center">
+              {videoProjects.length} {videoProjects.length === 1 ? "project" : "projects"}
+            </p>
+
+            {videoProjects.length === 0 ? (
+              <p className="font-body text-gray-600 text-center py-4">
+                No video projects yet. Add one above to get started.
+              </p>
+            ) : (
+              <div className="space-y-4">
+                {videoProjects.map((project, index) => (
+                  <div
+                    key={project.id}
+                    className="bg-white/80 rounded-xl p-4"
+                  >
+                    <div className="flex items-start justify-between">
+                      {/* Move Up/Down buttons */}
+                      <div className="flex flex-col gap-1 mr-3 flex-shrink-0">
+                        <button
+                          onClick={() => moveVideoProject(index, "up")}
+                          disabled={index === 0}
+                          className="p-1 rounded hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                          title="Move up"
+                        >
+                          <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => moveVideoProject(index, "down")}
+                          disabled={index === videoProjects.length - 1}
+                          className="p-1 rounded hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                          title="Move down"
+                        >
+                          <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </button>
+                      </div>
+
+                      <div className="flex items-start gap-4 flex-1">
+                        {/* Video icon */}
+                        <div className="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        </div>
+
+                        <div className="flex-1 min-w-0">
+                          {/* Title - Inline Edit */}
+                          {editingVideoField?.projectId === project.id && editingVideoField.field === "title" ? (
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="text"
+                                value={editVideoValue}
+                                onChange={(e) => setEditVideoValue(e.target.value)}
+                                className="font-heading font-bold text-[#1a1a1a] bg-white border border-gray-300 rounded px-2 py-1 flex-1"
+                                autoFocus
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") saveVideoEdit();
+                                  if (e.key === "Escape") cancelVideoEdit();
+                                }}
+                              />
+                              <button onClick={saveVideoEdit} className="text-green-500 hover:text-green-600">
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                              </button>
+                              <button onClick={cancelVideoEdit} className="text-gray-400 hover:text-gray-600">
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                              </button>
+                            </div>
+                          ) : (
+                            <h3
+                              className="font-heading font-bold text-[#1a1a1a] cursor-pointer hover:text-blue-600 transition-colors"
+                              onClick={() => startEditingVideo(project.id, "title", project.title)}
+                              title="Click to edit title"
+                            >
+                              {project.title}
+                            </h3>
+                          )}
+
+                          {/* Description - Inline Edit */}
+                          {editingVideoField?.projectId === project.id && editingVideoField.field === "description" ? (
+                            <div className="flex items-start gap-2 mt-1">
+                              <textarea
+                                value={editVideoValue}
+                                onChange={(e) => setEditVideoValue(e.target.value)}
+                                className="font-body text-sm text-gray-600 bg-white border border-gray-300 rounded px-2 py-1 flex-1 resize-none"
+                                rows={2}
+                                autoFocus
+                                onKeyDown={(e) => {
+                                  if (e.key === "Escape") cancelVideoEdit();
+                                }}
+                              />
+                              <div className="flex flex-col gap-1">
+                                <button onClick={saveVideoEdit} className="text-green-500 hover:text-green-600">
+                                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                  </svg>
+                                </button>
+                                <button onClick={cancelVideoEdit} className="text-gray-400 hover:text-gray-600">
+                                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                  </svg>
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <p
+                              className="font-body text-sm text-gray-500 cursor-pointer hover:text-blue-600 transition-colors mt-1"
+                              onClick={() => startEditingVideo(project.id, "description", project.description || "")}
+                              title="Click to edit description"
+                            >
+                              {project.description || "Click to add description..."}
+                            </p>
+                          )}
+
+                          {/* Video URL - Inline Edit */}
+                          {editingVideoField?.projectId === project.id && editingVideoField.field === "videoUrl" ? (
+                            <div className="flex items-center gap-2 mt-2">
+                              <input
+                                type="url"
+                                value={editVideoValue}
+                                onChange={(e) => setEditVideoValue(e.target.value)}
+                                className="font-body text-xs text-gray-500 bg-white border border-gray-300 rounded px-2 py-1 flex-1"
+                                autoFocus
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") saveVideoEdit();
+                                  if (e.key === "Escape") cancelVideoEdit();
+                                }}
+                              />
+                              <button onClick={saveVideoEdit} className="text-green-500 hover:text-green-600">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                              </button>
+                              <button onClick={cancelVideoEdit} className="text-gray-400 hover:text-gray-600">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                              </button>
+                            </div>
+                          ) : (
+                            <p
+                              className="font-body text-xs text-gray-400 mt-2 truncate cursor-pointer hover:text-blue-600 transition-colors"
+                              onClick={() => startEditingVideo(project.id, "videoUrl", project.videoUrl)}
+                              title="Click to edit URL"
+                            >
+                              {project.videoUrl}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => deleteVideoProject(project.id)}
+                        className="text-gray-500 hover:text-red-500 p-2 rounded-lg hover:bg-gray-100 transition-colors flex-shrink-0"
+                        title="Delete Video Project"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>
