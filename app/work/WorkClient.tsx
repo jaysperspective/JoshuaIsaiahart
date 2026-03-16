@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import WorkNavigation, { WorkTab } from "./WorkNavigation";
 import VideographyClient from "./VideographyClient";
+import ContactClient from "./ContactClient";
 
 interface Image {
   id: string;
@@ -57,7 +58,7 @@ export default function WorkClient({ galleries, videoProjects }: WorkClientProps
   // Handle URL-driven initialization
   useEffect(() => {
     const tabParam = searchParams.get("tab") as WorkTab | null;
-    if (tabParam && ["photography", "videography", "design", "book"].includes(tabParam)) {
+    if (tabParam && ["photography", "videography", "design", "contact"].includes(tabParam)) {
       setActiveTab(tabParam);
     }
 
@@ -212,11 +213,8 @@ export default function WorkClient({ galleries, videoProjects }: WorkClientProps
           </div>
         )}
 
-        {activeTab === "book" && (
-          <div className="rounded-2xl bg-white/[0.06] border border-white/[0.08] p-16 text-center">
-            <p className="font-heading text-lg font-semibold text-white/60 mb-1">Book</p>
-            <p className="font-body text-white/30 text-sm">Coming soon</p>
-          </div>
+        {activeTab === "contact" && (
+          <ContactClient />
         )}
 
         {/* Photography Gallery List */}

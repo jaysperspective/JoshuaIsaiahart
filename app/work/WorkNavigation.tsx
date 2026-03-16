@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 
-export type WorkTab = "photography" | "videography" | "design" | "book";
+export type WorkTab = "photography" | "videography" | "design" | "contact";
 
 interface WorkNavigationProps {
   activeTab: WorkTab;
@@ -13,7 +13,7 @@ const tabs: { id: WorkTab; label: string }[] = [
   { id: "photography", label: "Photo" },
   { id: "videography", label: "Video" },
   { id: "design", label: "Design" },
-  { id: "book", label: "Book" },
+  { id: "contact", label: "Contact" },
 ];
 
 export default function WorkNavigation({ activeTab, onTabChange }: WorkNavigationProps) {
