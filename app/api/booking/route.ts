@@ -59,7 +59,7 @@ export async function POST(request: Request) {
       },
       body: JSON.stringify({
         from: process.env.RESEND_FROM || "onboarding@resend.dev",
-        to: "Josh@plusntrust.org",
+        to: "josh@plusntrust.org",
         reply_to: email,
         subject: `Consultation Booking: ${name} — ${formattedDate} at ${time}`,
         html: emailHtml,
