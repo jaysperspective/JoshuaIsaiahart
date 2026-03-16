@@ -52,7 +52,7 @@ export default function Home() {
         {/* Business Card */}
         <Link href="/work" className="card card-gray card-business">
           <div className="card-business__inner">
-            <h2 className="font-heading card-title">Asun Media</h2>
+            <h2 className="font-heading card-title">Portfolio</h2>
             <p className="font-body card-subtitle">
               Photography • Videography • Design
             </p>
