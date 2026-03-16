@@ -247,7 +247,7 @@ export default function WorkClient({ galleries, videoProjects }: WorkClientProps
                         alt={gallery.title}
                         fill
                         sizes="(max-width: 768px) 100vw, 768px"
-                        className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+                        className="object-cover object-top transition-transform duration-300 group-hover:scale-[1.02]"
                       />
                       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 pointer-events-none" />
 
