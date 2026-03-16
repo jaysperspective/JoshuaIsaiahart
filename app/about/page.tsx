@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { prisma } from "@/app/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -102,10 +103,11 @@ export default async function About() {
           <div className="flex flex-col md:flex-row gap-8 md:gap-10">
             {/* Left column: Image */}
             <div className="flex-shrink-0 md:w-[240px]">
-              <img
-                src="/bioimage.png"
+              <Image
+                src="/bioimage.jpg"
                 alt="Joshua Isaiah"
-                loading="lazy"
+                width={480}
+                height={600}
                 className="w-full h-auto rounded-xl border border-gray-200/60"
               />
             </div>

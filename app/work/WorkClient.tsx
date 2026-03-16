@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import Image from "next/image";
 import WorkNavigation, { WorkTab } from "./WorkNavigation";
 import VideographyClient from "./VideographyClient";
 
@@ -241,11 +242,12 @@ export default function WorkClient({ galleries, videoProjects }: WorkClientProps
                 >
                   {coverImage ? (
                     <div className="relative rounded-xl overflow-hidden bg-white/5 aspect-[3/2]">
-                      <img
+                      <Image
                         src={coverImage.path}
                         alt={gallery.title}
-                        loading="lazy"
-                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+                        fill
+                        sizes="(max-width: 768px) 100vw, 768px"
+                        className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
                       />
                       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 pointer-events-none" />
 
@@ -305,11 +307,12 @@ export default function WorkClient({ galleries, videoProjects }: WorkClientProps
                               }}
                             >
                               <div className="relative aspect-square rounded-xl overflow-hidden bg-white/5">
-                                <img
+                                <Image
                                   src={image.path}
                                   alt={image.caption || image.filename}
-                                  loading="lazy"
-                                  className="w-full h-full object-cover transition-transform duration-300 group-hover/img:scale-105"
+                                  fill
+                                  sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, 33vw"
+                                  className="object-cover transition-transform duration-300 group-hover/img:scale-105"
                                 />
                                 <div className="absolute inset-0 bg-black/0 group-hover/img:bg-black/10 transition-colors duration-300" />
                               </div>

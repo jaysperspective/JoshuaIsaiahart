@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 function ArrowIcon({ className = "" }: { className?: string }) {
   return (
@@ -35,9 +36,12 @@ export default function Home() {
           </div>
 
           <div className="card-personal__image">
-            <img
+            <Image
               src="/homeimage.jpg"
               alt="Joshua Isaiah at work"
+              width={400}
+              height={500}
+              priority
               className="card-image"
             />
           </div>
