@@ -18,24 +18,14 @@ const tabs: { id: WorkTab; label: string }[] = [
 
 export default function WorkNavigation({ activeTab, onTabChange }: WorkNavigationProps) {
   return (
-    <nav className="mb-10">
+    <nav className="mb-12">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <Link href="/" className="group">
+      <div className="text-center mb-8">
+        <Link href="/" className="group inline-block">
           <p className="font-body text-white/40 text-sm italic">the portfolio of</p>
           <h1 className="font-heading text-white text-2xl sm:text-3xl font-bold tracking-tight group-hover:text-white/80 transition-colors">
             Joshua Isaiah
           </h1>
-        </Link>
-
-        {/* Back arrow */}
-        <Link
-          href="/"
-          className="text-white/40 hover:text-white transition-colors"
-        >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 19l-7-7 7-7" />
-          </svg>
         </Link>
       </div>
 
