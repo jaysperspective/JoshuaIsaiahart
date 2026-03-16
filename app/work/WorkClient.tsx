@@ -195,7 +195,7 @@ export default function WorkClient({ galleries, videoProjects }: WorkClientProps
   const lightboxIndex = getLightboxIndex();
 
   return (
-    <div className="min-h-screen bg-[#181818] px-8 sm:px-12 py-8 flex flex-col items-center">
+    <div className="min-h-screen bg-[#181818] px-8 sm:px-12 pt-12 pb-8 flex flex-col items-center">
       <div className="w-full max-w-3xl">
         {/* Top Navigation */}
         <WorkNavigation activeTab={activeTab} onTabChange={handleTabChange} />
