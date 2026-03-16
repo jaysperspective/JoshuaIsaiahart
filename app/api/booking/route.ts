@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import nodemailer from "nodemailer";
 
 export async function POST(request: Request) {
   try {
@@ -18,16 +17,6 @@ export async function POST(request: Request) {
       month: "long",
       day: "numeric",
       year: "numeric",
-    });
-
-    const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: Number(process.env.SMTP_PORT) || 587,
-      secure: process.env.SMTP_SECURE === "true",
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-      },
     });
 
     const emailHtml = `
@@ -62,13 +51,26 @@ export async function POST(request: Request) {
       </div>
     `;
 
-    await transporter.sendMail({
-      from: process.env.SMTP_FROM || process.env.SMTP_USER,
-      to: "Josh@plusntrust.org",
-      replyTo: email,
-      subject: `Consultation Booking: ${name} — ${formattedDate} at ${time}`,
-      html: emailHtml,
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+      },
+      body: JSON.stringify({
+        from: process.env.RESEND_FROM || "onboarding@resend.dev",
+        to: "Josh@plusntrust.org",
+        reply_to: email,
+        subject: `Consultation Booking: ${name} — ${formattedDate} at ${time}`,
+        html: emailHtml,
+      }),
     });
+
+    if (!res.ok) {
+      const data = await res.json();
+      console.error("Resend error:", data);
+      throw new Error(data.message || "Failed to send email");
+    }
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
