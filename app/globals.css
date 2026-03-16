@@ -245,3 +245,28 @@ body {
   }
 }
 
+/* Lightbox animations */
+.lightbox-enter {
+  animation: lightboxFadeIn 0.2s ease forwards;
+}
+
+@keyframes lightboxFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.lightbox-image-enter {
+  animation: lightboxImageIn 0.2s ease forwards;
+}
+
+@keyframes lightboxImageIn {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+

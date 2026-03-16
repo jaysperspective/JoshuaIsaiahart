@@ -44,8 +44,8 @@ export default function VideographyClient({ videoProjects }: VideographyClientPr
 
   if (videoProjects.length === 0) {
     return (
-      <div className="card card-gray p-10 text-center">
-        <p className="font-body text-gray-600">No video projects available yet.</p>
+      <div className="rounded-2xl bg-white/[0.06] border border-white/[0.08] p-16 text-center">
+        <p className="font-body text-white/40">No video projects available yet.</p>
       </div>
     );
   }
@@ -61,19 +61,20 @@ export default function VideographyClient({ videoProjects }: VideographyClientPr
             <div
               key={project.id}
               onClick={() => openLightbox(project)}
-              className="card card-gray p-6 cursor-pointer group transition-all duration-300 hover:shadow-lg"
+              className="rounded-2xl bg-white/[0.06] border border-white/[0.08] p-5 cursor-pointer group transition-all duration-300 hover:bg-white/[0.09]"
             >
               {/* Thumbnail */}
-              <div className="relative rounded-xl overflow-hidden bg-gray-200 aspect-video">
+              <div className="relative rounded-xl overflow-hidden bg-white/5 aspect-video">
                 {thumbnail ? (
                   <img
                     src={thumbnail}
                     alt={project.title}
+                    loading="lazy"
                     className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gray-300">
-                    <svg className="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="w-full h-full flex items-center justify-center bg-white/5">
+                    <svg className="w-16 h-16 text-white/20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
@@ -100,11 +101,11 @@ export default function VideographyClient({ videoProjects }: VideographyClientPr
 
               {/* Title and description */}
               <div className="mt-4">
-                <h2 className="font-heading text-xl font-bold text-gray-800">
+                <h2 className="font-heading text-xl font-bold text-white">
                   {project.title}
                 </h2>
                 {project.description && (
-                  <p className="font-body text-gray-600 text-sm mt-1 line-clamp-2">
+                  <p className="font-body text-white/50 text-sm mt-1 line-clamp-2">
                     {project.description}
                   </p>
                 )}

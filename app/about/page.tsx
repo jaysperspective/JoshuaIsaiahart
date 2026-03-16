@@ -90,12 +90,11 @@ export default async function About() {
         {/* Back link */}
         <Link
           href="/"
-          className="inline-flex items-center gap-2 text-white/70 hover:text-white font-body text-sm transition-colors mb-8"
+          className="inline-block text-white/50 hover:text-white transition-colors mb-8"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 19l-7-7 7-7" />
           </svg>
-          Back
         </Link>
 
         {/* Artist Statement Card */}
@@ -106,6 +105,7 @@ export default async function About() {
               <img
                 src="/bioimage.png"
                 alt="Joshua Isaiah"
+                loading="lazy"
                 className="w-full h-auto rounded-xl border border-gray-200/60"
               />
             </div>
