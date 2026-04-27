@@ -1,14 +1,31 @@
 @import "tailwindcss";
 
 :root {
-  --background: #181818;
-  --foreground: #1a1a1a;
-  --card-white: #fafafa;
-  --card-gray: #b6b1ad;
-  --text-dark: #1a1a1a;
-  --text-muted: #6b6b6b;
-  --text-contact: #5f6b7a;
-  --text-subtitle: #2f2f2f;
+  /* Surfaces — warm dark */
+  --background: #1a1410;
+  --card-bg: #221a14;
+  --card-bg-hover: #2a2018;
+
+  /* Text */
+  --foreground: #f4ece1;
+  --text-muted: #b8a896;
+  --text-faint: #8a7a68;
+
+  /* Borders */
+  --border-color: #3d2f23;
+  --border-muted: #5a4838;
+
+  /* Source / pill chips */
+  --source-pill-bg: #2e231b;
+  --source-pill-text: #d4c2ab;
+
+  /* Medium accents */
+  --accent-photography: #c89464;
+  --accent-videography: #a04848;
+  --accent-design: #4a8a82;
+  --accent-contact: #8a8a4a;
+  --accent-about: #d4c2ab;
+  --accent-external: #6d3f35;
 }
 
 @theme inline {
@@ -24,155 +41,18 @@
   box-sizing: border-box;
 }
 
+html,
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-geist), system-ui, sans-serif;
   min-height: 100vh;
 }
 
-/* Layout wrapper for the two cards */
-.home-stack {
-  width: 100%;
-  max-width: 540px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+body {
+  font-family: var(--font-geist), system-ui, sans-serif;
 }
 
-/* Card base */
-.card {
-  position: relative;
-  display: block;
-  width: 100%;
-  border-radius: 20px;
-  padding: 40px;
-  text-decoration: none;
-  color: inherit;
-  cursor: pointer;
-
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
-  transition: transform 200ms ease, box-shadow 200ms ease;
-}
-
-.card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
-}
-
-/* Arrow indicator */
-.card-arrow {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  opacity: 0.35;
-  color: var(--text-dark);
-  transition: opacity 200ms ease, transform 200ms ease;
-}
-
-.card:hover .card-arrow {
-  opacity: 0.7;
-  transform: translate(2px, -2px);
-}
-
-.card:focus-visible {
-  outline: none;
-  box-shadow:
-    0 16px 40px rgba(0, 0, 0, 0.35),
-    0 0 0 2px rgba(255, 255, 255, 0.18);
-}
-
-/* Surfaces */
-.card-white {
-  background: var(--card-white); /* #fafafa */
-  color: var(--text-dark);
-}
-
-.card-gray {
-  background: var(--card-gray);  /* #b6b1ad */
-  color: var(--text-dark);
-}
-
-/* Personal card layout */
-.card-personal {
-  display: flex;
-  flex-direction: row;
-  gap: 24px;
-}
-
-.card-personal__content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  /* justify-content controlled via utility class */
-}
-
-.card-personal__top {
-  display: flex;
-  flex-direction: column;
-}
-
-.card-personal__image {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-}
-
-.card-image {
-  width: 200px;
-  height: auto;
-  border-radius: 12px;
-  object-fit: cover;
-}
-
-/* Typography + spacing (matches ref) */
-.card-title {
-  font-size: 2.25rem;  /* ~ text-4xl */
-  line-height: 1.08;   /* prevents top clipping */
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  margin: 0 0 6px 0;
-}
-
-.card-role {
-  font-size: 1.25rem;  /* ~ text-xl */
-  line-height: 1.2;
-  color: var(--text-muted); /* #6b6b6b */
-  margin: 0;
-}
-
-.card-contact {
-  font-size: 1rem;
-  line-height: 1.5;
-  color: var(--text-contact); /* #5f6b7a */
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-/* Business card layout */
-.card-business {
-  min-height: 240px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-}
-
-.card-business__inner {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.card-subtitle {
-  font-size: 1.125rem; /* ~ text-lg */
-  line-height: 1.35;
-  color: var(--text-subtitle); /* #2f2f2f */
-  margin-top: 10px;
-}
-
-/* Fonts */
+/* Font helpers */
 .font-heading {
   font-family: var(--font-spline-sans), system-ui, sans-serif;
 }
@@ -181,59 +61,60 @@ body {
   font-family: var(--font-geist), system-ui, sans-serif;
 }
 
-/* URA card */
-.card-ura {
-  background: #4a5d52;
-  min-height: 200px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
+/* Neumorphic card primitives */
+.neu-card {
+  background: var(--card-bg);
+  border: 2px solid var(--border-color);
+  border-radius: 4px;
+  box-shadow: 3px 3px 0 var(--border-color);
+  transition: box-shadow 200ms ease, transform 200ms ease, background 200ms ease;
 }
 
-.card-ura__inner {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
+.neu-card-interactive:hover {
+  background: var(--card-bg-hover);
+  box-shadow: 4px 4px 0 var(--border-color);
+  transform: translate(-1px, -1px);
 }
 
-.card-ura__title {
-  font-family: var(--font-spline-sans), system-ui, sans-serif;
-  font-size: 0.875rem;
-  font-weight: 500;
-  letter-spacing: 0.25em;
-  text-transform: uppercase;
-  color: #c4a962;
-  margin: 0;
+.neu-button {
+  background: var(--card-bg);
+  border: 2px solid var(--border-color);
+  border-radius: 4px;
+  box-shadow: 2px 2px 0 var(--border-color);
+  transition: box-shadow 150ms ease, transform 150ms ease, background 150ms ease;
 }
 
-.card-ura__subtitle {
-  font-family: var(--font-spline-sans), system-ui, sans-serif;
-  font-size: 1.75rem;
-  font-weight: 600;
-  line-height: 1.2;
-  color: #ffffff;
-  margin: 0;
+.neu-button:hover:not(:disabled) {
+  box-shadow: 3px 3px 0 var(--border-color);
+  background: var(--card-bg-hover);
+  transform: translate(-1px, -1px);
 }
 
-.card-ura__caption {
+.neu-button:active:not(:disabled) {
+  box-shadow: 1px 1px 0 var(--border-color);
+  transform: translate(1px, 1px);
+}
+
+/* Inputs */
+.neu-input {
+  background: var(--card-bg);
+  border: 1px solid var(--border-muted);
+  border-radius: 4px;
+  color: var(--foreground);
   font-family: var(--font-geist), system-ui, sans-serif;
-  font-size: 1rem;
-  line-height: 1.5;
-  color: rgba(255, 255, 255, 0.7);
-  margin: 8px 0 0 0;
+  transition: border-color 150ms ease, background 150ms ease;
 }
 
-.card-arrow--light {
-  color: rgba(255, 255, 255, 0.5);
+.neu-input::placeholder {
+  color: var(--text-faint);
 }
 
-.card:hover .card-arrow--light {
-  color: rgba(255, 255, 255, 0.8);
+.neu-input:focus {
+  outline: none;
+  background: var(--card-bg-hover);
 }
 
-/* Gallery animations */
+/* Reveal animation (kept) */
 @keyframes fadeInUp {
   from {
     opacity: 0;
@@ -245,7 +126,7 @@ body {
   }
 }
 
-/* Lightbox animations */
+/* Lightbox animations (kept verbatim) */
 .lightbox-enter {
   animation: lightboxFadeIn 0.2s ease forwards;
 }
@@ -269,4 +150,3 @@ body {
     transform: scale(1);
   }
 }
-

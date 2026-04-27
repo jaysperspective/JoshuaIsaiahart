@@ -61,8 +61,8 @@ async function getVideoProjects() {
 
 function LoadingFallback() {
   return (
-    <div className="min-h-screen bg-[#181818] flex items-center justify-center">
-      <div className="text-white font-body">Loading...</div>
+    <div className="min-h-[60vh] flex items-center justify-center">
+      <div className="text-[var(--text-muted)] font-body">Loading...</div>
     </div>
   );
 }

@@ -51,41 +51,40 @@ export default function AdminAuth({ children }: AdminAuthProps) {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#181818] flex items-center justify-center">
-        <div className="text-white font-body">Loading...</div>
+      <div className="min-h-screen bg-[var(--background)] flex items-center justify-center">
+        <div className="text-[var(--text-muted)] font-body">Loading...</div>
       </div>
     );
   }
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-[#181818] flex items-center justify-center p-8">
+      <div className="min-h-screen bg-[var(--background)] flex items-center justify-center p-6">
         <div className="flex flex-col gap-4 w-full max-w-md">
-          {/* Back button */}
           <Link
             href="/"
-            className="text-white font-body text-sm flex items-center gap-2 hover:text-gray-300 transition-colors mb-2 self-start"
+            className="text-[var(--text-muted)] font-body text-sm flex items-center gap-2 hover:text-[var(--foreground)] transition-colors self-start no-underline"
           >
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 19l-7-7 7-7"
-              />
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 19l-7-7 7-7" />
             </svg>
             Back
           </Link>
 
-          {/* Login Card */}
-          <div className="card card-white p-10">
-            <h1 className="font-heading text-2xl font-bold mb-2">Admin Login</h1>
-            <p className="font-body text-[#6b6b6b] mb-8">
+          <div
+            className="neu-card p-8"
+            style={{ borderLeftWidth: "4px", borderLeftColor: "var(--accent-external)" }}
+          >
+            <span
+              className="inline-block font-medium px-1.5 py-0.5 rounded text-[10px] uppercase tracking-wide font-body mb-3"
+              style={{ color: "var(--accent-external)", border: "1px solid var(--accent-external)" }}
+            >
+              Admin
+            </span>
+            <h1 className="font-heading text-2xl font-semibold text-[var(--foreground)] mb-2">
+              Sign in
+            </h1>
+            <p className="font-body text-sm text-[var(--text-muted)] mb-6">
               Enter your password to access the dashboard
             </p>
 
@@ -94,15 +93,18 @@ export default function AdminAuth({ children }: AdminAuthProps) {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter password"
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl mb-4 font-body focus:outline-none focus:border-gray-400 transition-colors"
+                placeholder="Password"
+                className="neu-input w-full px-3 py-2.5 mb-4 text-sm focus:border-[var(--accent-external)]"
               />
               {error && (
-                <p className="text-red-500 text-sm mb-4 font-body">{error}</p>
+                <p className="font-body text-sm mb-4" style={{ color: "var(--accent-videography)" }}>
+                  {error}
+                </p>
               )}
               <button
                 type="submit"
-                className="w-full bg-[#1a1a1a] text-white py-3 rounded-xl font-body hover:bg-[#333] transition-colors"
+                className="neu-button w-full py-2.5 font-body text-sm font-medium text-[var(--foreground)]"
+                style={{ borderLeftWidth: "3px", borderLeftColor: "var(--accent-external)" }}
               >
                 Login
               </button>
@@ -114,34 +116,26 @@ export default function AdminAuth({ children }: AdminAuthProps) {
   }
 
   return (
-    <div className="min-h-screen bg-[#181818]">
-      <div className="bg-[#1a1a1a] border-b border-gray-800 px-8 py-4 flex justify-between items-center">
-        <div className="flex items-center gap-4">
+    <div className="min-h-screen bg-[var(--background)]">
+      <div className="bg-[var(--card-bg)] border-b-2 border-[var(--border-color)] px-6 py-3 flex justify-between items-center">
+        <div className="flex items-center gap-3">
           <Link
             href="/"
-            className="text-gray-400 hover:text-white font-body text-sm flex items-center gap-2 transition-colors"
+            className="text-[var(--text-muted)] hover:text-[var(--foreground)] font-body text-sm flex items-center gap-2 transition-colors no-underline"
           >
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 19l-7-7 7-7"
-              />
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 19l-7-7 7-7" />
             </svg>
             Home
           </Link>
-          <span className="text-gray-600">|</span>
-          <h1 className="text-white font-heading text-xl font-bold">Admin Dashboard</h1>
+          <span className="text-[var(--text-faint)]">·</span>
+          <h1 className="text-[var(--foreground)] font-heading text-base font-semibold">
+            Admin Dashboard
+          </h1>
         </div>
         <button
           onClick={handleLogout}
-          className="text-gray-400 hover:text-white font-body text-sm transition-colors"
+          className="text-[var(--text-muted)] hover:text-[var(--foreground)] font-body text-sm transition-colors"
         >
           Logout
         </button>
