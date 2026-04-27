@@ -1,8 +1,6 @@
-import type { Metadata, Viewport } from "next";
+import type { Metadata } from "next";
 import { Spline_Sans, Geist } from "next/font/google";
 import "./globals.css";
-import SiteNav from "./components/SiteNav";
-import SiteFooter from "./components/SiteFooter";
 
 const splineSans = Spline_Sans({
   weight: ["400", "500", "600", "700"],
@@ -17,12 +15,8 @@ const geist = Geist({
 });
 
 export const metadata: Metadata = {
-  title: "Joshua Isaiah — Creative Director",
-  description: "Joshua Isaiah — visual artist, creative director, photographer, filmmaker.",
-};
-
-export const viewport: Viewport = {
-  themeColor: "#1a1410",
+  title: "Joshua Isaiah - Creative Director",
+  description: "Joshua Isaiah - Creative Director | Asun Media",
 };
 
 export default function RootLayout({
@@ -31,13 +25,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="h-full">
-      <body
-        className={`${splineSans.variable} ${geist.variable} antialiased min-h-full flex flex-col bg-[var(--background)] text-[var(--foreground)]`}
-      >
-        <SiteNav />
-        <main className="flex-1">{children}</main>
-        <SiteFooter />
+    <html lang="en">
+      <body className={`${splineSans.variable} ${geist.variable} antialiased`}>
+        {children}
       </body>
     </html>
   );

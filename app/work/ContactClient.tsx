@@ -20,6 +20,23 @@ const TIME_SLOTS = [
   "6:30 PM",
 ];
 
+function getWeeksFromDate(start: Date, numWeeks: number): Date[][] {
+  const weeks: Date[][] = [];
+  const current = new Date(start);
+  // Start from the beginning of the week (Sunday)
+  current.setDate(current.getDate() - current.getDay());
+
+  for (let w = 0; w < numWeeks; w++) {
+    const week: Date[] = [];
+    for (let d = 0; d < 7; d++) {
+      week.push(new Date(current));
+      current.setDate(current.getDate() + 1);
+    }
+    weeks.push(week);
+  }
+  return weeks;
+}
+
 function isWeekday(date: Date): boolean {
   const day = date.getDay();
   return day >= 1 && day <= 5;
@@ -48,8 +65,6 @@ const MONTH_NAMES = [
 ];
 
 const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
-const CONTACT_ACCENT = "var(--accent-contact)";
 
 export default function ContactClient() {
   const today = useMemo(() => {
@@ -96,8 +111,7 @@ export default function ContactClient() {
     return weeksArr;
   }, [currentMonth]);
 
-  const canGoPrev =
-    currentMonth.year > today.getFullYear() ||
+  const canGoPrev = currentMonth.year > today.getFullYear() ||
     (currentMonth.year === today.getFullYear() && currentMonth.month > today.getMonth());
 
   function prevMonth() {
@@ -154,18 +168,15 @@ export default function ContactClient() {
 
   if (submitted) {
     return (
-      <div
-        className="neu-card p-10 text-center"
-        style={{ borderLeftWidth: "4px", borderLeftColor: CONTACT_ACCENT }}
-      >
-        <div className="text-3xl mb-3" style={{ color: CONTACT_ACCENT }}>✓</div>
-        <h2 className="font-heading text-xl font-semibold text-[var(--foreground)] mb-2">
-          Consultation booked
-        </h2>
-        <p className="font-body text-sm text-[var(--text-muted)] mb-1">
+      <div className="rounded-2xl bg-white/[0.06] border border-white/[0.08] p-12 text-center">
+        <div className="text-4xl mb-4">&#10003;</div>
+        <p className="font-heading text-xl font-semibold text-white mb-2">
+          Consultation Booked
+        </p>
+        <p className="font-body text-white/50 text-sm mb-1">
           {formatDate(selectedDate!)} at {selectedTime}
         </p>
-        <p className="font-body text-sm text-[var(--text-faint)]">
+        <p className="font-body text-white/40 text-sm">
           A confirmation email has been sent to {form.email}
         </p>
         <button
@@ -175,100 +186,89 @@ export default function ContactClient() {
             setSelectedTime(null);
             setForm({ name: "", phone: "", email: "", description: "" });
           }}
-          className="neu-button mt-6 px-4 py-2 font-body text-sm font-medium text-[var(--foreground)]"
-          style={{ borderLeftWidth: "3px", borderLeftColor: CONTACT_ACCENT }}
+          className="mt-6 px-6 py-2.5 rounded-full font-body text-sm bg-white/10 hover:bg-white/15 text-white/80 hover:text-white transition-colors"
         >
-          Book another
+          Book Another
         </button>
       </div>
     );
   }
 
   return (
-    <div className="space-y-5">
-      {/* Contact info */}
-      <article
-        className="neu-card p-6"
-        style={{ borderLeftWidth: "4px", borderLeftColor: CONTACT_ACCENT }}
-      >
-        <div className="flex items-center gap-2 text-[11px] mb-3">
-          <span
-            className="font-medium px-1.5 py-0.5 rounded text-[10px] uppercase tracking-wide font-body"
-            style={{ color: CONTACT_ACCENT, border: `1px solid ${CONTACT_ACCENT}` }}
-          >
-            Contact
-          </span>
-        </div>
-        <h2 className="font-heading text-xl font-semibold text-[var(--foreground)] mb-3">
-          Get in touch
+    <div className="space-y-8">
+      {/* Contact Info */}
+      <div className="rounded-2xl bg-white/[0.06] border border-white/[0.08] p-8">
+        <h2 className="font-heading text-xl font-semibold text-white mb-4">
+          Contact
         </h2>
-        <div className="space-y-1.5 font-body text-sm">
-          <p className="text-[var(--text-muted)]">
-            <span className="text-[var(--text-faint)] uppercase tracking-wide text-xs mr-3">Name</span>
-            <span className="text-[var(--foreground)]">Joshua</span>
+        <div className="space-y-2 font-body text-sm">
+          <p className="text-white/70">
+            <span className="text-white/40 mr-3">Name</span> Joshua
           </p>
-          <p className="text-[var(--text-muted)]">
-            <span className="text-[var(--text-faint)] uppercase tracking-wide text-xs mr-3">Email</span>
+          <p className="text-white/70">
+            <span className="text-white/40 mr-3">Email</span>{" "}
             <a
               href="mailto:Josh@plusntrust.org"
-              className="text-[var(--foreground)] hover:underline underline-offset-2"
+              className="hover:text-white transition-colors underline underline-offset-2"
             >
               Josh@plusntrust.org
             </a>
           </p>
         </div>
-      </article>
+      </div>
 
-      {/* Booking */}
-      <article
-        className="neu-card p-6"
-        style={{ borderLeftWidth: "4px", borderLeftColor: CONTACT_ACCENT }}
-      >
-        <h2 className="font-heading text-xl font-semibold text-[var(--foreground)] mb-1">
-          Book a consultation
+      {/* Booking Section */}
+      <div className="rounded-2xl bg-white/[0.06] border border-white/[0.08] p-8">
+        <h2 className="font-heading text-xl font-semibold text-white mb-2">
+          Book a Consultation
         </h2>
-        <p className="font-body text-xs text-[var(--text-muted)] uppercase tracking-wide mb-6">
-          30-minute Google Meet · Weekdays 3 PM – 7 PM
+        <p className="font-body text-white/40 text-sm mb-6">
+          30-minute Google Meet session &middot; Weekdays 3 PM &ndash; 7 PM
         </p>
 
         {/* Calendar */}
         <div className="mb-6">
-          <div className="flex items-center justify-between mb-3">
+          {/* Month navigation */}
+          <div className="flex items-center justify-between mb-4">
             <button
               onClick={prevMonth}
               disabled={!canGoPrev}
-              className="neu-button p-1.5 disabled:opacity-30 disabled:cursor-not-allowed"
-              aria-label="Previous month"
+              className={`p-1.5 rounded-full transition-colors ${
+                canGoPrev
+                  ? "text-white/60 hover:text-white hover:bg-white/10"
+                  : "text-white/15 cursor-not-allowed"
+              }`}
             >
-              <svg className="w-4 h-4 text-[var(--foreground)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
-            <span className="font-heading text-base font-medium text-[var(--foreground)]">
+            <span className="font-heading text-white text-base font-medium">
               {MONTH_NAMES[currentMonth.month]} {currentMonth.year}
             </span>
             <button
               onClick={nextMonth}
-              className="neu-button p-1.5"
-              aria-label="Next month"
+              className="p-1.5 rounded-full text-white/60 hover:text-white hover:bg-white/10 transition-colors"
             >
-              <svg className="w-4 h-4 text-[var(--foreground)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5l7 7-7 7" />
               </svg>
             </button>
           </div>
 
+          {/* Day headers */}
           <div className="grid grid-cols-7 gap-1 mb-1">
             {DAY_LABELS.map((d) => (
               <div
                 key={d}
-                className="text-center font-body text-[10px] uppercase tracking-wide text-[var(--text-faint)] py-1"
+                className="text-center font-body text-xs text-white/30 py-1"
               >
                 {d}
               </div>
             ))}
           </div>
 
+          {/* Calendar grid */}
           <div className="grid grid-cols-7 gap-1">
             {weeks.flat().map((date, i) => {
               const inMonth = date.getMonth() === currentMonth.month;
@@ -278,35 +278,21 @@ export default function ContactClient() {
               const isToday = isSameDay(date, today);
               const clickable = inMonth && weekday && !past;
 
-              const baseClass = "aspect-square flex items-center justify-center rounded-sm font-body text-sm transition-all";
-              let stateClass = "";
-              const inlineStyle: React.CSSProperties = {};
-
-              if (!inMonth) {
-                stateClass = "text-[var(--text-faint)]/40 cursor-default";
-              } else if (!weekday) {
-                stateClass = "text-[var(--text-faint)]/50 cursor-default";
-              } else if (past) {
-                stateClass = "text-[var(--text-faint)]/40 cursor-default";
-              } else if (isSelected) {
-                stateClass = "text-[var(--background)] font-semibold cursor-pointer";
-                inlineStyle.background = CONTACT_ACCENT;
-              } else {
-                stateClass = "text-[var(--foreground)] cursor-pointer hover:bg-[var(--card-bg-hover)]";
-                inlineStyle.border = "1px solid var(--border-color)";
-              }
-
-              if (isToday && !isSelected && clickable) {
-                inlineStyle.borderColor = CONTACT_ACCENT;
-              }
-
               return (
                 <button
                   key={i}
                   onClick={() => clickable && handleDateClick(date)}
                   disabled={!clickable}
-                  className={`${baseClass} ${stateClass}`}
-                  style={inlineStyle}
+                  className={`
+                    aspect-square flex items-center justify-center rounded-lg font-body text-sm transition-all
+                    ${!inMonth ? "text-white/10" : ""}
+                    ${inMonth && !weekday ? "text-white/15" : ""}
+                    ${inMonth && weekday && past ? "text-white/20" : ""}
+                    ${clickable && !isSelected ? "text-white/70 hover:bg-white/10 hover:text-white cursor-pointer" : ""}
+                    ${isSelected ? "bg-white/20 text-white font-medium" : ""}
+                    ${isToday && !isSelected ? "ring-1 ring-white/30" : ""}
+                    ${!clickable ? "cursor-default" : ""}
+                  `}
                 >
                   {date.getDate()}
                 </button>
@@ -315,40 +301,36 @@ export default function ContactClient() {
           </div>
         </div>
 
-        {/* Time slots */}
+        {/* Time Slots */}
         {selectedDate && (
           <div className="mb-6">
-            <p className="font-body text-xs uppercase tracking-wide text-[var(--text-muted)] mb-3">
+            <p className="font-body text-white/50 text-sm mb-3">
               Available times for {formatDate(selectedDate)}
             </p>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              {TIME_SLOTS.map((time) => {
-                const active = selectedTime === time;
-                return (
-                  <button
-                    key={time}
-                    onClick={() => setSelectedTime(time)}
-                    className="neu-button px-3 py-2 font-body text-sm font-medium"
-                    style={{
-                      color: active ? "var(--background)" : "var(--foreground)",
-                      background: active ? CONTACT_ACCENT : undefined,
-                      borderColor: active ? CONTACT_ACCENT : undefined,
-                    }}
-                  >
-                    {time}
-                  </button>
-                );
-              })}
+            <div className="grid grid-cols-4 gap-2">
+              {TIME_SLOTS.map((time) => (
+                <button
+                  key={time}
+                  onClick={() => setSelectedTime(time)}
+                  className={`px-3 py-2.5 rounded-lg font-body text-sm transition-all ${
+                    selectedTime === time
+                      ? "bg-white/20 text-white font-medium"
+                      : "bg-white/[0.04] text-white/50 hover:bg-white/10 hover:text-white"
+                  }`}
+                >
+                  {time}
+                </button>
+              ))}
             </div>
           </div>
         )}
 
-        {/* Form */}
+        {/* Booking Form */}
         {selectedDate && selectedTime && (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block font-body text-[10px] uppercase tracking-wide text-[var(--text-muted)] mb-1.5">
+                <label className="block font-body text-white/40 text-xs mb-1.5">
                   Name
                 </label>
                 <input
@@ -356,26 +338,26 @@ export default function ContactClient() {
                   required
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  className="neu-input w-full px-3 py-2 text-sm focus:border-[var(--accent-contact)]"
+                  className="w-full bg-white/[0.06] border border-white/[0.1] rounded-lg px-4 py-2.5 font-body text-sm text-white placeholder-white/20 focus:outline-none focus:border-white/30 transition-colors"
                   placeholder="Your name"
                 />
               </div>
               <div>
-                <label className="block font-body text-[10px] uppercase tracking-wide text-[var(--text-muted)] mb-1.5">
-                  Phone
+                <label className="block font-body text-white/40 text-xs mb-1.5">
+                  Phone Number
                 </label>
                 <input
                   type="tel"
                   required
                   value={form.phone}
                   onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                  className="neu-input w-full px-3 py-2 text-sm focus:border-[var(--accent-contact)]"
+                  className="w-full bg-white/[0.06] border border-white/[0.1] rounded-lg px-4 py-2.5 font-body text-sm text-white placeholder-white/20 focus:outline-none focus:border-white/30 transition-colors"
                   placeholder="(555) 123-4567"
                 />
               </div>
             </div>
             <div>
-              <label className="block font-body text-[10px] uppercase tracking-wide text-[var(--text-muted)] mb-1.5">
+              <label className="block font-body text-white/40 text-xs mb-1.5">
                 Email
               </label>
               <input
@@ -383,41 +365,40 @@ export default function ContactClient() {
                 required
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
-                className="neu-input w-full px-3 py-2 text-sm focus:border-[var(--accent-contact)]"
+                className="w-full bg-white/[0.06] border border-white/[0.1] rounded-lg px-4 py-2.5 font-body text-sm text-white placeholder-white/20 focus:outline-none focus:border-white/30 transition-colors"
                 placeholder="you@email.com"
               />
             </div>
             <div>
-              <label className="block font-body text-[10px] uppercase tracking-wide text-[var(--text-muted)] mb-1.5">
+              <label className="block font-body text-white/40 text-xs mb-1.5">
                 What are you looking for?
               </label>
               <textarea
                 required
                 rows={3}
                 value={form.description}
-                onChange={(e) => setForm({ ...form, description: e.target.value })}
-                className="neu-input w-full px-3 py-2 text-sm focus:border-[var(--accent-contact)] resize-none"
+                onChange={(e) =>
+                  setForm({ ...form, description: e.target.value })
+                }
+                className="w-full bg-white/[0.06] border border-white/[0.1] rounded-lg px-4 py-2.5 font-body text-sm text-white placeholder-white/20 focus:outline-none focus:border-white/30 transition-colors resize-none"
                 placeholder="Brief description of what you're looking for..."
               />
             </div>
 
             {error && (
-              <p className="font-body text-sm" style={{ color: "var(--accent-videography)" }}>
-                {error}
-              </p>
+              <p className="font-body text-red-400 text-sm">{error}</p>
             )}
 
             <button
               type="submit"
               disabled={submitting}
-              className="neu-button w-full py-3 font-body text-sm font-medium text-[var(--foreground)] disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{ borderLeftWidth: "3px", borderLeftColor: CONTACT_ACCENT }}
+              className="w-full py-3 rounded-full font-body text-sm font-medium bg-white/15 hover:bg-white/20 text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {submitting ? "Booking..." : "Book consultation"}
+              {submitting ? "Booking..." : "Book Consultation"}
             </button>
           </form>
         )}
-      </article>
+      </div>
     </div>
   );
 }

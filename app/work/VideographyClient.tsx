@@ -16,8 +16,6 @@ interface VideographyClientProps {
   videoProjects: VideoProject[];
 }
 
-const VIDEO_ACCENT = "var(--accent-videography)";
-
 export default function VideographyClient({ videoProjects }: VideographyClientProps) {
   const [lightboxVideo, setLightboxVideo] = useState<VideoProject | null>(null);
 
@@ -46,104 +44,89 @@ export default function VideographyClient({ videoProjects }: VideographyClientPr
 
   if (videoProjects.length === 0) {
     return (
-      <div
-        className="neu-card p-12 text-center"
-        style={{ borderLeftWidth: "4px", borderLeftColor: VIDEO_ACCENT }}
-      >
-        <p className="font-body text-[var(--text-muted)]">No video projects available yet.</p>
+      <div className="rounded-2xl bg-white/[0.06] border border-white/[0.08] p-16 text-center">
+        <p className="font-body text-white/40">No video projects available yet.</p>
       </div>
     );
   }
 
   return (
     <>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+      <div className="flex flex-col gap-6">
         {videoProjects.map((project) => {
           const thumbnail = getDisplayThumbnail(project);
           const parsed = parseVideoUrl(project.videoUrl);
 
           return (
-            <article
+            <div
               key={project.id}
               onClick={() => openLightbox(project)}
-              className="group neu-card neu-card-interactive cursor-pointer overflow-hidden flex flex-col"
-              style={{ borderLeftWidth: "4px", borderLeftColor: VIDEO_ACCENT }}
+              className="rounded-2xl bg-white/[0.06] border border-white/[0.08] p-5 cursor-pointer group transition-all duration-300 hover:bg-white/[0.09]"
             >
               {/* Thumbnail */}
-              <div className="relative w-full aspect-video bg-[var(--background)]">
+              <div className="relative rounded-xl overflow-hidden bg-white/5 aspect-video">
                 {thumbnail ? (
                   <img
                     src={thumbnail}
                     alt={project.title}
                     loading="lazy"
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <svg className="w-12 h-12 text-[var(--text-faint)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="w-full h-full flex items-center justify-center bg-white/5">
+                    <svg className="w-16 h-16 text-white/20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
                 )}
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 pointer-events-none" />
 
-                {/* Play overlay */}
-                <div className="absolute inset-0 flex items-center justify-center bg-[var(--background)]/30 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <div
-                    className="w-14 h-14 rounded-full flex items-center justify-center border-2"
-                    style={{ borderColor: VIDEO_ACCENT, background: "var(--card-bg)" }}
-                  >
-                    <svg className="w-6 h-6 ml-0.5" fill={VIDEO_ACCENT} viewBox="0 0 24 24">
+                {/* Play button overlay */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-16 h-16 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center transition-all duration-300 group-hover:bg-black/70 group-hover:scale-110">
+                    <svg className="w-8 h-8 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M8 5v14l11-7z" />
                     </svg>
                   </div>
                 </div>
+
+                {/* Platform badge */}
+                {parsed.service && parsed.service !== 'direct' && (
+                  <div className="absolute bottom-4 right-4 bg-black/50 backdrop-blur-sm text-white px-3 py-1.5 rounded-full font-body text-xs capitalize">
+                    {parsed.service}
+                  </div>
+                )}
               </div>
 
-              {/* Body */}
-              <div className="p-4 flex flex-col gap-2 flex-1">
-                <div className="flex items-center gap-2 text-[11px]">
-                  <span
-                    className="font-medium px-1.5 py-0.5 rounded text-[10px] uppercase tracking-wide font-body"
-                    style={{ color: VIDEO_ACCENT, border: `1px solid ${VIDEO_ACCENT}` }}
-                  >
-                    Video
-                  </span>
-                  {parsed.service && parsed.service !== "direct" && (
-                    <span className="font-body text-[var(--text-muted)] uppercase tracking-wide capitalize">
-                      {parsed.service}
-                    </span>
-                  )}
-                </div>
-
-                <h2 className="font-heading text-lg font-semibold text-[var(--foreground)] leading-snug">
+              {/* Title and description */}
+              <div className="mt-4">
+                <h2 className="font-heading text-xl font-bold text-white">
                   {project.title}
                 </h2>
-
                 {project.description && (
-                  <p className="font-body text-sm text-[var(--text-muted)] line-clamp-2">
+                  <p className="font-body text-white/50 text-sm mt-1 line-clamp-2">
                     {project.description}
                   </p>
                 )}
               </div>
-            </article>
+            </div>
           );
         })}
       </div>
 
-      {/* Lightbox */}
+      {/* Video Lightbox */}
       {lightboxVideo && (
         <div
-          className="fixed inset-0 bg-[var(--background)]/95 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto lightbox-enter"
+          className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4 overflow-y-auto"
           onClick={closeLightbox}
         >
           <button
             onClick={closeLightbox}
-            className="absolute top-6 right-6 text-[var(--text-muted)] hover:text-[var(--foreground)] transition-colors z-10"
-            aria-label="Close"
+            className="absolute top-6 right-6 text-white/70 hover:text-white transition-colors z-10"
           >
-            <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
+            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
 
@@ -151,33 +134,32 @@ export default function VideographyClient({ videoProjects }: VideographyClientPr
             className="w-full max-w-5xl flex flex-col gap-4 my-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            <div
-              className="aspect-video rounded-sm overflow-hidden border-2"
-              style={{ borderColor: "var(--border-color)" }}
-            >
-              {parseVideoUrl(lightboxVideo.videoUrl).service === "direct" ? (
+            {/* Video */}
+            <div className="aspect-video">
+              {parseVideoUrl(lightboxVideo.videoUrl).service === 'direct' ? (
                 <video
                   src={lightboxVideo.videoUrl}
                   controls
                   autoPlay
-                  className="w-full h-full"
+                  className="w-full h-full rounded-xl"
                 />
               ) : (
                 <iframe
-                  src={getVideoEmbed(lightboxVideo) || ""}
-                  className="w-full h-full"
+                  src={getVideoEmbed(lightboxVideo) || ''}
+                  className="w-full h-full rounded-xl"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
                 />
               )}
             </div>
 
+            {/* Video info below */}
             <div className="text-center px-4">
-              <h3 className="font-heading text-xl font-semibold text-[var(--foreground)]">
+              <h3 className="text-white font-heading text-xl font-bold">
                 {lightboxVideo.title}
               </h3>
               {lightboxVideo.description && (
-                <p className="font-body text-sm text-[var(--text-muted)] mt-2 max-h-32 overflow-y-auto">
+                <p className="text-white/70 font-body text-sm mt-2 max-h-32 overflow-y-auto">
                   {lightboxVideo.description}
                 </p>
               )}

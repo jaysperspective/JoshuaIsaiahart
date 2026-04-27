@@ -692,27 +692,25 @@ export default function AdminPage() {
 
   return (
     <AdminAuth>
-      <div className="min-h-[calc(100vh-60px)] flex items-start justify-center p-4 sm:p-8 bg-[var(--background)]">
-        <div className="flex flex-col gap-4 w-full max-w-3xl">
+      <div className="min-h-[calc(100vh-60px)] flex items-start justify-center p-8">
+        <div className="flex flex-col gap-4 w-full max-w-2xl">
           {/* Status Message */}
           {uploadStatus.step !== "idle" && (
             <div
-              className="rounded-sm p-4 border-2 bg-[var(--card-bg)]"
-              style={{
-                borderColor:
-                  uploadStatus.step === "error"
-                    ? "var(--accent-videography)"
-                    : uploadStatus.step === "success"
-                    ? "var(--accent-design)"
-                    : "var(--accent-photography)",
-              }}
+              className={`rounded-xl p-4 ${
+                uploadStatus.step === "error"
+                  ? "bg-red-100 border border-red-300"
+                  : uploadStatus.step === "success"
+                  ? "bg-green-100 border border-green-300"
+                  : "bg-blue-100 border border-blue-300"
+              }`}
             >
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
                   {/* Status Icon */}
                   {isUploading && (
                     <svg
-                      className="w-5 h-5 text-[var(--accent-photography)] animate-spin"
+                      className="w-5 h-5 text-blue-600 animate-spin"
                       fill="none"
                       viewBox="0 0 24 24"
                     >
@@ -733,7 +731,7 @@ export default function AdminPage() {
                   )}
                   {uploadStatus.step === "success" && (
                     <svg
-                      className="w-5 h-5 text-[var(--accent-design)]"
+                      className="w-5 h-5 text-green-600"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -748,7 +746,7 @@ export default function AdminPage() {
                   )}
                   {uploadStatus.step === "error" && (
                     <svg
-                      className="w-5 h-5 text-[var(--accent-videography)]"
+                      className="w-5 h-5 text-red-600"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -763,12 +761,18 @@ export default function AdminPage() {
                   )}
                   <div>
                     <p
-                      className="font-body font-medium text-[var(--foreground)]"
+                      className={`font-body font-medium ${
+                        uploadStatus.step === "error"
+                          ? "text-red-800"
+                          : uploadStatus.step === "success"
+                          ? "text-green-800"
+                          : "text-blue-800"
+                      }`}
                     >
                       {uploadStatus.message}
                     </p>
                     {uploadStatus.details && (
-                      <pre className="font-body text-xs text-[var(--accent-videography)] mt-2 whitespace-pre-wrap bg-[var(--background)] border border-[var(--border-color)] p-2 rounded-sm">
+                      <pre className="font-body text-xs text-red-700 mt-2 whitespace-pre-wrap bg-red-50 p-2 rounded">
                         {uploadStatus.details}
                       </pre>
                     )}
@@ -777,7 +781,7 @@ export default function AdminPage() {
                 {(uploadStatus.step === "error" || uploadStatus.step === "success") && (
                   <button
                     onClick={clearStatus}
-                    className="text-[var(--text-muted)] hover:text-[var(--foreground)]"
+                    className="text-gray-500 hover:text-gray-700"
                   >
                     <svg
                       className="w-5 h-5"
@@ -799,11 +803,11 @@ export default function AdminPage() {
           )}
 
           {/* Create/Edit Gallery Card */}
-          <div className="neu-card p-6 sm:p-8">
+          <div className="card card-white p-10">
             <h2 className="font-heading text-xl font-bold mb-2">
               {editingGallery ? "Edit Gallery" : "Create Gallery"}
             </h2>
-            <p className="font-body text-[var(--text-muted)] mb-6">
+            <p className="font-body text-[#6b6b6b] mb-6">
               {editingGallery
                 ? "Update gallery details below"
                 : "Add a new gallery with images"}
@@ -812,17 +816,17 @@ export default function AdminPage() {
             {/* Drag and drop zone */}
             {!editingGallery && (
               <div
-                className={`border-2 border-dashed rounded-sm p-8 mb-6 text-center transition-colors ${
+                className={`border-2 border-dashed rounded-xl p-8 mb-6 text-center transition-colors ${
                   dragActive
-                    ? "border-[var(--accent-photography)] bg-[var(--card-bg-hover)]"
-                    : "border-[var(--border-muted)] bg-[var(--background)]"
+                    ? "border-blue-500 bg-blue-50"
+                    : "border-gray-300"
                 }`}
                 onDragEnter={handleDrag}
                 onDragLeave={handleDrag}
                 onDragOver={handleDrag}
                 onDrop={handleDrop}
               >
-                <div className="text-[var(--text-faint)] mb-3">
+                <div className="text-gray-400 mb-3">
                   <svg
                     className="w-12 h-12 mx-auto"
                     fill="none"
@@ -837,10 +841,10 @@ export default function AdminPage() {
                     />
                   </svg>
                 </div>
-                <p className="font-body text-sm text-[var(--text-muted)] mb-1">
+                <p className="font-body text-sm text-gray-600 mb-1">
                   Drag & drop images here
                 </p>
-                <label className="font-body text-sm text-[var(--accent-photography)] cursor-pointer hover:underline">
+                <label className="font-body text-sm text-blue-500 cursor-pointer hover:underline">
                   or click to browse
                   <input
                     type="file"
@@ -856,18 +860,18 @@ export default function AdminPage() {
             {/* Selected files */}
             {selectedFiles.length > 0 && (
               <div className="mb-6">
-                <p className="font-body text-sm text-[var(--text-muted)] mb-2">
+                <p className="font-body text-sm text-gray-600 mb-2">
                   {selectedFiles.length} file(s) selected
                 </p>
                 <div className="space-y-2 max-h-48 overflow-y-auto">
                   {selectedFiles.map((file, index) => (
                     <div
                       key={index}
-                      className="flex items-center justify-between bg-[var(--background)] border border-[var(--border-color)] rounded-sm px-4 py-3"
+                      className="flex items-center justify-between bg-gray-100 rounded-xl px-4 py-3"
                     >
                       <div className="flex items-center gap-3 flex-1 min-w-0">
                         <svg
-                          className="w-5 h-5 text-[var(--text-faint)] flex-shrink-0"
+                          className="w-5 h-5 text-gray-400 flex-shrink-0"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -883,14 +887,14 @@ export default function AdminPage() {
                           <span className="font-body text-sm truncate block">
                             {file.name}
                           </span>
-                          <span className="font-body text-xs text-[var(--text-muted)]">
+                          <span className="font-body text-xs text-gray-500">
                             {(file.size / 1024 / 1024).toFixed(2)} MB
                           </span>
                         </div>
                       </div>
                       <button
                         onClick={() => removeFile(index)}
-                        className="text-[var(--text-faint)] hover:text-[var(--accent-videography)] ml-2 p-1"
+                        className="text-gray-400 hover:text-red-500 ml-2 p-1"
                         disabled={isUploading}
                       >
                         <svg
@@ -915,7 +919,7 @@ export default function AdminPage() {
 
             {/* Title input */}
             <div className="mb-4">
-              <label className="font-body text-[10px] uppercase tracking-wide text-[var(--text-muted)] block mb-1.5">
+              <label className="font-body text-sm text-gray-600 block mb-2">
                 Title
               </label>
               <input
@@ -929,7 +933,7 @@ export default function AdminPage() {
                       })
                     : setTitle(e.target.value)
                 }
-                className="neu-input w-full px-3 py-2.5 font-body text-sm focus:border-[var(--accent-external)]"
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl font-body focus:outline-none focus:border-gray-400 transition-colors"
                 placeholder="Gallery title"
                 disabled={isUploading}
               />
@@ -937,7 +941,7 @@ export default function AdminPage() {
 
             {/* Description input */}
             <div className="mb-6">
-              <label className="font-body text-[10px] uppercase tracking-wide text-[var(--text-muted)] block mb-1.5">
+              <label className="font-body text-sm text-gray-600 block mb-2">
                 Description
               </label>
               <textarea
@@ -954,7 +958,7 @@ export default function AdminPage() {
                       })
                     : setDescription(e.target.value)
                 }
-                className="neu-input w-full px-3 py-2.5 font-body text-sm focus:border-[var(--accent-external)] resize-none"
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl font-body resize-none focus:outline-none focus:border-gray-400 transition-colors"
                 rows={3}
                 placeholder="Gallery description"
                 disabled={isUploading}
@@ -966,13 +970,13 @@ export default function AdminPage() {
               <div className="flex gap-3">
                 <button
                   onClick={updateGallery}
-                  className="neu-button flex-1 py-3 font-body text-sm font-medium text-[var(--foreground)]"
+                  className="flex-1 bg-[#1a1a1a] text-white py-3 rounded-xl font-body hover:bg-[#333] transition-colors"
                 >
                   Save Changes
                 </button>
                 <button
                   onClick={() => setEditingGallery(null)}
-                  className="neu-button flex-1 py-3 font-body text-sm font-medium text-[var(--text-muted)]"
+                  className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-xl font-body hover:bg-gray-300 transition-colors"
                 >
                   Cancel
                 </button>
@@ -981,7 +985,7 @@ export default function AdminPage() {
               <button
                 onClick={createGallery}
                 disabled={isUploading}
-                className="neu-button w-full py-3 font-body text-sm font-medium text-[var(--foreground)] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full bg-[#1a1a1a] text-white py-3 rounded-xl font-body hover:bg-[#333] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {isUploading && (
                   <svg
@@ -1014,50 +1018,50 @@ export default function AdminPage() {
           </div>
 
           {/* Social Links Settings Card */}
-          <div className="neu-card p-6 sm:p-8">
+          <div className="card card-white p-10">
             <h2 className="font-heading text-xl font-bold mb-2">
               Social Links
             </h2>
-            <p className="font-body text-[var(--text-muted)] mb-6">
+            <p className="font-body text-[#6b6b6b] mb-6">
               Update your social media links
             </p>
 
             <div className="space-y-4">
               <div>
-                <label className="font-body text-[10px] uppercase tracking-wide text-[var(--text-muted)] block mb-1.5">
+                <label className="font-body text-sm text-gray-600 block mb-2">
                   Instagram URL
                 </label>
                 <input
                   type="url"
                   value={settings.instagramUrl}
                   onChange={(e) => setSettings({ ...settings, instagramUrl: e.target.value })}
-                  className="neu-input w-full px-3 py-2.5 font-body text-sm focus:border-[var(--accent-external)]"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl font-body focus:outline-none focus:border-gray-400 transition-colors"
                   placeholder="https://instagram.com/username"
                 />
               </div>
 
               <div>
-                <label className="font-body text-[10px] uppercase tracking-wide text-[var(--text-muted)] block mb-1.5">
+                <label className="font-body text-sm text-gray-600 block mb-2">
                   LinkedIn URL
                 </label>
                 <input
                   type="url"
                   value={settings.linkedinUrl}
                   onChange={(e) => setSettings({ ...settings, linkedinUrl: e.target.value })}
-                  className="neu-input w-full px-3 py-2.5 font-body text-sm focus:border-[var(--accent-external)]"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl font-body focus:outline-none focus:border-gray-400 transition-colors"
                   placeholder="https://linkedin.com/in/username"
                 />
               </div>
 
               <div>
-                <label className="font-body text-[10px] uppercase tracking-wide text-[var(--text-muted)] block mb-1.5">
+                <label className="font-body text-sm text-gray-600 block mb-2">
                   YouTube URL
                 </label>
                 <input
                   type="url"
                   value={settings.youtubeUrl}
                   onChange={(e) => setSettings({ ...settings, youtubeUrl: e.target.value })}
-                  className="neu-input w-full px-3 py-2.5 font-body text-sm focus:border-[var(--accent-external)]"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl font-body focus:outline-none focus:border-gray-400 transition-colors"
                   placeholder="https://youtube.com/@username"
                 />
               </div>
@@ -1066,18 +1070,18 @@ export default function AdminPage() {
             <button
               onClick={saveSettings}
               disabled={isSavingSettings}
-              className="neu-button w-full mt-6 py-3 font-body text-sm font-medium text-[var(--foreground)] disabled:opacity-50"
+              className="w-full mt-6 bg-[#1a1a1a] text-white py-3 rounded-xl font-body hover:bg-[#333] transition-colors disabled:opacity-50"
             >
               {isSavingSettings ? "Saving..." : "Save Links"}
             </button>
           </div>
 
           {/* Blog Post Card - Reddit-style */}
-          <div className="neu-card p-6 sm:p-8">
+          <div className="card card-white p-10">
             <h2 className="font-heading text-xl font-bold mb-2">
               Create Post
             </h2>
-            <p className="font-body text-[var(--text-muted)] mb-6">
+            <p className="font-body text-[#6b6b6b] mb-6">
               Share thoughts, updates, or reflections
             </p>
 
@@ -1086,7 +1090,7 @@ export default function AdminPage() {
                 type="text"
                 value={blogTitle}
                 onChange={(e) => setBlogTitle(e.target.value)}
-                className="neu-input w-full px-3 py-2.5 font-body text-sm focus:border-[var(--accent-external)]"
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl font-body focus:outline-none focus:border-gray-400 transition-colors"
                 placeholder="Title"
                 disabled={isPostingBlog}
               />
@@ -1096,7 +1100,7 @@ export default function AdminPage() {
               <textarea
                 value={blogContent}
                 onChange={(e) => setBlogContent(e.target.value)}
-                className="neu-input w-full px-3 py-2.5 font-body text-sm focus:border-[var(--accent-external)] resize-none"
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl font-body resize-none focus:outline-none focus:border-gray-400 transition-colors"
                 rows={5}
                 placeholder="What's on your mind?"
                 disabled={isPostingBlog}
@@ -1106,37 +1110,37 @@ export default function AdminPage() {
             <button
               onClick={createBlog}
               disabled={isPostingBlog || !blogTitle.trim() || !blogContent.trim()}
-              className="neu-button w-full py-3 font-body text-sm font-medium text-[var(--foreground)] disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-[#1a1a1a] text-white py-3 rounded-xl font-body hover:bg-[#333] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isPostingBlog ? "Posting..." : "Post"}
             </button>
 
             {/* Existing posts */}
             {blogs.length > 0 && (
-              <div className="mt-8 pt-6 border-t border-[var(--border-color)]">
-                <h3 className="font-heading text-sm font-semibold text-[var(--text-muted)] mb-4">
+              <div className="mt-8 pt-6 border-t border-gray-200">
+                <h3 className="font-heading text-sm font-semibold text-gray-600 mb-4">
                   Recent Posts ({blogs.length})
                 </h3>
                 <div className="space-y-3">
                   {blogs.map((blog) => (
                     <div
                       key={blog.id}
-                      className="flex items-start justify-between bg-[var(--background)] border border-[var(--border-color)] rounded-sm p-4"
+                      className="flex items-start justify-between bg-gray-50 rounded-xl p-4"
                     >
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-heading font-bold text-[var(--foreground)] truncate">
+                        <h4 className="font-heading font-bold text-[#1a1a1a] truncate">
                           {blog.title}
                         </h4>
-                        <p className="font-body text-sm text-[var(--text-muted)] line-clamp-2 mt-1">
+                        <p className="font-body text-sm text-gray-500 line-clamp-2 mt-1">
                           {blog.content}
                         </p>
-                        <p className="font-body text-xs text-[var(--text-faint)] mt-2">
+                        <p className="font-body text-xs text-gray-400 mt-2">
                           {new Date(blog.createdAt).toLocaleDateString()}
                         </p>
                       </div>
                       <button
                         onClick={() => deleteBlog(blog.id)}
-                        className="text-[var(--text-faint)] hover:text-[var(--accent-videography)] p-2 flex-shrink-0"
+                        className="text-gray-400 hover:text-red-500 p-2 flex-shrink-0"
                         title="Delete post"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1151,51 +1155,51 @@ export default function AdminPage() {
           </div>
 
           {/* Video Projects Card */}
-          <div className="neu-card p-6 sm:p-8">
+          <div className="card card-white p-10">
             <h2 className="font-heading text-xl font-bold mb-2">
               Add Video Project
             </h2>
-            <p className="font-body text-[var(--text-muted)] mb-6">
+            <p className="font-body text-[#6b6b6b] mb-6">
               Paste a video link (YouTube, Vimeo, or direct URL)
             </p>
 
             <div className="space-y-4">
               <div>
-                <label className="font-body text-[10px] uppercase tracking-wide text-[var(--text-muted)] block mb-1.5">
+                <label className="font-body text-sm text-gray-600 block mb-2">
                   Title *
                 </label>
                 <input
                   type="text"
                   value={videoTitle}
                   onChange={(e) => setVideoTitle(e.target.value)}
-                  className="neu-input w-full px-3 py-2.5 font-body text-sm focus:border-[var(--accent-external)]"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl font-body focus:outline-none focus:border-gray-400 transition-colors"
                   placeholder="Video title"
                   disabled={isCreatingVideo}
                 />
               </div>
 
               <div>
-                <label className="font-body text-[10px] uppercase tracking-wide text-[var(--text-muted)] block mb-1.5">
+                <label className="font-body text-sm text-gray-600 block mb-2">
                   Video URL *
                 </label>
                 <input
                   type="url"
                   value={videoUrl}
                   onChange={(e) => setVideoUrl(e.target.value)}
-                  className="neu-input w-full px-3 py-2.5 font-body text-sm focus:border-[var(--accent-external)]"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl font-body focus:outline-none focus:border-gray-400 transition-colors"
                   placeholder="https://youtube.com/watch?v=... or https://vimeo.com/..."
                   disabled={isCreatingVideo}
                 />
               </div>
 
               <div>
-                <label className="font-body text-[10px] uppercase tracking-wide text-[var(--text-muted)] block mb-1.5">
+                <label className="font-body text-sm text-gray-600 block mb-2">
                   Description
                 </label>
                 <textarea
                   value={videoDescription}
                   onChange={(e) => setVideoDescription(e.target.value)}
-                  className="neu-input w-full px-3 py-2.5 font-body text-sm focus:border-[var(--accent-external)] resize-none"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl font-body resize-none focus:outline-none focus:border-gray-400 transition-colors"
                   rows={3}
                   placeholder="Video description"
                   disabled={isCreatingVideo}
@@ -1203,18 +1207,18 @@ export default function AdminPage() {
               </div>
 
               <div>
-                <label className="font-body text-[10px] uppercase tracking-wide text-[var(--text-muted)] block mb-1.5">
+                <label className="font-body text-sm text-gray-600 block mb-2">
                   Custom Thumbnail URL (optional)
                 </label>
                 <input
                   type="url"
                   value={videoThumbnail}
                   onChange={(e) => setVideoThumbnail(e.target.value)}
-                  className="neu-input w-full px-3 py-2.5 font-body text-sm focus:border-[var(--accent-external)]"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl font-body focus:outline-none focus:border-gray-400 transition-colors"
                   placeholder="https://example.com/thumbnail.jpg"
                   disabled={isCreatingVideo}
                 />
-                <p className="font-body text-xs text-[var(--text-faint)] mt-1">
+                <p className="font-body text-xs text-gray-400 mt-1">
                   Leave empty to auto-fetch from YouTube
                 </p>
               </div>
@@ -1223,23 +1227,23 @@ export default function AdminPage() {
             <button
               onClick={createVideoProject}
               disabled={isCreatingVideo || !videoTitle.trim() || !videoUrl.trim()}
-              className="neu-button w-full mt-6 py-3 font-body text-sm font-medium text-[var(--foreground)] disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full mt-6 bg-[#1a1a1a] text-white py-3 rounded-xl font-body hover:bg-[#333] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isCreatingVideo ? "Creating..." : "Add Video Project"}
             </button>
           </div>
 
           {/* Video Projects List Card */}
-          <div className="neu-card p-6 sm:p-8">
+          <div className="card card-gray p-10">
             <h2 className="font-heading text-xl font-bold mb-2 text-center">
               Video Projects
             </h2>
-            <p className="font-body text-[var(--text-muted)] mb-6 text-center">
+            <p className="font-body text-[#2f2f2f] mb-6 text-center">
               {videoProjects.length} {videoProjects.length === 1 ? "project" : "projects"}
             </p>
 
             {videoProjects.length === 0 ? (
-              <p className="font-body text-[var(--text-muted)] text-center py-4">
+              <p className="font-body text-gray-600 text-center py-4">
                 No video projects yet. Add one above to get started.
               </p>
             ) : (
@@ -1247,7 +1251,7 @@ export default function AdminPage() {
                 {videoProjects.map((project, index) => (
                   <div
                     key={project.id}
-                    className="bg-[var(--background)] border border-[var(--border-color)] rounded-sm p-4"
+                    className="bg-white/80 rounded-xl p-4"
                   >
                     <div className="flex items-start justify-between">
                       {/* Move Up/Down buttons */}
@@ -1255,20 +1259,20 @@ export default function AdminPage() {
                         <button
                           onClick={() => moveVideoProject(index, "up")}
                           disabled={index === 0}
-                          className="p-1 rounded hover:bg-[var(--card-bg-hover)] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                          className="p-1 rounded hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                           title="Move up"
                         >
-                          <svg className="w-4 h-4 text-[var(--text-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
                           </svg>
                         </button>
                         <button
                           onClick={() => moveVideoProject(index, "down")}
                           disabled={index === videoProjects.length - 1}
-                          className="p-1 rounded hover:bg-[var(--card-bg-hover)] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                          className="p-1 rounded hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                           title="Move down"
                         >
-                          <svg className="w-4 h-4 text-[var(--text-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                           </svg>
                         </button>
@@ -1276,8 +1280,8 @@ export default function AdminPage() {
 
                       <div className="flex items-start gap-4 flex-1">
                         {/* Video icon */}
-                        <div className="w-16 h-16 bg-[var(--background)] border border-[var(--border-color)] rounded-sm flex items-center justify-center flex-shrink-0">
-                          <svg className="w-8 h-8 text-[var(--text-faint)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div className="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
@@ -1291,19 +1295,19 @@ export default function AdminPage() {
                                 type="text"
                                 value={editVideoValue}
                                 onChange={(e) => setEditVideoValue(e.target.value)}
-                                className="font-heading font-bold text-[var(--foreground)] bg-[var(--card-bg)] border border-[var(--border-muted)] rounded-sm px-2 py-1 flex-1"
+                                className="font-heading font-bold text-[#1a1a1a] bg-white border border-gray-300 rounded px-2 py-1 flex-1"
                                 autoFocus
                                 onKeyDown={(e) => {
                                   if (e.key === "Enter") saveVideoEdit();
                                   if (e.key === "Escape") cancelVideoEdit();
                                 }}
                               />
-                              <button onClick={saveVideoEdit} className="text-[var(--accent-design)] hover:text-[var(--foreground)]">
+                              <button onClick={saveVideoEdit} className="text-green-500 hover:text-green-600">
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                 </svg>
                               </button>
-                              <button onClick={cancelVideoEdit} className="text-[var(--text-faint)] hover:text-[var(--text-muted)]">
+                              <button onClick={cancelVideoEdit} className="text-gray-400 hover:text-gray-600">
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                 </svg>
@@ -1311,7 +1315,7 @@ export default function AdminPage() {
                             </div>
                           ) : (
                             <h3
-                              className="font-heading font-bold text-[var(--foreground)] cursor-pointer hover:text-[var(--accent-photography)] transition-colors"
+                              className="font-heading font-bold text-[#1a1a1a] cursor-pointer hover:text-blue-600 transition-colors"
                               onClick={() => startEditingVideo(project.id, "title", project.title)}
                               title="Click to edit title"
                             >
@@ -1325,7 +1329,7 @@ export default function AdminPage() {
                               <textarea
                                 value={editVideoValue}
                                 onChange={(e) => setEditVideoValue(e.target.value)}
-                                className="font-body text-sm text-[var(--text-muted)] bg-[var(--card-bg)] border border-[var(--border-muted)] rounded-sm px-2 py-1 flex-1 resize-none"
+                                className="font-body text-sm text-gray-600 bg-white border border-gray-300 rounded px-2 py-1 flex-1 resize-none"
                                 rows={2}
                                 autoFocus
                                 onKeyDown={(e) => {
@@ -1333,12 +1337,12 @@ export default function AdminPage() {
                                 }}
                               />
                               <div className="flex flex-col gap-1">
-                                <button onClick={saveVideoEdit} className="text-[var(--accent-design)] hover:text-[var(--foreground)]">
+                                <button onClick={saveVideoEdit} className="text-green-500 hover:text-green-600">
                                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                   </svg>
                                 </button>
-                                <button onClick={cancelVideoEdit} className="text-[var(--text-faint)] hover:text-[var(--text-muted)]">
+                                <button onClick={cancelVideoEdit} className="text-gray-400 hover:text-gray-600">
                                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                   </svg>
@@ -1347,7 +1351,7 @@ export default function AdminPage() {
                             </div>
                           ) : (
                             <p
-                              className="font-body text-sm text-[var(--text-muted)] cursor-pointer hover:text-[var(--accent-photography)] transition-colors mt-1"
+                              className="font-body text-sm text-gray-500 cursor-pointer hover:text-blue-600 transition-colors mt-1"
                               onClick={() => startEditingVideo(project.id, "description", project.description || "")}
                               title="Click to edit description"
                             >
@@ -1362,19 +1366,19 @@ export default function AdminPage() {
                                 type="url"
                                 value={editVideoValue}
                                 onChange={(e) => setEditVideoValue(e.target.value)}
-                                className="font-body text-xs text-[var(--text-muted)] bg-[var(--card-bg)] border border-[var(--border-muted)] rounded-sm px-2 py-1 flex-1"
+                                className="font-body text-xs text-gray-500 bg-white border border-gray-300 rounded px-2 py-1 flex-1"
                                 autoFocus
                                 onKeyDown={(e) => {
                                   if (e.key === "Enter") saveVideoEdit();
                                   if (e.key === "Escape") cancelVideoEdit();
                                 }}
                               />
-                              <button onClick={saveVideoEdit} className="text-[var(--accent-design)] hover:text-[var(--foreground)]">
+                              <button onClick={saveVideoEdit} className="text-green-500 hover:text-green-600">
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                 </svg>
                               </button>
-                              <button onClick={cancelVideoEdit} className="text-[var(--text-faint)] hover:text-[var(--text-muted)]">
+                              <button onClick={cancelVideoEdit} className="text-gray-400 hover:text-gray-600">
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                 </svg>
@@ -1382,7 +1386,7 @@ export default function AdminPage() {
                             </div>
                           ) : (
                             <p
-                              className="font-body text-xs text-[var(--text-faint)] mt-2 truncate cursor-pointer hover:text-[var(--accent-photography)] transition-colors"
+                              className="font-body text-xs text-gray-400 mt-2 truncate cursor-pointer hover:text-blue-600 transition-colors"
                               onClick={() => startEditingVideo(project.id, "videoUrl", project.videoUrl)}
                               title="Click to edit URL"
                             >
@@ -1394,7 +1398,7 @@ export default function AdminPage() {
 
                       <button
                         onClick={() => deleteVideoProject(project.id)}
-                        className="text-[var(--text-muted)] hover:text-[var(--accent-videography)] p-2 rounded-lg hover:bg-[var(--card-bg-hover)] transition-colors flex-shrink-0"
+                        className="text-gray-500 hover:text-red-500 p-2 rounded-lg hover:bg-gray-100 transition-colors flex-shrink-0"
                         title="Delete Video Project"
                       >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1409,16 +1413,16 @@ export default function AdminPage() {
           </div>
 
           {/* Galleries List Card */}
-          <div className="neu-card p-6 sm:p-8">
+          <div className="card card-gray p-10">
             <h2 className="font-heading text-xl font-bold mb-2 text-center">
               Your Galleries
             </h2>
-            <p className="font-body text-[var(--text-muted)] mb-6 text-center">
+            <p className="font-body text-[#2f2f2f] mb-6 text-center">
               {galleries.length} {galleries.length === 1 ? "gallery" : "galleries"}
             </p>
 
             {galleries.length === 0 ? (
-              <p className="font-body text-[var(--text-muted)] text-center py-4">
+              <p className="font-body text-gray-600 text-center py-4">
                 No galleries yet. Create one above to get started.
               </p>
             ) : (
@@ -1426,7 +1430,7 @@ export default function AdminPage() {
                 {galleries.map((gallery, index) => (
                   <div
                     key={gallery.id}
-                    className="bg-[var(--background)] border border-[var(--border-color)] rounded-sm p-4"
+                    className="bg-white/80 rounded-xl p-4"
                   >
                     <div className="flex items-start justify-between">
                       {/* Move Up/Down buttons */}
@@ -1434,20 +1438,20 @@ export default function AdminPage() {
                         <button
                           onClick={() => moveGallery(index, "up")}
                           disabled={index === 0}
-                          className="p-1 rounded hover:bg-[var(--card-bg-hover)] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                          className="p-1 rounded hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                           title="Move up"
                         >
-                          <svg className="w-4 h-4 text-[var(--text-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
                           </svg>
                         </button>
                         <button
                           onClick={() => moveGallery(index, "down")}
                           disabled={index === galleries.length - 1}
-                          className="p-1 rounded hover:bg-[var(--card-bg-hover)] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                          className="p-1 rounded hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                           title="Move down"
                         >
-                          <svg className="w-4 h-4 text-[var(--text-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                           </svg>
                         </button>
@@ -1457,12 +1461,12 @@ export default function AdminPage() {
                           <img
                             src={gallery.coverImage}
                             alt={gallery.title}
-                            className="w-16 h-16 object-cover rounded-sm flex-shrink-0"
+                            className="w-16 h-16 object-cover rounded-lg flex-shrink-0"
                           />
                         ) : (
-                          <div className="w-16 h-16 bg-[var(--background)] border border-[var(--border-color)] rounded-sm flex items-center justify-center flex-shrink-0">
+                          <div className="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
                             <svg
-                              className="w-6 h-6 text-[var(--text-faint)]"
+                              className="w-6 h-6 text-gray-400"
                               fill="none"
                               stroke="currentColor"
                               viewBox="0 0 24 24"
@@ -1484,19 +1488,19 @@ export default function AdminPage() {
                                 type="text"
                                 value={editValue}
                                 onChange={(e) => setEditValue(e.target.value)}
-                                className="font-heading font-bold text-[var(--foreground)] bg-[var(--card-bg)] border border-[var(--border-muted)] rounded-sm px-2 py-1 flex-1"
+                                className="font-heading font-bold text-[#1a1a1a] bg-white border border-gray-300 rounded px-2 py-1 flex-1"
                                 autoFocus
                                 onKeyDown={(e) => {
                                   if (e.key === "Enter") saveInlineEdit();
                                   if (e.key === "Escape") cancelInlineEdit();
                                 }}
                               />
-                              <button onClick={saveInlineEdit} className="text-[var(--accent-design)] hover:text-[var(--foreground)]">
+                              <button onClick={saveInlineEdit} className="text-green-500 hover:text-green-600">
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                 </svg>
                               </button>
-                              <button onClick={cancelInlineEdit} className="text-[var(--text-faint)] hover:text-[var(--text-muted)]">
+                              <button onClick={cancelInlineEdit} className="text-gray-400 hover:text-gray-600">
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                 </svg>
@@ -1504,7 +1508,7 @@ export default function AdminPage() {
                             </div>
                           ) : (
                             <h3
-                              className="font-heading font-bold text-[var(--foreground)] cursor-pointer hover:text-[var(--accent-photography)] transition-colors"
+                              className="font-heading font-bold text-[#1a1a1a] cursor-pointer hover:text-blue-600 transition-colors"
                               onClick={() => startEditing(gallery.id, "title", gallery.title)}
                               title="Click to edit title"
                             >
@@ -1518,7 +1522,7 @@ export default function AdminPage() {
                               <textarea
                                 value={editValue}
                                 onChange={(e) => setEditValue(e.target.value)}
-                                className="font-body text-sm text-[var(--text-muted)] bg-[var(--card-bg)] border border-[var(--border-muted)] rounded-sm px-2 py-1 flex-1 resize-none"
+                                className="font-body text-sm text-gray-600 bg-white border border-gray-300 rounded px-2 py-1 flex-1 resize-none"
                                 rows={2}
                                 autoFocus
                                 onKeyDown={(e) => {
@@ -1526,12 +1530,12 @@ export default function AdminPage() {
                                 }}
                               />
                               <div className="flex flex-col gap-1">
-                                <button onClick={saveInlineEdit} className="text-[var(--accent-design)] hover:text-[var(--foreground)]">
+                                <button onClick={saveInlineEdit} className="text-green-500 hover:text-green-600">
                                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                   </svg>
                                 </button>
-                                <button onClick={cancelInlineEdit} className="text-[var(--text-faint)] hover:text-[var(--text-muted)]">
+                                <button onClick={cancelInlineEdit} className="text-gray-400 hover:text-gray-600">
                                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                   </svg>
@@ -1540,7 +1544,7 @@ export default function AdminPage() {
                             </div>
                           ) : (
                             <p
-                              className="font-body text-sm text-[var(--text-muted)] cursor-pointer hover:text-[var(--accent-photography)] transition-colors mt-1"
+                              className="font-body text-sm text-gray-500 cursor-pointer hover:text-blue-600 transition-colors mt-1"
                               onClick={() => startEditing(gallery.id, "description", gallery.description || "")}
                               title="Click to edit description"
                             >
@@ -1548,14 +1552,14 @@ export default function AdminPage() {
                             </p>
                           )}
 
-                          <p className="font-body text-xs text-[var(--text-faint)] mt-1">
+                          <p className="font-body text-xs text-gray-400 mt-1">
                             {gallery.images.length} images
                           </p>
                         </div>
                       </div>
                       <button
                         onClick={() => deleteGallery(gallery.id)}
-                        className="text-[var(--text-muted)] hover:text-[var(--accent-videography)] p-2 rounded-lg hover:bg-[var(--card-bg-hover)] transition-colors flex-shrink-0"
+                        className="text-gray-500 hover:text-red-500 p-2 rounded-lg hover:bg-gray-100 transition-colors flex-shrink-0"
                         title="Delete Gallery"
                       >
                         <svg
@@ -1576,8 +1580,8 @@ export default function AdminPage() {
 
                     {/* Gallery Images */}
                     {gallery.images.length > 0 && (
-                      <div className="mt-4 pt-4 border-t border-[var(--border-color)]">
-                        <p className="font-body text-xs text-[var(--text-muted)] mb-2">
+                      <div className="mt-4 pt-4 border-t border-gray-200">
+                        <p className="font-body text-xs text-gray-500 mb-2">
                           Drag to reorder. Click to set as cover. Blue border = cover.
                         </p>
                         <div className="grid grid-cols-4 md:grid-cols-6 gap-2">
@@ -1597,10 +1601,10 @@ export default function AdminPage() {
                                 src={image.path}
                                 alt={image.filename}
                                 onClick={() => setCoverImage(gallery.id, image.path)}
-                                className={`w-full aspect-square object-cover rounded-sm cursor-grab active:cursor-grabbing transition-all ${
+                                className={`w-full aspect-square object-cover rounded-lg cursor-grab active:cursor-grabbing transition-all ${
                                   gallery.coverImage === image.path
-                                    ? "ring-2 ring-[var(--accent-photography)]"
-                                    : "hover:ring-2 hover:ring-[var(--border-muted)]"
+                                    ? "ring-2 ring-blue-500"
+                                    : "hover:ring-2 hover:ring-gray-300"
                                 }`}
                               />
                               <button
@@ -1608,7 +1612,7 @@ export default function AdminPage() {
                                   e.stopPropagation();
                                   deleteImage(gallery.id, image.id);
                                 }}
-                                className="absolute -top-1 -right-1 w-5 h-5 bg-[var(--accent-videography)] text-[var(--background)] rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                                className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
                                 title="Delete image"
                               >
                                 <svg
@@ -1633,7 +1637,7 @@ export default function AdminPage() {
 
                     {/* Add More Images */}
                     {addingImagesToGallery === gallery.id ? (
-                      <div className="mt-4 pt-4 border-t border-[var(--border-color)]">
+                      <div className="mt-4 pt-4 border-t border-gray-200">
                         <div className="flex items-center gap-2 mb-2">
                           <label className="flex-1">
                             <input
@@ -1643,8 +1647,8 @@ export default function AdminPage() {
                               onChange={handleNewImageSelect}
                               className="hidden"
                             />
-                            <div className="border-2 border-dashed border-[var(--border-muted)] rounded-sm p-4 text-center cursor-pointer hover:border-[var(--accent-photography)] transition-colors">
-                              <p className="font-body text-sm text-[var(--text-muted)]">
+                            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:border-gray-400 transition-colors">
+                              <p className="font-body text-sm text-gray-500">
                                 Click to select images ({newImages.length} selected)
                               </p>
                             </div>
@@ -1655,7 +1659,7 @@ export default function AdminPage() {
                             {newImages.map((file, idx) => (
                               <span
                                 key={idx}
-                                className="text-xs bg-[var(--background)] border border-[var(--border-color)] text-[var(--foreground)] px-2 py-1 rounded-sm"
+                                className="text-xs bg-gray-100 px-2 py-1 rounded"
                               >
                                 {file.name}
                               </span>
@@ -1666,7 +1670,7 @@ export default function AdminPage() {
                           <button
                             onClick={() => uploadMoreImages(gallery.id)}
                             disabled={newImages.length === 0 || isUploading}
-                            className="neu-button px-4 py-2 font-body text-sm font-medium text-[var(--foreground)] disabled:opacity-50"
+                            className="px-4 py-2 bg-[#1a1a1a] text-white rounded-lg font-body text-sm hover:bg-[#333] transition-colors disabled:opacity-50"
                           >
                             Upload
                           </button>
@@ -1675,7 +1679,7 @@ export default function AdminPage() {
                               setAddingImagesToGallery(null);
                               setNewImages([]);
                             }}
-                            className="neu-button px-4 py-2 font-body text-sm font-medium text-[var(--text-muted)]"
+                            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-body text-sm hover:bg-gray-300 transition-colors"
                           >
                             Cancel
                           </button>
@@ -1684,7 +1688,7 @@ export default function AdminPage() {
                     ) : (
                       <button
                         onClick={() => setAddingImagesToGallery(gallery.id)}
-                        className="mt-3 text-sm text-[var(--accent-photography)] hover:text-[var(--foreground)] font-body flex items-center gap-1"
+                        className="mt-3 text-sm text-blue-500 hover:text-blue-600 font-body flex items-center gap-1"
                       >
                         <svg
                           className="w-4 h-4"
@@ -1703,7 +1707,7 @@ export default function AdminPage() {
                       </button>
                     )}
 
-                    <div className="mt-3 pt-3 border-t border-[var(--border-color)] flex items-center">
+                    <div className="mt-3 pt-3 border-t border-gray-200 flex items-center">
                       <label className="flex items-center gap-2 cursor-pointer">
                         <input
                           type="checkbox"
@@ -1711,7 +1715,7 @@ export default function AdminPage() {
                           onChange={() => toggleDownloadable(gallery)}
                           className="w-4 h-4 rounded"
                         />
-                        <span className="font-body text-sm text-[var(--text-muted)]">
+                        <span className="font-body text-sm text-gray-600">
                           Allow downloads
                         </span>
                       </label>
