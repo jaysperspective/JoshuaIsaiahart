@@ -1,22 +1,31 @@
 import type { Metadata } from "next";
-import { Spline_Sans, Geist } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
-const splineSans = Spline_Sans({
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-spline-sans",
-  subsets: ["latin"],
+// Editorial display serif — high contrast, optical sizing.
+// Self-hosted variable font (wght + opsz axes), latin subset.
+const fraunces = localFont({
+  src: [
+    { path: "./fonts/Fraunces.woff2", style: "normal" },
+    { path: "./fonts/Fraunces-Italic.woff2", style: "italic" },
+  ],
+  weight: "100 900",
+  variable: "--font-fraunces",
+  display: "swap",
 });
 
-const geist = Geist({
-  weight: ["400", "500"],
+// Clean grotesque for labels, captions, UI — self-hosted variable font.
+const geist = localFont({
+  src: "./fonts/Geist.woff2",
+  weight: "100 900",
   variable: "--font-geist",
-  subsets: ["latin"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "Joshua Isaiah - Creative Director",
-  description: "Joshua Isaiah - Creative Director | Asun Media",
+  title: "Joshua Isaiah — Creative Director",
+  description:
+    "Joshua Isaiah — Creative Director, photographer & filmmaker. Selected work in photography, film, and design.",
 };
 
 export default function RootLayout({
@@ -26,7 +35,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${splineSans.variable} ${geist.variable} antialiased`}>
+      <body className={`${fraunces.variable} ${geist.variable} antialiased`}>
         {children}
       </body>
     </html>

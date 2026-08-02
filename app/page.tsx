@@ -5,16 +5,17 @@ function ArrowIcon({ className = "" }: { className?: string }) {
   return (
     <svg
       className={className}
-      width="20"
-      height="20"
+      width="22"
+      height="22"
       viewBox="0 0 20 20"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
     >
       <path
         d="M5.5 14.5L14.5 5.5M14.5 5.5H7.5M14.5 5.5V12.5"
         stroke="currentColor"
-        strokeWidth="1.5"
+        strokeWidth="1.4"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
@@ -24,59 +25,67 @@ function ArrowIcon({ className = "" }: { className?: string }) {
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-[#181818] flex items-center justify-center px-8 sm:px-12 py-8">
-      <div className="home-stack">
-        {/* Personal Card */}
-        <Link href="/about" className="card card-white card-personal">
-          <div className="card-personal__content justify-center">
-            <div className="card-personal__top">
-              <h1 className="font-heading card-title">Joshua Isaiah</h1>
-              <p className="font-heading card-role">Creative Director</p>
+    <main className="relative min-h-screen overflow-hidden bg-paper text-ink">
+      <div className="grid grid-cols-1 md:grid-cols-[1.4fr_1fr] lg:grid-cols-[1.5fr_1fr]">
+        {/* Left — decorative circle + hero text */}
+        <div className="flex min-h-screen items-center justify-center gap-8 px-6 py-12 sm:px-10 lg:gap-14">
+          <Link
+            href="/Uraenis"
+            aria-label="Uraenis"
+            className="hidden aspect-square w-[clamp(160px,16vw,300px)] shrink-0 rounded-full bg-vigne transition-transform duration-300 hover:scale-[1.04] lg:block"
+          />
+
+          <div className="max-w-[38rem]">
+            <p className="eyebrow mb-5">Creative Director · Photographer · Filmmaker</p>
+            <h1 className="display">
+              Joshua
+              <br />
+              <span className="italic font-light">Isaiah</span>
+            </h1>
+            <p className="prose-serif mt-6 max-w-md">
+              A polymath working across creative mediums — collecting tools, perspectives,
+              and languages in search of the most honest way to be of service.
+            </p>
+            <div className="mt-8 flex flex-wrap items-center gap-2.5">
+              <Link href="/work" className="btn btn-accent">
+                View Work
+                <ArrowIcon className="-mr-1" />
+              </Link>
+              <Link href="/rate-sheet" className="btn">
+                Rate Sheet
+              </Link>
+              <Link href="/work?tab=videography" className="btn">
+                Feature Film
+              </Link>
+              <Link href="/work?tab=photography" className="btn">
+                Editorial
+              </Link>
             </div>
           </div>
+        </div>
 
-          <div className="card-personal__image">
-            <Image
-              src="/homeimage.jpg"
-              alt="Joshua Isaiah at work"
-              width={400}
-              height={500}
-              priority
-              className="card-image"
-            />
-          </div>
-
-          <ArrowIcon className="card-arrow" />
-        </Link>
-
-        {/* Business Card */}
-        <Link href="/work" className="card card-gray card-business">
-          <div className="card-business__inner">
-            <h2 className="font-heading card-title">Portfolio</h2>
-            <p className="font-body card-subtitle">
-              Photography • Videography • Design
-            </p>
-          </div>
-
-          <ArrowIcon className="card-arrow" />
-        </Link>
-
-        {/* URA Card */}
-        <a
-          href="https://airofuranus.com"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="card card-ura"
+        {/* Right — cut-out portrait, anchored to the bottom edge */}
+        <Link
+          href="/about"
+          aria-label="About Joshua Isaiah"
+          className="group relative hidden md:block cursor-pointer"
         >
-          <div className="card-ura__inner">
-            <p className="card-ura__title">URA</p>
-            <h2 className="card-ura__subtitle">A Seasonal Orientation System</h2>
-            <p className="card-ura__caption">Knowing where you are changes how you move.</p>
-          </div>
-
-          <ArrowIcon className="card-arrow card-arrow--light" />
-        </a>
+          <Image
+            src="/joshua-home.webp"
+            alt="Joshua Isaiah holding a film camera"
+            fill
+            priority
+            sizes="(max-width: 1024px) 42vw, 40vw"
+            className="object-contain object-bottom transition-opacity duration-200 group-hover:opacity-90"
+          />
+          {/* Hover outline */}
+          <span className="pointer-events-none absolute inset-0 border-2 border-transparent transition-colors duration-200 group-hover:border-emerald" />
+          {/* Hover label */}
+          <span className="pointer-events-none absolute top-8 right-6 eyebrow opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+            About ↗
+          </span>
+        </Link>
       </div>
-    </div>
+    </main>
   );
 }

@@ -20,23 +20,6 @@ const TIME_SLOTS = [
   "6:30 PM",
 ];
 
-function getWeeksFromDate(start: Date, numWeeks: number): Date[][] {
-  const weeks: Date[][] = [];
-  const current = new Date(start);
-  // Start from the beginning of the week (Sunday)
-  current.setDate(current.getDate() - current.getDay());
-
-  for (let w = 0; w < numWeeks; w++) {
-    const week: Date[] = [];
-    for (let d = 0; d < 7; d++) {
-      week.push(new Date(current));
-      current.setDate(current.getDate() + 1);
-    }
-    weeks.push(week);
-  }
-  return weeks;
-}
-
 function isWeekday(date: Date): boolean {
   const day = date.getDay();
   return day >= 1 && day <= 5;
@@ -168,15 +151,13 @@ export default function ContactClient() {
 
   if (submitted) {
     return (
-      <div className="rounded-2xl bg-white/[0.06] border border-white/[0.08] p-12 text-center">
-        <div className="text-4xl mb-4">&#10003;</div>
-        <p className="font-heading text-xl font-semibold text-white mb-2">
-          Consultation Booked
-        </p>
-        <p className="font-body text-white/50 text-sm mb-1">
+      <div className="surface p-12 text-center">
+        <p className="eyebrow mb-3">Confirmed</p>
+        <p className="headline mb-3">Consultation Booked</p>
+        <p className="font-sans text-sm text-ink-soft mb-1">
           {formatDate(selectedDate!)} at {selectedTime}
         </p>
-        <p className="font-body text-white/40 text-sm">
+        <p className="label normal-case tracking-normal">
           A confirmation email has been sent to {form.email}
         </p>
         <button
@@ -186,7 +167,7 @@ export default function ContactClient() {
             setSelectedTime(null);
             setForm({ name: "", phone: "", email: "", description: "" });
           }}
-          className="mt-6 px-6 py-2.5 rounded-full font-body text-sm bg-white/10 hover:bg-white/15 text-white/80 hover:text-white transition-colors"
+          className="btn mt-7"
         >
           Book Another
         </button>
@@ -195,60 +176,53 @@ export default function ContactClient() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="max-w-3xl space-y-12">
       {/* Contact Info */}
-      <div className="rounded-2xl bg-white/[0.06] border border-white/[0.08] p-8">
-        <h2 className="font-heading text-xl font-semibold text-white mb-4">
-          Contact
-        </h2>
-        <div className="space-y-2 font-body text-sm">
-          <p className="text-white/70">
-            <span className="text-white/40 mr-3">Name</span> Joshua
-          </p>
-          <p className="text-white/70">
-            <span className="text-white/40 mr-3">Email</span>{" "}
-            <a
-              href="mailto:Josh@plusntrust.org"
-              className="hover:text-white transition-colors underline underline-offset-2"
-            >
+      <div>
+        <h2 className="label mb-4">Contact</h2>
+        <hr className="rule mb-5" />
+        <dl className="grid gap-2 font-sans text-sm sm:grid-cols-[6rem_1fr]">
+          <dt className="label">Name</dt>
+          <dd className="text-ink-soft">Joshua</dd>
+          <dt className="label">Email</dt>
+          <dd>
+            <a href="mailto:Josh@plusntrust.org" className="link-underline">
               Josh@plusntrust.org
             </a>
-          </p>
-        </div>
+          </dd>
+        </dl>
       </div>
 
       {/* Booking Section */}
-      <div className="rounded-2xl bg-white/[0.06] border border-white/[0.08] p-8">
-        <h2 className="font-heading text-xl font-semibold text-white mb-2">
-          Book a Consultation
-        </h2>
-        <p className="font-body text-white/40 text-sm mb-6">
-          30-minute Google Meet session &middot; Weekdays 3 PM &ndash; 7 PM
+      <div>
+        <h2 className="headline mb-2">Book a Consultation</h2>
+        <p className="label normal-case tracking-normal mb-6">
+          30-minute Google Meet session · Weekdays 3 PM – 7 PM
         </p>
 
         {/* Calendar */}
-        <div className="mb-6">
+        <div className="surface p-6 mb-6">
           {/* Month navigation */}
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-5">
             <button
               onClick={prevMonth}
               disabled={!canGoPrev}
               className={`p-1.5 rounded-full transition-colors ${
                 canGoPrev
-                  ? "text-white/60 hover:text-white hover:bg-white/10"
-                  : "text-white/15 cursor-not-allowed"
+                  ? "text-ink-soft hover:text-accent hover:bg-paper-2"
+                  : "text-muted/30 cursor-not-allowed"
               }`}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
-            <span className="font-heading text-white text-base font-medium">
+            <span className="font-display text-lg font-medium text-emerald">
               {MONTH_NAMES[currentMonth.month]} {currentMonth.year}
             </span>
             <button
               onClick={nextMonth}
-              className="p-1.5 rounded-full text-white/60 hover:text-white hover:bg-white/10 transition-colors"
+              className="p-1.5 rounded-full text-ink-soft hover:text-accent hover:bg-paper-2 transition-colors"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5l7 7-7 7" />
@@ -259,10 +233,7 @@ export default function ContactClient() {
           {/* Day headers */}
           <div className="grid grid-cols-7 gap-1 mb-1">
             {DAY_LABELS.map((d) => (
-              <div
-                key={d}
-                className="text-center font-body text-xs text-white/30 py-1"
-              >
+              <div key={d} className="text-center label text-[0.6rem] py-1">
                 {d}
               </div>
             ))}
@@ -284,13 +255,13 @@ export default function ContactClient() {
                   onClick={() => clickable && handleDateClick(date)}
                   disabled={!clickable}
                   className={`
-                    aspect-square flex items-center justify-center rounded-lg font-body text-sm transition-all
-                    ${!inMonth ? "text-white/10" : ""}
-                    ${inMonth && !weekday ? "text-white/15" : ""}
-                    ${inMonth && weekday && past ? "text-white/20" : ""}
-                    ${clickable && !isSelected ? "text-white/70 hover:bg-white/10 hover:text-white cursor-pointer" : ""}
-                    ${isSelected ? "bg-white/20 text-white font-medium" : ""}
-                    ${isToday && !isSelected ? "ring-1 ring-white/30" : ""}
+                    aspect-square flex items-center justify-center rounded-[3px] font-sans text-sm numeral transition-all
+                    ${!inMonth ? "text-muted/25" : ""}
+                    ${inMonth && !weekday ? "text-muted/30" : ""}
+                    ${inMonth && weekday && past ? "text-muted/40" : ""}
+                    ${clickable && !isSelected ? "text-ink-soft hover:bg-paper-2 hover:text-accent cursor-pointer" : ""}
+                    ${isSelected ? "bg-emerald text-paper font-medium" : ""}
+                    ${isToday && !isSelected ? "ring-1 ring-accent/40" : ""}
                     ${!clickable ? "cursor-default" : ""}
                   `}
                 >
@@ -304,7 +275,7 @@ export default function ContactClient() {
         {/* Time Slots */}
         {selectedDate && (
           <div className="mb-6">
-            <p className="font-body text-white/50 text-sm mb-3">
+            <p className="label mb-3">
               Available times for {formatDate(selectedDate)}
             </p>
             <div className="grid grid-cols-4 gap-2">
@@ -312,10 +283,10 @@ export default function ContactClient() {
                 <button
                   key={time}
                   onClick={() => setSelectedTime(time)}
-                  className={`px-3 py-2.5 rounded-lg font-body text-sm transition-all ${
+                  className={`px-3 py-2.5 rounded-[3px] font-sans text-sm numeral border transition-all ${
                     selectedTime === time
-                      ? "bg-white/20 text-white font-medium"
-                      : "bg-white/[0.04] text-white/50 hover:bg-white/10 hover:text-white"
+                      ? "bg-emerald border-emerald text-paper font-medium"
+                      : "border-rule text-ink-soft hover:border-accent hover:text-accent"
                   }`}
                 >
                   {time}
@@ -327,72 +298,60 @@ export default function ContactClient() {
 
         {/* Booking Form */}
         {selectedDate && selectedTime && (
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div>
-                <label className="block font-body text-white/40 text-xs mb-1.5">
-                  Name
-                </label>
+                <label className="block label mb-2">Name</label>
                 <input
                   type="text"
                   required
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  className="w-full bg-white/[0.06] border border-white/[0.1] rounded-lg px-4 py-2.5 font-body text-sm text-white placeholder-white/20 focus:outline-none focus:border-white/30 transition-colors"
+                  className="field"
                   placeholder="Your name"
                 />
               </div>
               <div>
-                <label className="block font-body text-white/40 text-xs mb-1.5">
-                  Phone Number
-                </label>
+                <label className="block label mb-2">Phone Number</label>
                 <input
                   type="tel"
                   required
                   value={form.phone}
                   onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                  className="w-full bg-white/[0.06] border border-white/[0.1] rounded-lg px-4 py-2.5 font-body text-sm text-white placeholder-white/20 focus:outline-none focus:border-white/30 transition-colors"
+                  className="field"
                   placeholder="(555) 123-4567"
                 />
               </div>
             </div>
             <div>
-              <label className="block font-body text-white/40 text-xs mb-1.5">
-                Email
-              </label>
+              <label className="block label mb-2">Email</label>
               <input
                 type="email"
                 required
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
-                className="w-full bg-white/[0.06] border border-white/[0.1] rounded-lg px-4 py-2.5 font-body text-sm text-white placeholder-white/20 focus:outline-none focus:border-white/30 transition-colors"
+                className="field"
                 placeholder="you@email.com"
               />
             </div>
             <div>
-              <label className="block font-body text-white/40 text-xs mb-1.5">
-                What are you looking for?
-              </label>
+              <label className="block label mb-2">What are you looking for?</label>
               <textarea
                 required
                 rows={3}
                 value={form.description}
-                onChange={(e) =>
-                  setForm({ ...form, description: e.target.value })
-                }
-                className="w-full bg-white/[0.06] border border-white/[0.1] rounded-lg px-4 py-2.5 font-body text-sm text-white placeholder-white/20 focus:outline-none focus:border-white/30 transition-colors resize-none"
+                onChange={(e) => setForm({ ...form, description: e.target.value })}
+                className="field resize-none"
                 placeholder="Brief description of what you're looking for..."
               />
             </div>
 
-            {error && (
-              <p className="font-body text-red-400 text-sm">{error}</p>
-            )}
+            {error && <p className="font-sans text-sm text-earth">{error}</p>}
 
             <button
               type="submit"
               disabled={submitting}
-              className="w-full py-3 rounded-full font-body text-sm font-medium bg-white/15 hover:bg-white/20 text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="btn btn-accent w-full justify-center disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {submitting ? "Booking..." : "Book Consultation"}
             </button>

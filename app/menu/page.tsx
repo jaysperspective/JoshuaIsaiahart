@@ -2,30 +2,26 @@ import Link from "next/link";
 
 export default function Menu() {
   return (
-    <div className="min-h-screen bg-white">
-      {/* Header */}
-      <header className="flex justify-between items-center px-8 py-6">
-        <Link href="/">
-          <h1 className="text-2xl tracking-[0.3em] font-normal" style={{ fontFamily: 'var(--font-bebas-neue)' }}>
-            JOSHUA HARRINGTON
-          </h1>
-        </Link>
-        <nav className="flex gap-8 text-xl tracking-[0.2em]" style={{ fontFamily: 'var(--font-bebas-neue)' }}>
-          <Link href="/about" className="hover:opacity-70 transition-opacity">ABOUT</Link>
-          <Link href="/work" className="hover:opacity-70 transition-opacity">WORK</Link>
-          <Link href="/menu" className="hover:opacity-70 transition-opacity">MENU</Link>
-        </nav>
-      </header>
+    <main className="min-h-screen bg-paper text-ink">
+      <div className="w-full px-5 sm:px-8 lg:px-12 xl:px-16">
+        {/* Masthead */}
+        <header className="flex items-center justify-between pt-10 sm:pt-14">
+          <Link href="/" className="eyebrow transition-colors hover:text-accent">
+            ← Joshua Isaiah
+          </Link>
+          <nav className="flex gap-6">
+            <Link href="/about" className="label transition-colors hover:text-accent">About</Link>
+            <Link href="/work" className="label transition-colors hover:text-accent">Work</Link>
+          </nav>
+        </header>
+        <hr className="rule mt-5" />
 
-      {/* Content */}
-      <main className="px-8 py-16">
-        <h2 className="text-6xl tracking-[0.1em] mb-8" style={{ fontFamily: 'var(--font-bebas-neue)' }}>
-          MENU
-        </h2>
-        <p className="text-xl max-w-2xl" style={{ fontFamily: 'var(--font-bebas-neue)' }}>
-          Coming soon...
-        </p>
-      </main>
-    </div>
+        {/* Content */}
+        <section className="flex min-h-[60vh] flex-col justify-center">
+          <p className="eyebrow mb-5">Menu</p>
+          <h1 className="display">Coming soon</h1>
+        </section>
+      </div>
+    </main>
   );
 }

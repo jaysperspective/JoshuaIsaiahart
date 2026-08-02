@@ -42,5 +42,13 @@ next-env.d.ts
 
 /app/generated/prisma
 
-/app/generated/prisma
 portfolio.dump
+
+# local dev db
+dev.db
+
+# user-uploaded gallery images — server-managed, never in git
+/public/galleries/
+
+# dev seed script
+/prisma/seed.ts

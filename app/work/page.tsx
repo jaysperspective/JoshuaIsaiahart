@@ -6,34 +6,39 @@ import WorkClient from "./WorkClient";
 export const dynamic = "force-dynamic";
 
 async function getGalleries() {
-  const galleries = await prisma.gallery.findMany({
-    include: {
-      images: {
-        orderBy: { order: "asc" },
+  try {
+    const galleries = await prisma.gallery.findMany({
+      include: {
+        images: {
+          orderBy: { order: "asc" },
+        },
       },
-    },
-    // Order by sortOrder first (nulls last), then by createdAt as fallback
-    orderBy: [
-      { sortOrder: "asc" },
-      { createdAt: "asc" },
-    ] as any,
-  });
+      // Order by sortOrder first (nulls last), then by createdAt as fallback
+      orderBy: [
+        { sortOrder: "asc" },
+        { createdAt: "asc" },
+      ] as any,
+    });
 
-  // Serialize dates for client component
-  return galleries.map((gallery) => ({
-    id: gallery.id,
-    title: gallery.title,
-    description: gallery.description,
-    coverImage: gallery.coverImage,
-    downloadable: gallery.downloadable,
-    createdAt: gallery.createdAt.toISOString(),
-    images: gallery.images.map((image) => ({
-      id: image.id,
-      filename: image.filename,
-      path: image.path,
-      caption: image.caption,
-    })),
-  }));
+    // Serialize dates for client component
+    return galleries.map((gallery) => ({
+      id: gallery.id,
+      title: gallery.title,
+      description: gallery.description,
+      coverImage: gallery.coverImage,
+      downloadable: gallery.downloadable,
+      createdAt: gallery.createdAt.toISOString(),
+      images: gallery.images.map((image) => ({
+        id: image.id,
+        filename: image.filename,
+        path: image.path,
+        caption: image.caption,
+      })),
+    }));
+  } catch {
+    // Database unavailable (e.g. no DATABASE_URL locally) — render empty state
+    return [];
+  }
 }
 
 async function getVideoProjects() {
@@ -61,8 +66,8 @@ async function getVideoProjects() {
 
 function LoadingFallback() {
   return (
-    <div className="min-h-screen bg-[#181818] flex items-center justify-center">
-      <div className="text-white font-body">Loading...</div>
+    <div className="min-h-screen bg-paper flex items-center justify-center">
+      <div className="label">Loading…</div>
     </div>
   );
 }

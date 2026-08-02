@@ -44,16 +44,16 @@ export default function VideographyClient({ videoProjects }: VideographyClientPr
 
   if (videoProjects.length === 0) {
     return (
-      <div className="rounded-2xl bg-white/[0.06] border border-white/[0.08] p-16 text-center">
-        <p className="font-body text-white/40">No video projects available yet.</p>
+      <div className="surface py-24 text-center">
+        <p className="label">No video projects available yet.</p>
       </div>
     );
   }
 
   return (
     <>
-      <div className="flex flex-col gap-6">
-        {videoProjects.map((project) => {
+      <div className="flex flex-col">
+        {videoProjects.map((project, index) => {
           const thumbnail = getDisplayThumbnail(project);
           const parsed = parseVideoUrl(project.videoUrl);
 
@@ -61,55 +61,55 @@ export default function VideographyClient({ videoProjects }: VideographyClientPr
             <div
               key={project.id}
               onClick={() => openLightbox(project)}
-              className="rounded-2xl bg-white/[0.06] border border-white/[0.08] p-5 cursor-pointer group transition-all duration-300 hover:bg-white/[0.09]"
+              className="group cursor-pointer border-t border-rule py-10 first:border-t-0 first:pt-2"
             >
+              {/* Caption line */}
+              <div className="mb-4 flex items-baseline justify-between gap-4">
+                <div className="flex items-baseline gap-3">
+                  <span className="label numeral">{String(index + 1).padStart(2, "0")}</span>
+                  <h2 className="headline text-[1.6rem] sm:text-[2rem] transition-colors group-hover:text-accent">
+                    {project.title}
+                  </h2>
+                </div>
+                {parsed.service && parsed.service !== "direct" && (
+                  <span className="label shrink-0 self-center capitalize">{parsed.service}</span>
+                )}
+              </div>
+
               {/* Thumbnail */}
-              <div className="relative rounded-xl overflow-hidden bg-white/5 aspect-video">
+              <div className="relative overflow-hidden rounded-[4px] bg-paper-2 aspect-video lg:aspect-auto lg:h-[58vh]">
                 {thumbnail ? (
                   <img
                     src={thumbnail}
                     alt={project.title}
                     loading="lazy"
-                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-white/5">
-                    <svg className="w-16 h-16 text-white/20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="flex h-full w-full items-center justify-center bg-paper-2">
+                    <svg className="h-16 w-16 text-muted/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
                 )}
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 pointer-events-none" />
 
                 {/* Play button overlay */}
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-16 h-16 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center transition-all duration-300 group-hover:bg-black/70 group-hover:scale-110">
-                    <svg className="w-8 h-8 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-vigne/55 backdrop-blur-sm transition-all duration-300 group-hover:scale-110 group-hover:bg-accent">
+                    <svg className="ml-1 h-7 w-7 text-paper" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M8 5v14l11-7z" />
                     </svg>
                   </div>
                 </div>
-
-                {/* Platform badge */}
-                {parsed.service && parsed.service !== 'direct' && (
-                  <div className="absolute bottom-4 right-4 bg-black/50 backdrop-blur-sm text-white px-3 py-1.5 rounded-full font-body text-xs capitalize">
-                    {parsed.service}
-                  </div>
-                )}
               </div>
 
-              {/* Title and description */}
-              <div className="mt-4">
-                <h2 className="font-heading text-xl font-bold text-white">
-                  {project.title}
-                </h2>
-                {project.description && (
-                  <p className="font-body text-white/50 text-sm mt-1 line-clamp-2">
-                    {project.description}
-                  </p>
-                )}
-              </div>
+              {/* Description */}
+              {project.description && (
+                <p className="prose-serif mt-4 max-w-2xl text-[1.05rem] line-clamp-2">
+                  {project.description}
+                </p>
+              )}
             </div>
           );
         })}
@@ -118,12 +118,12 @@ export default function VideographyClient({ videoProjects }: VideographyClientPr
       {/* Video Lightbox */}
       {lightboxVideo && (
         <div
-          className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4 overflow-y-auto"
+          className="fixed inset-0 bg-vigne/95 z-50 flex items-center justify-center p-4 overflow-y-auto"
           onClick={closeLightbox}
         >
           <button
             onClick={closeLightbox}
-            className="absolute top-6 right-6 text-white/70 hover:text-white transition-colors z-10"
+            className="absolute top-6 right-6 text-paper/70 hover:text-paper transition-colors z-10"
           >
             <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -136,17 +136,17 @@ export default function VideographyClient({ videoProjects }: VideographyClientPr
           >
             {/* Video */}
             <div className="aspect-video">
-              {parseVideoUrl(lightboxVideo.videoUrl).service === 'direct' ? (
+              {parseVideoUrl(lightboxVideo.videoUrl).service === "direct" ? (
                 <video
                   src={lightboxVideo.videoUrl}
                   controls
                   autoPlay
-                  className="w-full h-full rounded-xl"
+                  className="w-full h-full rounded-[4px]"
                 />
               ) : (
                 <iframe
-                  src={getVideoEmbed(lightboxVideo) || ''}
-                  className="w-full h-full rounded-xl"
+                  src={getVideoEmbed(lightboxVideo) || ""}
+                  className="w-full h-full rounded-[4px]"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
                 />
@@ -155,11 +155,11 @@ export default function VideographyClient({ videoProjects }: VideographyClientPr
 
             {/* Video info below */}
             <div className="text-center px-4">
-              <h3 className="text-white font-heading text-xl font-bold">
+              <h3 className="text-paper font-display text-xl font-medium">
                 {lightboxVideo.title}
               </h3>
               {lightboxVideo.description && (
-                <p className="text-white/70 font-body text-sm mt-2 max-h-32 overflow-y-auto">
+                <p className="text-paper/70 font-sans text-sm mt-2 max-h-32 overflow-y-auto">
                   {lightboxVideo.description}
                 </p>
               )}

@@ -1,239 +1,300 @@
 @import "tailwindcss";
 
+/* ============================================================
+   Joshua Isaiah — Editorial design system
+   Palette: "Noir de Vigne" / Earthen
+   ============================================================ */
+
 :root {
-  --background: #181818;
-  --foreground: #1a1a1a;
-  --card-white: #fafafa;
-  --card-gray: #b6b1ad;
-  --text-dark: #1a1a1a;
-  --text-muted: #6b6b6b;
-  --text-contact: #5f6b7a;
-  --text-subtitle: #2f2f2f;
+  /* Core palette */
+  --emerald: #284139; /* deep green        */
+  --sage:    #809076; /* wasabi            */
+  --khaki:   #f8e794; /* creased khaki     */
+  --earth:   #b86830; /* egyptian earth    */
+  --vigne:   #111a19; /* noir de vigne     */
+
+  /* Semantic roles */
+  --paper:       #f4ecd2; /* page background, warm khaki cream */
+  --paper-2:     #ece0bf; /* deeper / inset panels            */
+  --card:        #faf4e2; /* raised surface                   */
+  --ink:         #18201c; /* primary text                     */
+  --ink-soft:    #3a423b; /* secondary text                   */
+  --muted:       #6f7567; /* captions / metadata              */
+  --accent:      #b86830; /* terracotta accent                */
+  --accent-deep: #8f4d20;
+  --feature:     #284139; /* dark feature section             */
+
+  --rule:      color-mix(in srgb, var(--emerald) 26%, transparent);
+  --rule-soft: color-mix(in srgb, var(--emerald) 13%, transparent);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-heading: var(--font-spline-sans);
-  --font-body: var(--font-geist);
+  --color-paper:    var(--paper);
+  --color-paper-2:  var(--paper-2);
+  --color-card:     var(--card);
+  --color-ink:      var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-muted:    var(--muted);
+  --color-emerald:  var(--emerald);
+  --color-sage:     var(--sage);
+  --color-khaki:    var(--khaki);
+  --color-earth:    var(--earth);
+  --color-vigne:    var(--vigne);
+  --color-accent:   var(--accent);
+  --color-rule:     var(--rule);
+  --color-rule-soft:var(--rule-soft);
+
+  --font-display: var(--font-fraunces);
+  --font-sans:    var(--font-geist);
 }
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+/* Base reset — kept in @layer base so Tailwind's utility layer (px-*, mx-*,
+   etc.) can still override it. If left unlayered it beats every layered
+   utility and silently kills all padding/margin utilities site-wide. */
+@layer base {
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  background: var(--paper);
+  min-height: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--paper);
+  color: var(--ink);
   font-family: var(--font-geist), system-ui, sans-serif;
+  font-optical-sizing: auto;
   min-height: 100vh;
-}
-
-/* Layout wrapper for the two cards */
-.home-stack {
   width: 100%;
-  max-width: 540px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+  overflow-x: hidden;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* Card base */
+::selection {
+  background: var(--khaki);
+  color: var(--vigne);
+}
+
+/* Legacy aliases — keep older class names mapping to the new fonts */
+.font-heading,
+.font-display {
+  font-family: var(--font-fraunces), Georgia, "Times New Roman", serif;
+}
+.font-body,
+.font-sans {
+  font-family: var(--font-geist), system-ui, sans-serif;
+}
+
+/* ---------- Typographic scale ---------- */
+.display {
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-weight: 460;
+  line-height: 0.94;
+  letter-spacing: -0.022em;
+  font-size: clamp(3rem, 9.2vw, 7rem);
+  color: var(--emerald);
+}
+
+.headline {
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-weight: 500;
+  line-height: 1.05;
+  letter-spacing: -0.015em;
+  font-size: clamp(1.7rem, 4.2vw, 2.75rem);
+  color: var(--emerald);
+}
+
+.title {
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-weight: 540;
+  line-height: 1.12;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+.eyebrow {
+  font-family: var(--font-geist), system-ui, sans-serif;
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.label {
+  font-family: var(--font-geist), system-ui, sans-serif;
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.prose-serif {
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-weight: 370;
+  font-size: clamp(1.08rem, 1.5vw, 1.3rem);
+  line-height: 1.62;
+  letter-spacing: 0.002em;
+  color: var(--ink-soft);
+}
+
+.numeral {
+  font-variant-numeric: tabular-nums lining-nums;
+  letter-spacing: 0.02em;
+}
+
+/* ---------- Rules / structure ---------- */
+.rule {
+  border: 0;
+  border-top: 1px solid var(--rule);
+}
+.rule-soft {
+  border: 0;
+  border-top: 1px solid var(--rule-soft);
+}
+
+/* ---------- Index rows (section list) ---------- */
+.index-row {
+  display: flex;
+  align-items: baseline;
+  gap: 1.25rem;
+  padding: 1.15rem 0.1rem;
+  border-top: 1px solid var(--rule);
+  color: var(--ink);
+  text-decoration: none;
+  transition: color 220ms ease, padding-left 320ms cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+.index-row:hover {
+  color: var(--accent);
+  padding-left: 0.6rem;
+}
+.index-row:last-child {
+  border-bottom: 1px solid var(--rule);
+}
+.index-row .index-title {
+  color: inherit;
+}
+
+/* ---------- Buttons ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-family: var(--font-geist), system-ui, sans-serif;
+  font-size: 0.73rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  padding: 0.72rem 1.25rem;
+  border: 1px solid var(--emerald);
+  color: var(--emerald);
+  background: transparent;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: background 180ms ease, color 180ms ease, border-color 180ms ease;
+}
+.btn:hover {
+  background: var(--emerald);
+  color: var(--paper);
+}
+.btn-accent {
+  border-color: var(--accent);
+  color: var(--paper);
+  background: var(--accent);
+}
+.btn-accent:hover {
+  background: var(--accent-deep);
+  border-color: var(--accent-deep);
+  color: var(--paper);
+}
+.btn-ghost {
+  border-color: transparent;
+  color: var(--muted);
+  padding-left: 0;
+  padding-right: 0;
+}
+.btn-ghost:hover {
+  background: transparent;
+  color: var(--accent);
+}
+
+/* ---------- Inline link ---------- */
+.link-underline {
+  color: var(--accent);
+  text-decoration: none;
+  background-image: linear-gradient(var(--accent), var(--accent));
+  background-size: 100% 1px;
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  padding-bottom: 1px;
+  transition: color 180ms ease, opacity 180ms ease;
+}
+.link-underline:hover {
+  color: var(--accent-deep);
+}
+
+/* ---------- Surfaces ---------- */
+.surface {
+  background: var(--card);
+  border: 1px solid var(--rule-soft);
+  border-radius: 4px;
+}
+.surface-hover {
+  transition: border-color 200ms ease, transform 200ms ease;
+}
+.surface-hover:hover {
+  border-color: var(--accent);
+}
+
+/* ---------- Form fields ---------- */
+.field {
+  width: 100%;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--rule);
+  border-radius: 0;
+  padding: 0.6rem 0.1rem;
+  font-family: var(--font-geist), system-ui, sans-serif;
+  font-size: 0.95rem;
+  color: var(--ink);
+  transition: border-color 180ms ease;
+}
+.field::placeholder {
+  color: color-mix(in srgb, var(--muted) 70%, transparent);
+}
+.field:focus {
+  outline: none;
+  border-bottom-color: var(--accent);
+}
+
+/* ---------- Back-compat surfaces (admin CMS / legacy) ---------- */
 .card {
   position: relative;
   display: block;
   width: 100%;
-  border-radius: 20px;
-  padding: 40px;
-  text-decoration: none;
+  border-radius: 16px;
+  padding: 32px;
   color: inherit;
-  cursor: pointer;
-
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
-  transition: transform 200ms ease, box-shadow 200ms ease;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
 }
-
-.card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
-}
-
-/* Arrow indicator */
-.card-arrow {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  opacity: 0.35;
-  color: var(--text-dark);
-  transition: opacity 200ms ease, transform 200ms ease;
-}
-
-.card:hover .card-arrow {
-  opacity: 0.7;
-  transform: translate(2px, -2px);
-}
-
-.card:focus-visible {
-  outline: none;
-  box-shadow:
-    0 16px 40px rgba(0, 0, 0, 0.35),
-    0 0 0 2px rgba(255, 255, 255, 0.18);
-}
-
-/* Surfaces */
 .card-white {
-  background: var(--card-white); /* #fafafa */
-  color: var(--text-dark);
+  background: #fafafa;
+  color: #1a1a1a;
 }
-
 .card-gray {
-  background: var(--card-gray);  /* #b6b1ad */
-  color: var(--text-dark);
+  background: #e9e6e0;
+  color: #1a1a1a;
 }
 
-/* Personal card layout */
-.card-personal {
-  display: flex;
-  flex-direction: row;
-  gap: 24px;
-}
-
-.card-personal__content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  /* justify-content controlled via utility class */
-}
-
-.card-personal__top {
-  display: flex;
-  flex-direction: column;
-}
-
-.card-personal__image {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-}
-
-.card-image {
-  width: 200px;
-  height: auto;
-  border-radius: 12px;
-  object-fit: cover;
-}
-
-/* Typography + spacing (matches ref) */
-.card-title {
-  font-size: 2.25rem;  /* ~ text-4xl */
-  line-height: 1.08;   /* prevents top clipping */
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  margin: 0 0 6px 0;
-}
-
-.card-role {
-  font-size: 1.25rem;  /* ~ text-xl */
-  line-height: 1.2;
-  color: var(--text-muted); /* #6b6b6b */
-  margin: 0;
-}
-
-.card-contact {
-  font-size: 1rem;
-  line-height: 1.5;
-  color: var(--text-contact); /* #5f6b7a */
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-/* Business card layout */
-.card-business {
-  min-height: 240px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-}
-
-.card-business__inner {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.card-subtitle {
-  font-size: 1.125rem; /* ~ text-lg */
-  line-height: 1.35;
-  color: var(--text-subtitle); /* #2f2f2f */
-  margin-top: 10px;
-}
-
-/* Fonts */
-.font-heading {
-  font-family: var(--font-spline-sans), system-ui, sans-serif;
-}
-
-.font-body {
-  font-family: var(--font-geist), system-ui, sans-serif;
-}
-
-/* URA card */
-.card-ura {
-  background: #4a5d52;
-  min-height: 200px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-}
-
-.card-ura__inner {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-}
-
-.card-ura__title {
-  font-family: var(--font-spline-sans), system-ui, sans-serif;
-  font-size: 0.875rem;
-  font-weight: 500;
-  letter-spacing: 0.25em;
-  text-transform: uppercase;
-  color: #c4a962;
-  margin: 0;
-}
-
-.card-ura__subtitle {
-  font-family: var(--font-spline-sans), system-ui, sans-serif;
-  font-size: 1.75rem;
-  font-weight: 600;
-  line-height: 1.2;
-  color: #ffffff;
-  margin: 0;
-}
-
-.card-ura__caption {
-  font-family: var(--font-geist), system-ui, sans-serif;
-  font-size: 1rem;
-  line-height: 1.5;
-  color: rgba(255, 255, 255, 0.7);
-  margin: 8px 0 0 0;
-}
-
-.card-arrow--light {
-  color: rgba(255, 255, 255, 0.5);
-}
-
-.card:hover .card-arrow--light {
-  color: rgba(255, 255, 255, 0.8);
-}
-
-/* Gallery animations */
+/* ---------- Animations ---------- */
 @keyframes fadeInUp {
   from {
     opacity: 0;
@@ -244,21 +305,25 @@ body {
     transform: translateY(0);
   }
 }
+.reveal {
+  animation: fadeInUp 0.5s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
 
-/* Lightbox animations */
 .lightbox-enter {
   animation: lightboxFadeIn 0.2s ease forwards;
 }
-
 @keyframes lightboxFadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .lightbox-image-enter {
   animation: lightboxImageIn 0.2s ease forwards;
 }
-
 @keyframes lightboxImageIn {
   from {
     opacity: 0;
@@ -269,4 +334,3 @@ body {
     transform: scale(1);
   }
 }
-
