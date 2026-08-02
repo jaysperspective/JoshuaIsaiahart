@@ -232,40 +232,40 @@ export default function WorkClient({ galleries, videoProjects }: WorkClientProps
                   className="border-t border-rule py-10 first:border-t-0 first:pt-2"
                 >
                   {/* Cover / header — click to expand */}
-                  <div onClick={() => toggleGallery(gallery)} className="group cursor-pointer">
-                    {/* Caption line */}
-                    <div className="mb-4 flex items-baseline justify-between gap-4">
-                      <div className="flex items-baseline gap-3">
+                  <div onClick={() => toggleGallery(gallery)} className="group cursor-pointer flex items-center gap-6">
+                    {/* Text */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-baseline gap-3 mb-2">
                         <span className="label numeral">{String(gIndex + 1).padStart(2, "0")}</span>
                         <h2 className="headline text-[1.6rem] sm:text-[2rem] transition-colors group-hover:text-accent">
                           {gallery.title}
                         </h2>
                       </div>
-                      <span className="label shrink-0 self-center transition-colors group-hover:text-accent">
+                      {!isExpanded && gallery.description && (
+                        <p className="prose-serif text-[1.05rem] line-clamp-2 max-w-xl">
+                          {gallery.description}
+                        </p>
+                      )}
+                      <span className="label mt-3 inline-block transition-colors group-hover:text-accent">
                         {isExpanded ? "Close —" : `${gallery.images.length} frames`}
                       </span>
                     </div>
 
+                    {/* Square thumbnail */}
                     {coverImage ? (
-                      <div className="relative overflow-hidden rounded-[4px] bg-paper-2 aspect-[3/2] lg:aspect-auto lg:h-[58vh]">
+                      <div className="relative aspect-square w-36 sm:w-48 shrink-0 overflow-hidden rounded-[4px] bg-paper-2">
                         <Image
                           src={coverImage.path}
                           alt={gallery.title}
                           fill
-                          sizes="(max-width: 1024px) 100vw, 1024px"
-                          className="object-cover object-top transition-transform duration-500 group-hover:scale-[1.02]"
+                          sizes="192px"
+                          className="object-cover transition-transform duration-500 group-hover:scale-[1.04]"
                         />
                       </div>
                     ) : (
-                      <div className="flex aspect-[3/2] items-center justify-center rounded-[4px] bg-paper-2">
-                        <p className="label">No cover image</p>
+                      <div className="flex aspect-square w-36 sm:w-48 shrink-0 items-center justify-center rounded-[4px] bg-paper-2">
+                        <p className="label">—</p>
                       </div>
-                    )}
-
-                    {!isExpanded && gallery.description && (
-                      <p className="prose-serif mt-4 max-w-2xl text-[1.05rem] line-clamp-2">
-                        {gallery.description}
-                      </p>
                     )}
                   </div>
 

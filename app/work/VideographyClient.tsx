@@ -77,7 +77,7 @@ export default function VideographyClient({ videoProjects }: VideographyClientPr
               </div>
 
               {/* Thumbnail */}
-              <div className="relative overflow-hidden rounded-[4px] bg-paper-2 aspect-video lg:aspect-auto lg:h-[58vh]">
+              <div className="relative overflow-hidden rounded-[4px] bg-paper-2 aspect-video">
                 {thumbnail ? (
                   <img
                     src={thumbnail}
