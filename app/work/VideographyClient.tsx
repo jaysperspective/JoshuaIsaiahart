@@ -52,7 +52,7 @@ export default function VideographyClient({ videoProjects }: VideographyClientPr
 
   return (
     <>
-      <div className="flex flex-col">
+      <div className="max-w-3xl mx-auto flex flex-col">
         {videoProjects.map((project, index) => {
           const thumbnail = getDisplayThumbnail(project);
           const parsed = parseVideoUrl(project.videoUrl);

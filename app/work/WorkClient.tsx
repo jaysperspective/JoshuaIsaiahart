@@ -217,7 +217,7 @@ export default function WorkClient({ galleries, videoProjects }: WorkClientProps
 
         {/* Photography Gallery List */}
         {activeTab === "photography" && (
-          <div className="flex flex-col">
+          <div className="max-w-3xl mx-auto w-full flex flex-col">
             {galleries.map((gallery, gIndex) => {
               const isExpanded = expandedGalleryId === gallery.id;
               const coverImage = getCoverImage(gallery);
@@ -235,18 +235,18 @@ export default function WorkClient({ galleries, videoProjects }: WorkClientProps
                   <div onClick={() => toggleGallery(gallery)} className="group cursor-pointer flex items-center gap-6">
                     {/* Text */}
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-baseline gap-3 mb-2">
+                      <div className="flex items-baseline gap-3 mb-2 justify-center">
                         <span className="label numeral">{String(gIndex + 1).padStart(2, "0")}</span>
-                        <h2 className="headline text-[1.6rem] sm:text-[2rem] transition-colors group-hover:text-accent">
+                        <h2 className="headline text-[1.6rem] sm:text-[2rem] transition-colors group-hover:text-accent text-center">
                           {gallery.title}
                         </h2>
                       </div>
                       {!isExpanded && gallery.description && (
-                        <p className="prose-serif text-[1.05rem] line-clamp-2 max-w-xl">
+                        <p className="prose-serif text-[1.05rem] line-clamp-2 text-center">
                           {gallery.description}
                         </p>
                       )}
-                      <span className="label mt-3 inline-block transition-colors group-hover:text-accent">
+                      <span className="label mt-3 inline-block transition-colors group-hover:text-accent text-center w-full">
                         {isExpanded ? "Close —" : `${gallery.images.length} frames`}
                       </span>
                     </div>
