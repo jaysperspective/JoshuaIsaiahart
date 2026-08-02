@@ -29,13 +29,13 @@ export default function WorkNavigation({ activeTab, onTabChange }: WorkNavigatio
       <hr className="rule mt-5" />
 
       {/* Title */}
-      <div className="pt-12 pb-8 sm:pt-16">
+      <div className="pt-12 pb-8 sm:pt-16 text-center">
         <p className="eyebrow mb-5">The Portfolio Of</p>
         <h1 className="display text-[clamp(2.5rem,8vw,5rem)]">Selected Work</h1>
       </div>
 
       {/* Tabs */}
-      <div className="flex flex-wrap items-baseline gap-x-8 gap-y-2 border-t border-rule pt-5">
+      <div className="flex flex-wrap justify-center items-baseline gap-x-8 gap-y-2 border-t border-rule pt-5">
         {tabs.map((tab) => {
           const isActive = activeTab === tab.id;
           return (
