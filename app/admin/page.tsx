@@ -64,6 +64,7 @@ export default function AdminPage() {
   });
   const [addingImagesToGallery, setAddingImagesToGallery] = useState<string | null>(null);
   const [newImages, setNewImages] = useState<File[]>([]);
+  const [localUploadProgress, setLocalUploadProgress] = useState<{ done: number; total: number } | null>(null);
   const [draggedImage, setDraggedImage] = useState<{ galleryId: string; imageId: string } | null>(null);
   const [editingField, setEditingField] = useState<{ galleryId: string; field: "title" | "description" } | null>(null);
   const [editValue, setEditValue] = useState("");
@@ -383,27 +384,39 @@ export default function AdminPage() {
   const uploadMoreImages = async (galleryId: string) => {
     if (newImages.length === 0) return;
 
+    setLocalUploadProgress({ done: 0, total: newImages.length });
+
     try {
-      const uploaded = await uploadFilesOneByOne(galleryId, newImages);
-      setUploadStatus({
-        step: "success",
-        message: `Added ${uploaded} image(s) to gallery!`,
-        uploadedCount: uploaded,
-        totalCount: newImages.length,
-      });
+      let uploaded = 0;
+      for (const file of newImages) {
+        setLocalUploadProgress({ done: uploaded, total: newImages.length });
+
+        const formData = new FormData();
+        formData.append("files", file);
+
+        const res = await fetch(`/api/galleries/${galleryId}/images`, {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!res.ok) {
+          const errorText = await res.text();
+          throw new Error(`Failed on "${file.name}": ${res.status} — ${errorText}`);
+        }
+
+        uploaded++;
+        setLocalUploadProgress({ done: uploaded, total: newImages.length });
+      }
+
+      setLocalUploadProgress(null);
       setNewImages([]);
       setAddingImagesToGallery(null);
       fetchGalleries();
-
-      setTimeout(() => {
-        setUploadStatus((prev) =>
-          prev.step === "success" ? { step: "idle", message: "" } : prev
-        );
-      }, 5000);
     } catch (error) {
+      setLocalUploadProgress(null);
       setUploadStatus({
         step: "error",
-        message: "Failed to upload images",
+        message: "Upload failed",
         details: error instanceof Error ? error.message : String(error),
       });
     }
@@ -1654,20 +1667,35 @@ export default function AdminPage() {
                             ))}
                           </div>
                         )}
+                        {localUploadProgress && (
+                          <div className="mb-2">
+                            <p className="font-body text-sm text-blue-700 mb-1">
+                              Compressing & uploading… {localUploadProgress.done} / {localUploadProgress.total}
+                            </p>
+                            <div className="h-1.5 w-full rounded-full bg-blue-100 overflow-hidden">
+                              <div
+                                className="h-full rounded-full bg-blue-500 transition-all duration-300"
+                                style={{ width: `${Math.round((localUploadProgress.done / localUploadProgress.total) * 100)}%` }}
+                              />
+                            </div>
+                          </div>
+                        )}
+
                         <div className="flex gap-2">
                           <button
                             onClick={() => uploadMoreImages(gallery.id)}
-                            disabled={newImages.length === 0 || isUploading}
-                            className="px-4 py-2 bg-[#1a1a1a] text-white rounded-lg font-body text-sm hover:bg-[#333] transition-colors disabled:opacity-50"
+                            disabled={newImages.length === 0 || !!localUploadProgress}
+                            className="px-4 py-2 bg-[#1a1a1a] text-white rounded-lg font-body text-sm hover:bg-[#333] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                           >
-                            Upload
+                            {localUploadProgress ? `${localUploadProgress.done}/${localUploadProgress.total} done…` : "Upload"}
                           </button>
                           <button
                             onClick={() => {
                               setAddingImagesToGallery(null);
                               setNewImages([]);
                             }}
-                            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-body text-sm hover:bg-gray-300 transition-colors"
+                            disabled={!!localUploadProgress}
+                            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-body text-sm hover:bg-gray-300 transition-colors disabled:opacity-50"
                           >
                             Cancel
                           </button>
