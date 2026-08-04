@@ -189,21 +189,48 @@ export default function AdminPage() {
     setUploadStatus({ step: "idle", message: "" });
   };
 
+  const uploadFilesOneByOne = async (galleryId: string, files: File[]) => {
+    let uploaded = 0;
+    for (const file of files) {
+      setUploadStatus({
+        step: "uploading",
+        message: `Compressing & uploading…`,
+        uploadedCount: uploaded,
+        totalCount: files.length,
+      });
+
+      const formData = new FormData();
+      formData.append("files", file);
+
+      const res = await fetch(`/api/galleries/${galleryId}/images`, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(`Failed on "${file.name}": ${res.status} — ${errorText}`);
+      }
+
+      uploaded++;
+      setUploadStatus({
+        step: "uploading",
+        message: `Compressing & uploading…`,
+        uploadedCount: uploaded,
+        totalCount: files.length,
+      });
+    }
+    return uploaded;
+  };
+
   const createGallery = async () => {
     if (!title.trim()) {
-      setUploadStatus({
-        step: "error",
-        message: "Please enter a title",
-      });
+      setUploadStatus({ step: "error", message: "Please enter a title" });
       return;
     }
 
     try {
-      // Step 1: Create gallery
-      setUploadStatus({
-        step: "creating",
-        message: "Creating gallery...",
-      });
+      setUploadStatus({ step: "creating", message: "Creating gallery…" });
 
       const galleryRes = await fetch("/api/galleries", {
         method: "POST",
@@ -217,71 +244,29 @@ export default function AdminPage() {
       }
 
       const gallery = await galleryRes.json();
-      console.log("Gallery created:", gallery);
 
-      // Step 2: Upload images if any
       if (selectedFiles.length > 0) {
-        setUploadStatus({
-          step: "uploading",
-          message: `Uploading ${selectedFiles.length} image(s)...`,
-          uploadedCount: 0,
-          totalCount: selectedFiles.length,
-        });
-
-        const formData = new FormData();
-        selectedFiles.forEach((file) => {
-          console.log("Adding file to upload:", file.name, file.size, file.type);
-          formData.append("files", file);
-        });
-
-        console.log("Sending upload request to:", `/api/galleries/${gallery.id}/images`);
-
-        const uploadRes = await fetch(`/api/galleries/${gallery.id}/images`, {
-          method: "POST",
-          body: formData,
-        });
-
-        if (!uploadRes.ok) {
-          const errorText = await uploadRes.text();
-          console.error("Upload failed:", uploadRes.status, errorText);
-          setUploadStatus({
-            step: "error",
-            message: "Gallery created but image upload failed",
-            details: `Status: ${uploadRes.status}\nResponse: ${errorText}`,
-          });
-          fetchGalleries();
-          return;
-        }
-
-        const uploadedImages = await uploadRes.json();
-        console.log("Upload successful:", uploadedImages);
-
+        const uploaded = await uploadFilesOneByOne(gallery.id, selectedFiles);
         setUploadStatus({
           step: "success",
-          message: `Gallery created with ${uploadedImages.length} image(s)!`,
-          uploadedCount: uploadedImages.length,
+          message: `Gallery created with ${uploaded} image(s)!`,
+          uploadedCount: uploaded,
           totalCount: selectedFiles.length,
         });
       } else {
-        setUploadStatus({
-          step: "success",
-          message: "Gallery created successfully!",
-        });
+        setUploadStatus({ step: "success", message: "Gallery created successfully!" });
       }
 
-      // Reset form
       setTitle("");
       setDescription("");
       setSelectedFiles([]);
       fetchGalleries();
 
-      // Clear success message after 5 seconds
       setTimeout(() => {
         setUploadStatus((prev) =>
           prev.step === "success" ? { step: "idle", message: "" } : prev
         );
       }, 5000);
-
     } catch (error) {
       console.error("Failed to create gallery:", error);
       setUploadStatus({
@@ -398,44 +383,23 @@ export default function AdminPage() {
   const uploadMoreImages = async (galleryId: string) => {
     if (newImages.length === 0) return;
 
-    setUploadStatus({
-      step: "uploading",
-      message: `Uploading ${newImages.length} image(s)...`,
-    });
-
     try {
-      const formData = new FormData();
-      newImages.forEach((file) => {
-        formData.append("files", file);
+      const uploaded = await uploadFilesOneByOne(galleryId, newImages);
+      setUploadStatus({
+        step: "success",
+        message: `Added ${uploaded} image(s) to gallery!`,
+        uploadedCount: uploaded,
+        totalCount: newImages.length,
       });
+      setNewImages([]);
+      setAddingImagesToGallery(null);
+      fetchGalleries();
 
-      const res = await fetch(`/api/galleries/${galleryId}/images`, {
-        method: "POST",
-        body: formData,
-      });
-
-      if (res.ok) {
-        setUploadStatus({
-          step: "success",
-          message: `Added ${newImages.length} image(s) to gallery!`,
-        });
-        setNewImages([]);
-        setAddingImagesToGallery(null);
-        fetchGalleries();
-
-        setTimeout(() => {
-          setUploadStatus((prev) =>
-            prev.step === "success" ? { step: "idle", message: "" } : prev
-          );
-        }, 5000);
-      } else {
-        const errorText = await res.text();
-        setUploadStatus({
-          step: "error",
-          message: "Failed to upload images",
-          details: errorText,
-        });
-      }
+      setTimeout(() => {
+        setUploadStatus((prev) =>
+          prev.step === "success" ? { step: "idle", message: "" } : prev
+        );
+      }, 5000);
     } catch (error) {
       setUploadStatus({
         step: "error",
@@ -759,7 +723,7 @@ export default function AdminPage() {
                       />
                     </svg>
                   )}
-                  <div>
+                  <div className="flex-1">
                     <p
                       className={`font-body font-medium ${
                         uploadStatus.step === "error"
@@ -770,7 +734,31 @@ export default function AdminPage() {
                       }`}
                     >
                       {uploadStatus.message}
+                      {uploadStatus.step === "uploading" &&
+                        uploadStatus.totalCount != null &&
+                        uploadStatus.totalCount > 0 && (
+                          <span className="ml-2 font-normal text-blue-700">
+                            {uploadStatus.uploadedCount ?? 0} / {uploadStatus.totalCount}
+                          </span>
+                        )}
                     </p>
+
+                    {/* Progress bar */}
+                    {uploadStatus.step === "uploading" &&
+                      uploadStatus.totalCount != null &&
+                      uploadStatus.totalCount > 0 && (
+                        <div className="mt-2 h-1.5 w-full rounded-full bg-blue-200 overflow-hidden">
+                          <div
+                            className="h-full rounded-full bg-blue-500 transition-all duration-300"
+                            style={{
+                              width: `${Math.round(
+                                ((uploadStatus.uploadedCount ?? 0) / uploadStatus.totalCount) * 100
+                              )}%`,
+                            }}
+                          />
+                        </div>
+                      )}
+
                     {uploadStatus.details && (
                       <pre className="font-body text-xs text-red-700 mt-2 whitespace-pre-wrap bg-red-50 p-2 rounded">
                         {uploadStatus.details}
