@@ -5,7 +5,6 @@ import { useSearchParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import WorkNavigation, { WorkTab } from "./WorkNavigation";
 import VideographyClient from "./VideographyClient";
-import ContactClient from "./ContactClient";
 
 interface Image {
   id: string;
@@ -58,7 +57,7 @@ export default function WorkClient({ galleries, videoProjects }: WorkClientProps
   // Handle URL-driven initialization
   useEffect(() => {
     const tabParam = searchParams.get("tab") as WorkTab | null;
-    if (tabParam && ["photography", "videography", "design", "contact"].includes(tabParam)) {
+    if (tabParam && ["photography", "videography"].includes(tabParam)) {
       setActiveTab(tabParam);
     }
 
@@ -111,6 +110,8 @@ export default function WorkClient({ galleries, videoProjects }: WorkClientProps
       router.push(`/work?tab=${tab}`, { scroll: false });
     }
   }, [router]);
+
+
 
   const updateURL = useCallback((galleryId: string | null, galleryTitle?: string) => {
     if (galleryId && galleryTitle) {
@@ -205,15 +206,6 @@ export default function WorkClient({ galleries, videoProjects }: WorkClientProps
         {activeTab === "videography" && (
           <VideographyClient videoProjects={videoProjects} />
         )}
-
-        {activeTab === "design" && (
-          <div className="surface flex flex-col items-center justify-center py-24 text-center">
-            <p className="eyebrow mb-2">Design</p>
-            <p className="headline text-muted">Coming soon</p>
-          </div>
-        )}
-
-        {activeTab === "contact" && <ContactClient />}
 
         {/* Photography Gallery List */}
         {activeTab === "photography" && (
