@@ -23,9 +23,26 @@ const geist = localFont({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://joshuaisaiah.art"),
   title: "Joshua Isaiah — Creative Director",
   description:
     "Joshua Isaiah — Creative Director, photographer & filmmaker. Selected work in photography, film, and design.",
+  openGraph: {
+    title: "Joshua Isaiah — Creative Director",
+    description:
+      "Photographer & filmmaker. Selected work in photography, film, and social.",
+    url: "https://joshuaisaiah.art",
+    siteName: "Joshua Isaiah",
+    images: [{ url: "/og-image.jpg", width: 1200, height: 630 }],
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Joshua Isaiah — Creative Director",
+    description:
+      "Photographer & filmmaker. Selected work in photography, film, and social.",
+    images: ["/og-image.jpg"],
+  },
 };
 
 export default function RootLayout({
