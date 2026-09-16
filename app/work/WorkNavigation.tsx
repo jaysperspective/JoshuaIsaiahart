@@ -10,9 +10,9 @@ interface WorkNavigationProps {
 }
 
 const tabs: { id: WorkTab; label: string; no: string }[] = [
-  { id: "photography", label: "Photo", no: "01" },
-  { id: "videography", label: "Video", no: "02" },
-  { id: "reels", label: "Reels", no: "03" },
+  { id: "photography", label: "Photography", no: "01" },
+  { id: "videography", label: "Film", no: "02" },
+  { id: "reels", label: "Social", no: "03" },
 ];
 
 export default function WorkNavigation({ activeTab, onTabChange }: WorkNavigationProps) {
@@ -27,14 +27,8 @@ export default function WorkNavigation({ activeTab, onTabChange }: WorkNavigatio
       </div>
       <hr className="rule mt-5" />
 
-      {/* Title */}
-      <div className="pt-12 pb-8 sm:pt-16 text-center">
-        <p className="eyebrow mb-5">Photography · Film · Social</p>
-        <h1 className="display text-[clamp(2.5rem,8vw,5rem)]">Selected Work</h1>
-      </div>
-
       {/* Tabs */}
-      <div className="flex flex-wrap justify-center items-baseline gap-x-8 gap-y-2 border-t border-rule pt-5">
+      <div className="flex flex-wrap justify-center items-baseline gap-x-8 gap-y-2 pt-10 pb-2 sm:pt-14">
         {tabs.map((tab) => {
           const isActive = activeTab === tab.id;
           return (

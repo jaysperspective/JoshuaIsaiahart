@@ -58,7 +58,7 @@ export default function SocialClient({ socialVideos }: SocialClientProps) {
           campaign moments built to live in the feed. The longer stories are
           under{" "}
           <Link href="/work?tab=videography" className="link-underline">
-            Video
+            Film
           </Link>
           .
         </p>

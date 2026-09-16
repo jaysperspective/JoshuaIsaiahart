@@ -52,7 +52,7 @@ export default function VideographyClient({ videoProjects }: VideographyClientPr
           Films, event coverage, and interviews — work that takes its time.
           Short-form social pieces made for clients live under{" "}
           <Link href="/work?tab=reels" className="link-underline">
-            Reels
+            Social
           </Link>
           .
         </p>
