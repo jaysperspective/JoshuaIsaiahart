@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
+import { unlink } from "fs/promises";
+import path from "path";
 
 export async function PUT(
   request: NextRequest,
@@ -36,9 +38,20 @@ export async function DELETE(
   try {
     const { id } = await params;
 
+    const video = await (prisma as any).socialVideo.findUnique({ where: { id } });
+
     await (prisma as any).socialVideo.delete({
       where: { id },
     });
+
+    // Remove locally uploaded thumbnail file
+    if (video?.thumbnailUrl?.startsWith("/reels/")) {
+      try {
+        await unlink(path.join(process.cwd(), "public", video.thumbnailUrl));
+      } catch (e: any) {
+        if (e.code !== "ENOENT") console.error("Could not delete thumbnail:", e);
+      }
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

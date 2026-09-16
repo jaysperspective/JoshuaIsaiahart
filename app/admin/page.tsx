@@ -113,6 +113,7 @@ export default function AdminPage() {
   const [reelError, setReelError] = useState<string | null>(null);
   const [editingReelField, setEditingReelField] = useState<{ videoId: string; field: "caption" | "sourceUrl" | "thumbnailUrl" } | null>(null);
   const [editReelValue, setEditReelValue] = useState("");
+  const [uploadingThumbId, setUploadingThumbId] = useState<string | null>(null);
   const [copiedGalleryId, setCopiedGalleryId] = useState<string | null>(null);
 
   const fetchGalleries = useCallback(async () => {
@@ -718,6 +719,29 @@ export default function AdminPage() {
   const cancelReelEdit = () => {
     setEditingReelField(null);
     setEditReelValue("");
+  };
+
+  const uploadReelThumbnail = async (videoId: string, file: File) => {
+    setUploadingThumbId(videoId);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch(`/api/social-videos/${videoId}/thumbnail`, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (res.ok) {
+        fetchSocialVideos();
+      } else {
+        console.error("Failed to upload thumbnail");
+      }
+    } catch (error) {
+      console.error("Failed to upload thumbnail:", error);
+    } finally {
+      setUploadingThumbId(null);
+    }
   };
 
   const moveSocialVideo = async (index: number, direction: "up" | "down") => {
@@ -1774,6 +1798,28 @@ export default function AdminPage() {
                               {video.sourceUrl}
                             </p>
                           )}
+
+                          <label className="mt-2 inline-flex items-center gap-1.5 text-sm text-blue-500 hover:text-blue-600 font-body cursor-pointer">
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              disabled={uploadingThumbId === video.id}
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) uploadReelThumbnail(video.id, file);
+                                e.target.value = "";
+                              }}
+                            />
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            {uploadingThumbId === video.id
+                              ? "Uploading…"
+                              : video.thumbnailUrl
+                              ? "Replace thumbnail"
+                              : "Upload thumbnail (removes IG frame)"}
+                          </label>
                         </div>
                       </div>
 

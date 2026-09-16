@@ -84,9 +84,20 @@ export default function SocialClient({ socialVideos }: SocialClientProps) {
                     preload="metadata"
                     className="h-full w-full object-cover"
                   />
+                ) : embedUrl && parsed.platform === "instagram" ? (
+                  // No thumbnail available — show the embed with Instagram's
+                  // header/footer chrome cropped out, inert so clicks open the modal
+                  <div className="pointer-events-none absolute inset-0 overflow-hidden">
+                    <iframe
+                      src={embedUrl}
+                      loading="lazy"
+                      scrolling="no"
+                      className="absolute left-0 w-full"
+                      style={{ top: "-54px", height: "calc(100% + 158px)" }}
+                      title={video.caption || "Social video"}
+                    />
+                  </div>
                 ) : embedUrl ? (
-                  // No thumbnail available (e.g. Instagram) — show the embed itself,
-                  // inert so clicks open the modal
                   <iframe
                     src={embedUrl}
                     loading="lazy"
