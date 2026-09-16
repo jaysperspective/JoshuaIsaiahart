@@ -136,17 +136,22 @@ export default async function About() {
             <div className="max-w-2xl space-y-6">
               <p className="prose-serif first-letter:float-left first-letter:mr-3 first-letter:font-display first-letter:text-[4.5rem] first-letter:leading-[0.8] first-letter:font-medium first-letter:text-emerald">
                 I see myself as a polymath—multifaceted, curious, and fluent across
-                disciplines. I&apos;ve always been quick to learn, and that instinct has carried
-                me far. I&apos;ve also been wary of being boxed in, even in a world that rewards
-                single-lane expertise with stability. What draws me instead is the journey:
-                learning something new, absorbing it, and synthesizing it into my own
-                framework so it has meaning.
+                disciplines. Quick to learn, wary of being boxed in, even in a world that
+                rewards single-lane expertise. What draws me is the journey: learning
+                something new, absorbing it, and synthesizing it until it has meaning.
               </p>
               <p className="prose-serif">
-                I&apos;m a photojournalist, a filmmaker, a street photographer. A graphic
-                designer, creative director, and brand builder. An artist, a writer, an event
-                curator. I understand code, AI, and financial markets. I move through this
-                multiverse collecting tools, perspectives, and languages—ultimately searching
+                The craft was built in newsrooms. More than a decade behind the camera for
+                Washington&apos;s daily stories—breaking news, live broadcast, long-form
+                pieces—taught me a discipline you can&apos;t fake: get the shot, get it
+                right, get it on air. The work earned awards; more importantly, it taught me
+                how to walk into any room and find the story worth telling.
+              </p>
+              <p className="prose-serif">
+                Now that eye serves clients and collaborators—portraits, films, events,
+                brands. I&apos;m a photojournalist, filmmaker, and street photographer; a
+                designer, creative director, and brand builder. I move through this
+                multiverse collecting tools, perspectives, and languages—still searching
                 for the most honest way to be of service.
               </p>
 
