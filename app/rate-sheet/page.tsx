@@ -9,8 +9,27 @@ export const metadata = {
 
 const SECTIONS = [
   {
-    title: "Videography Services",
+    title: "Photography Services",
     number: "01",
+    groups: [
+      {
+        heading: "Day Rates",
+        items: [
+          { label: "Hourly", note: "2-hour minimum", price: "$350 / hr" },
+          { label: "Half-Day", note: "up to 4 hours", price: "$1,200" },
+          { label: "Full Day", note: "up to 8 hours", price: "$2,200" },
+          {
+            label: "Same-Day Social Media Gallery",
+            note: "25 curated images — add-on",
+            price: "$300",
+          },
+        ],
+      },
+    ],
+  },
+  {
+    title: "Videography Services",
+    number: "02",
     groups: [
       {
         heading: "Hourly / Day Rates",
@@ -46,25 +65,6 @@ const SECTIONS = [
         items: [
           { label: "Standard Edit", note: "3 hrs included with packages", price: "Included" },
           { label: "Additional Editing", note: "", price: "$125 / hr" },
-        ],
-      },
-    ],
-  },
-  {
-    title: "Photography Services",
-    number: "02",
-    groups: [
-      {
-        heading: "Day Rates",
-        items: [
-          { label: "Hourly", note: "2-hour minimum", price: "$350 / hr" },
-          { label: "Half-Day", note: "up to 4 hours", price: "$1,200" },
-          { label: "Full Day", note: "up to 8 hours", price: "$2,200" },
-          {
-            label: "Same-Day Social Media Gallery",
-            note: "25 curated images — add-on",
-            price: "$300",
-          },
         ],
       },
     ],

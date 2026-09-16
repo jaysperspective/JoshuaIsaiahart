@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
+import FloatingBook from "./components/FloatingBook";
 
 // Editorial display serif — high contrast, optical sizing.
 // Self-hosted variable font (wght + opsz axes), latin subset.
@@ -122,6 +123,7 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }}
         />
         {children}
+        <FloatingBook />
       </body>
     </html>
   );
