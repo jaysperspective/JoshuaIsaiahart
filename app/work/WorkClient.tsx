@@ -24,6 +24,7 @@ interface Gallery {
   description: string | null;
   coverImage: string | null;
   downloadable: boolean;
+  slug: string | null;
   images: Image[];
   createdAt: string;
 }
@@ -338,6 +339,17 @@ export default function WorkClient({ galleries, videoProjects, socialVideos, tes
                           </svg>
                           Inquire
                         </button>
+
+                        <Link
+                          href={`/g/${gallery.slug || slugify(gallery.title)}`}
+                          onClick={(e) => e.stopPropagation()}
+                          className="btn"
+                        >
+                          Open Album
+                          <svg className="-mr-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5.5 14.5L14.5 5.5M14.5 5.5H7.5M14.5 5.5V12.5" />
+                          </svg>
+                        </Link>
 
                         <button onClick={(e) => { e.stopPropagation(); toggleGallery(gallery); }} className="btn btn-ghost">
                           Close —

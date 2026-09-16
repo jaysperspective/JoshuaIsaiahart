@@ -52,6 +52,9 @@ export default function Home() {
                 View Work
                 <ArrowIcon className="-mr-1" />
               </Link>
+              <Link href="/work#book" className="btn">
+                Book a Session
+              </Link>
               <Link href="/rate-sheet" className="btn">
                 Rate Sheet
               </Link>
@@ -63,6 +66,9 @@ export default function Home() {
               </Link>
               <Link href="/work?tab=photography" className="btn">
                 Editorial
+              </Link>
+              <Link href="/testimonial" className="btn">
+                Testimonial
               </Link>
             </div>
           </div>

@@ -36,6 +36,7 @@ async function getGalleries() {
       description: gallery.description,
       coverImage: gallery.coverImage,
       downloadable: gallery.downloadable,
+      slug: (gallery as any).slug || null,
       createdAt: gallery.createdAt.toISOString(),
       images: gallery.images.map((image) => ({
         id: image.id,
