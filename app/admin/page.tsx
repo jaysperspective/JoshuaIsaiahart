@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import AdminAuth from "@/app/components/AdminAuth";
+import { slugify } from "@/app/lib/slug";
 
 interface Image {
   id: string;
@@ -17,6 +18,8 @@ interface Gallery {
   description: string | null;
   coverImage: string | null;
   downloadable: boolean;
+  slug?: string | null;
+  unlisted?: boolean;
   sortOrder: number | null;
   images: Image[];
 }
@@ -47,6 +50,14 @@ interface VideoProject {
   title: string;
   description: string | null;
   videoUrl: string;
+  thumbnailUrl: string | null;
+  sortOrder: number | null;
+}
+
+interface SocialVideo {
+  id: string;
+  caption: string | null;
+  sourceUrl: string;
   thumbnailUrl: string | null;
   sortOrder: number | null;
 }
@@ -92,6 +103,17 @@ export default function AdminPage() {
   const [isCreatingVideo, setIsCreatingVideo] = useState(false);
   const [editingVideoField, setEditingVideoField] = useState<{ projectId: string; field: "title" | "description" | "videoUrl" | "thumbnailUrl" } | null>(null);
   const [editVideoValue, setEditVideoValue] = useState("");
+
+  // Social videos (reels) state
+  const [socialVideos, setSocialVideos] = useState<SocialVideo[]>([]);
+  const [reelUrl, setReelUrl] = useState("");
+  const [reelCaption, setReelCaption] = useState("");
+  const [reelThumbnail, setReelThumbnail] = useState("");
+  const [isCreatingReel, setIsCreatingReel] = useState(false);
+  const [reelError, setReelError] = useState<string | null>(null);
+  const [editingReelField, setEditingReelField] = useState<{ videoId: string; field: "caption" | "sourceUrl" | "thumbnailUrl" } | null>(null);
+  const [editReelValue, setEditReelValue] = useState("");
+  const [copiedGalleryId, setCopiedGalleryId] = useState<string | null>(null);
 
   const fetchGalleries = useCallback(async () => {
     try {
@@ -145,12 +167,25 @@ export default function AdminPage() {
     }
   }, []);
 
+  const fetchSocialVideos = useCallback(async () => {
+    try {
+      const res = await fetch("/api/social-videos");
+      if (res.ok) {
+        const data = await res.json();
+        setSocialVideos(data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch social videos:", error);
+    }
+  }, []);
+
   useEffect(() => {
     fetchGalleries();
     fetchBlogs();
     fetchSettings();
     fetchVideoProjects();
-  }, [fetchGalleries, fetchBlogs, fetchSettings, fetchVideoProjects]);
+    fetchSocialVideos();
+  }, [fetchGalleries, fetchBlogs, fetchSettings, fetchVideoProjects, fetchSocialVideos]);
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
@@ -608,6 +643,135 @@ export default function AdminPage() {
     } catch (error) {
       console.error("Failed to reorder video projects:", error);
       fetchVideoProjects();
+    }
+  };
+
+  // Social video (reels) functions
+  const createSocialVideo = async () => {
+    if (!reelUrl.trim()) return;
+
+    setIsCreatingReel(true);
+    setReelError(null);
+    try {
+      const res = await fetch("/api/social-videos", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sourceUrl: reelUrl.trim(),
+          caption: reelCaption || null,
+          thumbnailUrl: reelThumbnail || null,
+        }),
+      });
+
+      if (res.ok) {
+        setReelUrl("");
+        setReelCaption("");
+        setReelThumbnail("");
+        fetchSocialVideos();
+      } else {
+        const data = await res.json();
+        setReelError(data.error || "Failed to add reel");
+      }
+    } catch (error) {
+      console.error("Failed to create social video:", error);
+      setReelError("Failed to add reel");
+    } finally {
+      setIsCreatingReel(false);
+    }
+  };
+
+  const deleteSocialVideo = async (id: string) => {
+    if (!confirm("Delete this reel?")) return;
+
+    try {
+      await fetch(`/api/social-videos/${id}`, { method: "DELETE" });
+      fetchSocialVideos();
+    } catch (error) {
+      console.error("Failed to delete social video:", error);
+    }
+  };
+
+  const startEditingReel = (videoId: string, field: "caption" | "sourceUrl" | "thumbnailUrl", currentValue: string) => {
+    setEditingReelField({ videoId, field });
+    setEditReelValue(currentValue || "");
+  };
+
+  const saveReelEdit = async () => {
+    if (!editingReelField) return;
+
+    try {
+      await fetch(`/api/social-videos/${editingReelField.videoId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          [editingReelField.field]: editReelValue,
+        }),
+      });
+      setEditingReelField(null);
+      setEditReelValue("");
+      fetchSocialVideos();
+    } catch (error) {
+      console.error("Failed to update social video:", error);
+    }
+  };
+
+  const cancelReelEdit = () => {
+    setEditingReelField(null);
+    setEditReelValue("");
+  };
+
+  const moveSocialVideo = async (index: number, direction: "up" | "down") => {
+    const newIndex = direction === "up" ? index - 1 : index + 1;
+    if (newIndex < 0 || newIndex >= socialVideos.length) return;
+
+    const newVideos = [...socialVideos];
+    [newVideos[index], newVideos[newIndex]] = [newVideos[newIndex], newVideos[index]];
+
+    setSocialVideos(newVideos);
+
+    try {
+      const res = await fetch("/api/social-videos/reorder", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          videoIds: newVideos.map((v) => v.id),
+        }),
+      });
+
+      if (!res.ok) {
+        console.error("Failed to reorder social videos");
+        fetchSocialVideos();
+      }
+    } catch (error) {
+      console.error("Failed to reorder social videos:", error);
+      fetchSocialVideos();
+    }
+  };
+
+  // Gallery share link helpers
+  const galleryShareUrl = (gallery: Gallery) =>
+    `${window.location.origin}/g/${gallery.slug || slugify(gallery.title)}`;
+
+  const copyGalleryLink = async (gallery: Gallery) => {
+    try {
+      await navigator.clipboard.writeText(galleryShareUrl(gallery));
+      setCopiedGalleryId(gallery.id);
+      setTimeout(() => setCopiedGalleryId(null), 2000);
+    } catch (error) {
+      console.error("Failed to copy link:", error);
+    }
+  };
+
+  const toggleUnlisted = async (gallery: Gallery) => {
+    try {
+      await fetch(`/api/galleries/${gallery.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ unlisted: !gallery.unlisted }),
+      });
+      fetchGalleries();
+    } catch (error) {
+      console.error("Failed to update gallery:", error);
     }
   };
 
@@ -1413,6 +1577,222 @@ export default function AdminPage() {
             )}
           </div>
 
+          {/* Add Reel Card */}
+          <div className="card card-white p-10">
+            <h2 className="font-heading text-xl font-bold mb-2">
+              Add Reel
+            </h2>
+            <p className="font-body text-[#6b6b6b] mb-6">
+              Paste a TikTok, Instagram Reel, YouTube Short, or direct video link — shows in the 9:16 Reels feed
+            </p>
+
+            <div className="space-y-4">
+              <div>
+                <label className="font-body text-sm text-gray-600 block mb-2">
+                  Video Link *
+                </label>
+                <input
+                  type="url"
+                  value={reelUrl}
+                  onChange={(e) => setReelUrl(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl font-body focus:outline-none focus:border-gray-400 transition-colors"
+                  placeholder="https://www.tiktok.com/@user/video/… or https://www.instagram.com/reel/…"
+                  disabled={isCreatingReel}
+                />
+              </div>
+
+              <div>
+                <label className="font-body text-sm text-gray-600 block mb-2">
+                  Caption (optional)
+                </label>
+                <input
+                  type="text"
+                  value={reelCaption}
+                  onChange={(e) => setReelCaption(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl font-body focus:outline-none focus:border-gray-400 transition-colors"
+                  placeholder="Short caption shown under the reel"
+                  disabled={isCreatingReel}
+                />
+              </div>
+
+              <div>
+                <label className="font-body text-sm text-gray-600 block mb-2">
+                  Custom Thumbnail URL (optional)
+                </label>
+                <input
+                  type="url"
+                  value={reelThumbnail}
+                  onChange={(e) => setReelThumbnail(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl font-body focus:outline-none focus:border-gray-400 transition-colors"
+                  placeholder="https://example.com/thumbnail.jpg"
+                  disabled={isCreatingReel}
+                />
+                <p className="font-body text-xs text-gray-400 mt-1">
+                  Auto-fetched for TikTok and YouTube. Instagram shows a live preview instead.
+                </p>
+              </div>
+            </div>
+
+            {reelError && (
+              <p className="font-body text-sm text-red-600 mt-4">{reelError}</p>
+            )}
+
+            <button
+              onClick={createSocialVideo}
+              disabled={isCreatingReel || !reelUrl.trim()}
+              className="w-full mt-6 bg-[#1a1a1a] text-white py-3 rounded-xl font-body hover:bg-[#333] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isCreatingReel ? "Adding..." : "Add Reel"}
+            </button>
+          </div>
+
+          {/* Reels List Card */}
+          <div className="card card-gray p-10">
+            <h2 className="font-heading text-xl font-bold mb-2 text-center">
+              Reels
+            </h2>
+            <p className="font-body text-[#2f2f2f] mb-6 text-center">
+              {socialVideos.length} {socialVideos.length === 1 ? "reel" : "reels"}
+            </p>
+
+            {socialVideos.length === 0 ? (
+              <p className="font-body text-gray-600 text-center py-4">
+                No reels yet. Add one above to get started.
+              </p>
+            ) : (
+              <div className="space-y-4">
+                {socialVideos.map((video, index) => (
+                  <div key={video.id} className="bg-white/80 rounded-xl p-4">
+                    <div className="flex items-start justify-between">
+                      {/* Move Up/Down buttons */}
+                      <div className="flex flex-col gap-1 mr-3 flex-shrink-0">
+                        <button
+                          onClick={() => moveSocialVideo(index, "up")}
+                          disabled={index === 0}
+                          className="p-1 rounded hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                          title="Move up"
+                        >
+                          <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => moveSocialVideo(index, "down")}
+                          disabled={index === socialVideos.length - 1}
+                          className="p-1 rounded hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                          title="Move down"
+                        >
+                          <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </button>
+                      </div>
+
+                      <div className="flex items-start gap-4 flex-1">
+                        {/* 9:16 thumbnail */}
+                        {video.thumbnailUrl ? (
+                          <img
+                            src={video.thumbnailUrl}
+                            alt={video.caption || "Reel"}
+                            className="w-12 h-[85px] object-cover rounded-lg flex-shrink-0"
+                          />
+                        ) : (
+                          <div className="w-12 h-[85px] bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                            </svg>
+                          </div>
+                        )}
+
+                        <div className="flex-1 min-w-0">
+                          {/* Caption - Inline Edit */}
+                          {editingReelField?.videoId === video.id && editingReelField.field === "caption" ? (
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="text"
+                                value={editReelValue}
+                                onChange={(e) => setEditReelValue(e.target.value)}
+                                className="font-heading font-bold text-[#1a1a1a] bg-white border border-gray-300 rounded px-2 py-1 flex-1"
+                                autoFocus
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") saveReelEdit();
+                                  if (e.key === "Escape") cancelReelEdit();
+                                }}
+                              />
+                              <button onClick={saveReelEdit} className="text-green-500 hover:text-green-600">
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                              </button>
+                              <button onClick={cancelReelEdit} className="text-gray-400 hover:text-gray-600">
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                              </button>
+                            </div>
+                          ) : (
+                            <h3
+                              className="font-heading font-bold text-[#1a1a1a] cursor-pointer hover:text-blue-600 transition-colors"
+                              onClick={() => startEditingReel(video.id, "caption", video.caption || "")}
+                              title="Click to edit caption"
+                            >
+                              {video.caption || "Click to add caption..."}
+                            </h3>
+                          )}
+
+                          {/* Source URL - Inline Edit */}
+                          {editingReelField?.videoId === video.id && editingReelField.field === "sourceUrl" ? (
+                            <div className="flex items-center gap-2 mt-2">
+                              <input
+                                type="url"
+                                value={editReelValue}
+                                onChange={(e) => setEditReelValue(e.target.value)}
+                                className="font-body text-xs text-gray-500 bg-white border border-gray-300 rounded px-2 py-1 flex-1"
+                                autoFocus
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") saveReelEdit();
+                                  if (e.key === "Escape") cancelReelEdit();
+                                }}
+                              />
+                              <button onClick={saveReelEdit} className="text-green-500 hover:text-green-600">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                              </button>
+                              <button onClick={cancelReelEdit} className="text-gray-400 hover:text-gray-600">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                              </button>
+                            </div>
+                          ) : (
+                            <p
+                              className="font-body text-xs text-gray-400 mt-2 truncate cursor-pointer hover:text-blue-600 transition-colors"
+                              onClick={() => startEditingReel(video.id, "sourceUrl", video.sourceUrl)}
+                              title="Click to edit link"
+                            >
+                              {video.sourceUrl}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => deleteSocialVideo(video.id)}
+                        className="text-gray-500 hover:text-red-500 p-2 rounded-lg hover:bg-gray-100 transition-colors flex-shrink-0"
+                        title="Delete Reel"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           {/* Galleries List Card */}
           <div className="card card-gray p-10">
             <h2 className="font-heading text-xl font-bold mb-2 text-center">
@@ -1723,7 +2103,7 @@ export default function AdminPage() {
                       </button>
                     )}
 
-                    <div className="mt-3 pt-3 border-t border-gray-200 flex items-center">
+                    <div className="mt-3 pt-3 border-t border-gray-200 flex flex-wrap items-center gap-x-6 gap-y-2">
                       <label className="flex items-center gap-2 cursor-pointer">
                         <input
                           type="checkbox"
@@ -1735,6 +2115,29 @@ export default function AdminPage() {
                           Allow downloads
                         </span>
                       </label>
+
+                      <label className="flex items-center gap-2 cursor-pointer" title="Hidden from the Work page — only reachable via the direct link">
+                        <input
+                          type="checkbox"
+                          checked={!!gallery.unlisted}
+                          onChange={() => toggleUnlisted(gallery)}
+                          className="w-4 h-4 rounded"
+                        />
+                        <span className="font-body text-sm text-gray-600">
+                          Unlisted (direct link only)
+                        </span>
+                      </label>
+
+                      <button
+                        onClick={() => copyGalleryLink(gallery)}
+                        className="flex items-center gap-1.5 text-sm text-blue-500 hover:text-blue-600 font-body"
+                        title={`/g/${gallery.slug || slugify(gallery.title)}`}
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                        </svg>
+                        {copiedGalleryId === gallery.id ? "Copied!" : "Copy share link"}
+                      </button>
                     </div>
                   </div>
                 ))}

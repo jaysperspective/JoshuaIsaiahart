@@ -195,7 +195,6 @@ export default function ContactClient() {
 
       {/* Booking Section */}
       <div>
-        <h2 className="headline mb-2">Book a Consultation</h2>
         <p className="label normal-case tracking-normal mb-6">
           30-minute Google Meet session · Weekdays 3 PM – 7 PM
         </p>
@@ -278,7 +277,7 @@ export default function ContactClient() {
             <p className="label mb-3">
               Available times for {formatDate(selectedDate)}
             </p>
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {TIME_SLOTS.map((time) => (
                 <button
                   key={time}

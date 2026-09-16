@@ -96,3 +96,67 @@ export function isValidVideoUrl(url: string): boolean {
   const parsed = parseVideoUrl(url);
   return parsed.service !== null;
 }
+
+// ---------- Social / vertical (9:16) video support ----------
+
+export type SocialPlatform = 'tiktok' | 'instagram' | 'youtube' | 'direct' | null;
+
+export interface ParsedSocial {
+  platform: SocialPlatform;
+  id: string | null;
+  originalUrl: string;
+}
+
+/**
+ * Parse a social video URL (TikTok, Instagram Reel, YouTube Short, or direct file)
+ */
+export function parseSocialUrl(url: string): ParsedSocial {
+  if (!url) {
+    return { platform: null, id: null, originalUrl: url };
+  }
+
+  const tiktokMatch = url.match(/tiktok\.com\/@[^/]+\/video\/(\d+)/);
+  if (tiktokMatch) {
+    return { platform: 'tiktok', id: tiktokMatch[1], originalUrl: url };
+  }
+
+  const instagramMatch = url.match(/instagram\.com\/(?:[^/]+\/)?(?:reel|reels|p)\/([A-Za-z0-9_-]+)/);
+  if (instagramMatch) {
+    return { platform: 'instagram', id: instagramMatch[1], originalUrl: url };
+  }
+
+  const parsed = parseVideoUrl(url);
+  if (parsed.service === 'youtube') {
+    return { platform: 'youtube', id: parsed.id, originalUrl: url };
+  }
+  if (parsed.service === 'direct') {
+    return { platform: 'direct', id: null, originalUrl: url };
+  }
+
+  return { platform: null, id: null, originalUrl: url };
+}
+
+/**
+ * Generate an embed URL for a social video
+ */
+export function getSocialEmbedUrl(parsed: ParsedSocial): string | null {
+  switch (parsed.platform) {
+    case 'tiktok':
+      return `https://www.tiktok.com/embed/v2/${parsed.id}`;
+    case 'instagram':
+      return `https://www.instagram.com/reel/${parsed.id}/embed`;
+    case 'youtube':
+      return `https://www.youtube.com/embed/${parsed.id}?autoplay=1&playsinline=1`;
+    case 'direct':
+      return parsed.originalUrl;
+    default:
+      return null;
+  }
+}
+
+/**
+ * Check if a URL is a supported social video URL
+ */
+export function isValidSocialUrl(url: string): boolean {
+  return parseSocialUrl(url).platform !== null;
+}

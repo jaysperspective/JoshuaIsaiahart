@@ -157,8 +157,8 @@ export default function RateSheet() {
             Let&apos;s talk about your <span className="italic font-light">project</span>
           </h2>
           <div className="flex flex-wrap gap-3">
-            <Link href="/work?tab=contact" className="btn btn-accent">
-              Get in Touch
+            <Link href="/work#book" className="btn btn-accent">
+              Book a Session
             </Link>
             <Link href="/work" className="btn">
               View Work

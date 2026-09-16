@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
+import { slugify } from "@/app/lib/slug";
 
 export async function GET() {
   try {
@@ -46,11 +47,21 @@ export async function POST(request: NextRequest) {
     });
     const nextSortOrder = ((lastGallery as any)?.sortOrder ?? -1) + 1;
 
+    // Stable share slug — unique even if two galleries share a title
+    const base = slugify(title) || "gallery";
+    let slug = base;
+    for (let n = 2; ; n++) {
+      const existing = await prisma.gallery.findFirst({ where: { slug } as any });
+      if (!existing) break;
+      slug = `${base}-${n}`;
+    }
+
     const gallery = await prisma.gallery.create({
       data: {
         title,
         description: description || null,
         downloadable: downloadable || false,
+        slug,
         sortOrder: nextSortOrder,
       } as any,
     });

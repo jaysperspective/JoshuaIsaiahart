@@ -40,7 +40,7 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { title, description, downloadable, coverImage, imageOrder } = body;
+    const { title, description, downloadable, coverImage, imageOrder, unlisted } = body;
 
     // Update image order if provided
     if (imageOrder && Array.isArray(imageOrder)) {
@@ -61,7 +61,8 @@ export async function PUT(
         ...(description !== undefined && { description }),
         ...(downloadable !== undefined && { downloadable }),
         ...(coverImage !== undefined && { coverImage }),
-      },
+        ...(unlisted !== undefined && { unlisted }),
+      } as any,
       include: {
         images: {
           orderBy: { order: "asc" },

@@ -8,6 +8,8 @@ export const dynamic = "force-dynamic";
 async function getGalleries() {
   try {
     const galleries = await prisma.gallery.findMany({
+      // Unlisted galleries only appear at their direct /g/<slug> link
+      where: { unlisted: false } as any,
       include: {
         images: {
           orderBy: { order: "asc" },
@@ -64,6 +66,28 @@ async function getVideoProjects() {
   }
 }
 
+async function getSocialVideos() {
+  try {
+    const socialVideos = await (prisma as any).socialVideo.findMany({
+      orderBy: [
+        { sortOrder: "asc" },
+        { createdAt: "asc" },
+      ],
+    });
+
+    return socialVideos.map((video: any) => ({
+      id: video.id,
+      caption: video.caption,
+      sourceUrl: video.sourceUrl,
+      thumbnailUrl: video.thumbnailUrl,
+      createdAt: video.createdAt.toISOString(),
+    }));
+  } catch {
+    // SocialVideo model may not exist yet
+    return [];
+  }
+}
+
 function LoadingFallback() {
   return (
     <div className="min-h-screen bg-paper flex items-center justify-center">
@@ -73,14 +97,15 @@ function LoadingFallback() {
 }
 
 export default async function WorkPage() {
-  const [galleries, videoProjects] = await Promise.all([
+  const [galleries, videoProjects, socialVideos] = await Promise.all([
     getGalleries(),
     getVideoProjects(),
+    getSocialVideos(),
   ]);
 
   return (
     <Suspense fallback={<LoadingFallback />}>
-      <WorkClient galleries={galleries} videoProjects={videoProjects} />
+      <WorkClient galleries={galleries} videoProjects={videoProjects} socialVideos={socialVideos} />
     </Suspense>
   );
 }

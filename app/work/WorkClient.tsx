@@ -3,8 +3,13 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Image from "next/image";
+import Link from "next/link";
 import WorkNavigation, { WorkTab } from "./WorkNavigation";
 import VideographyClient from "./VideographyClient";
+import ContactClient from "./ContactClient";
+import Testimonials from "./Testimonials";
+import Reveal from "./Reveal";
+import SocialClient, { SocialVideo } from "./SocialClient";
 
 interface Image {
   id: string;
@@ -35,9 +40,10 @@ interface VideoProject {
 interface WorkClientProps {
   galleries: Gallery[];
   videoProjects: VideoProject[];
+  socialVideos: SocialVideo[];
 }
 
-export default function WorkClient({ galleries, videoProjects }: WorkClientProps) {
+export default function WorkClient({ galleries, videoProjects, socialVideos }: WorkClientProps) {
   const [expandedGalleryId, setExpandedGalleryId] = useState<string | null>(null);
   const [lightboxImage, setLightboxImage] = useState<Image | null>(null);
   const [isAnimating, setIsAnimating] = useState(false);
@@ -46,6 +52,16 @@ export default function WorkClient({ galleries, videoProjects }: WorkClientProps
   const searchParams = useSearchParams();
   const router = useRouter();
   const galleryRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+  const touchStartX = useRef<number | null>(null);
+
+  // Scroll to booking section when arriving via /work#book
+  useEffect(() => {
+    if (window.location.hash === "#book") {
+      setTimeout(() => {
+        document.getElementById("book")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 150);
+    }
+  }, []);
 
   const slugify = (text: string) => {
     return text
@@ -57,7 +73,7 @@ export default function WorkClient({ galleries, videoProjects }: WorkClientProps
   // Handle URL-driven initialization
   useEffect(() => {
     const tabParam = searchParams.get("tab") as WorkTab | null;
-    if (tabParam && ["photography", "videography"].includes(tabParam)) {
+    if (tabParam && ["photography", "videography", "reels"].includes(tabParam)) {
       setActiveTab(tabParam);
     }
 
@@ -207,6 +223,10 @@ export default function WorkClient({ galleries, videoProjects }: WorkClientProps
           <VideographyClient videoProjects={videoProjects} />
         )}
 
+        {activeTab === "reels" && (
+          <SocialClient socialVideos={socialVideos} />
+        )}
+
         {/* Photography Gallery List */}
         {activeTab === "photography" && (
           <div className="max-w-3xl mx-auto w-full flex flex-col">
@@ -223,6 +243,7 @@ export default function WorkClient({ galleries, videoProjects }: WorkClientProps
                   }}
                   className="border-t border-rule py-10 first:border-t-0 first:pt-2"
                 >
+                  <Reveal>
                   {/* Cover / header — click to expand */}
                   <div onClick={() => toggleGallery(gallery)} className="group cursor-pointer flex items-center gap-6">
                     {/* Text */}
@@ -320,6 +341,7 @@ export default function WorkClient({ galleries, videoProjects }: WorkClientProps
                       </div>
                     </div>
                   )}
+                  </Reveal>
                 </div>
               );
             })}
@@ -331,6 +353,34 @@ export default function WorkClient({ galleries, videoProjects }: WorkClientProps
             )}
           </div>
         )}
+
+        {/* Client stories + booking — placed right after the work, while it's fresh */}
+        <div className="max-w-3xl mx-auto w-full">
+          <Testimonials />
+
+          <section id="book" className="mt-20 border-t border-rule pt-14 scroll-mt-8">
+            <Reveal>
+              <p className="eyebrow mb-4 text-center">Ready When You Are</p>
+              <h2 className="headline mb-4 text-center">
+                Book a <span className="italic font-light">Session</span>
+              </h2>
+              <p className="prose-serif mx-auto mb-3 max-w-2xl text-center">
+                If the work resonates, let&apos;s talk about what you have in mind.
+                Every project starts with a free 30-minute consultation — no
+                commitment, just a conversation.
+              </p>
+              <p className="label normal-case tracking-normal text-center mb-12">
+                Curious about pricing first?{" "}
+                <Link href="/rate-sheet" className="link-underline">
+                  View the rate sheet
+                </Link>
+              </p>
+            </Reveal>
+            <Reveal delay={80}>
+              <ContactClient />
+            </Reveal>
+          </section>
+        </div>
       </div>
 
       {/* Lightbox */}
@@ -338,6 +388,15 @@ export default function WorkClient({ galleries, videoProjects }: WorkClientProps
         <div
           className="fixed inset-0 bg-vigne/95 z-50 flex items-center justify-center lightbox-enter"
           onClick={closeLightbox}
+          onTouchStart={(e) => {
+            touchStartX.current = e.touches[0].clientX;
+          }}
+          onTouchEnd={(e) => {
+            if (touchStartX.current === null) return;
+            const dx = e.changedTouches[0].clientX - touchStartX.current;
+            touchStartX.current = null;
+            if (Math.abs(dx) > 50) navigateLightbox(dx < 0 ? "next" : "prev");
+          }}
         >
           {/* Close button */}
           <button
