@@ -29,7 +29,7 @@ export default function WorkNavigation({ activeTab, onTabChange }: WorkNavigatio
 
       {/* Title */}
       <div className="pt-12 pb-8 sm:pt-16 text-center">
-        <p className="eyebrow mb-5">The Portfolio Of</p>
+        <p className="eyebrow mb-5">Photography · Film · Social</p>
         <h1 className="display text-[clamp(2.5rem,8vw,5rem)]">Selected Work</h1>
       </div>
 
