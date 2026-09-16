@@ -155,12 +155,15 @@ export default async function About() {
                 for the most honest way to be of service.
               </p>
 
-              <div className="pt-2">
+              <div className="flex flex-wrap gap-3 pt-2">
                 <Link href="/work" className="btn btn-accent">
                   View Work
                   <svg className="-mr-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5l7 7-7 7" />
                   </svg>
+                </Link>
+                <Link href="/cv" className="btn">
+                  Curriculum Vitae
                 </Link>
               </div>
 

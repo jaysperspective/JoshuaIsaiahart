@@ -12,6 +12,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE}/work`, changeFrequency: "weekly", priority: 0.9 },
     { url: `${BASE}/rate-sheet`, changeFrequency: "monthly", priority: 0.8 },
     { url: `${BASE}/about`, changeFrequency: "monthly", priority: 0.7 },
+    { url: `${BASE}/cv`, changeFrequency: "monthly", priority: 0.6 },
   ];
 
   // Public galleries get their standalone /g/ pages; unlisted stay out

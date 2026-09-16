@@ -294,6 +294,18 @@ body {
   color: #1a1a1a;
 }
 
+/* ---------- Print (CV page → clean paper resume) ---------- */
+@media print {
+  html,
+  body {
+    background: #fff;
+  }
+  .display,
+  .headline {
+    color: #1a1a1a;
+  }
+}
+
 /* ---------- Scroll reveals ---------- */
 .sr {
   opacity: 0;
