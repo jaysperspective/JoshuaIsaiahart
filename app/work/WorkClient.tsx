@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, Fragment } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -227,72 +227,72 @@ export default function WorkClient({ galleries, videoProjects, socialVideos }: W
           <SocialClient socialVideos={socialVideos} />
         )}
 
-        {/* Photography Gallery List */}
+        {/* Photography — cover grid; clicking a cover unfolds that gallery */}
         {activeTab === "photography" && (
-          <div className="max-w-3xl mx-auto w-full flex flex-col">
+          <div className="mx-auto grid w-full max-w-5xl grid-cols-2 gap-x-2 gap-y-8 sm:gap-x-3 sm:grid-cols-3">
             {galleries.map((gallery, gIndex) => {
               const isExpanded = expandedGalleryId === gallery.id;
               const coverImage = getCoverImage(gallery);
               const otherImages = getOtherImages(gallery);
 
               return (
-                <div
-                  key={gallery.id}
-                  ref={(el) => {
-                    if (el) galleryRefs.current.set(gallery.id, el);
-                  }}
-                  className="border-t border-rule py-10 first:border-t-0 first:pt-2"
-                >
-                  <Reveal>
-                  {/* Cover / header — click to expand */}
-                  <div onClick={() => toggleGallery(gallery)} className="group cursor-pointer flex items-center gap-6">
-                    {/* Text */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-baseline gap-3 mb-2 justify-center">
-                        <span className="label numeral">{String(gIndex + 1).padStart(2, "0")}</span>
-                        <h2 className="headline text-[1.6rem] sm:text-[2rem] transition-colors group-hover:text-accent text-center">
+                <Fragment key={gallery.id}>
+                  {/* Cover card */}
+                  <div
+                    ref={(el) => {
+                      if (el) galleryRefs.current.set(gallery.id, el);
+                    }}
+                    onClick={() => toggleGallery(gallery)}
+                    className="group cursor-pointer scroll-mt-8"
+                  >
+                    <Reveal delay={(gIndex % 3) * 60}>
+                      <div
+                        className={`relative aspect-square overflow-hidden rounded-[4px] bg-paper-2 transition-shadow ${
+                          isExpanded ? "ring-1 ring-accent" : ""
+                        }`}
+                      >
+                        {coverImage ? (
+                          <Image
+                            src={coverImage.path}
+                            alt={gallery.title}
+                            fill
+                            sizes="(max-width: 640px) 50vw, 33vw"
+                            className="object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center">
+                            <p className="label">—</p>
+                          </div>
+                        )}
+                      </div>
+                      <div className="mt-2.5 flex items-baseline justify-center gap-2">
+                        <span className="label numeral text-[0.6rem]">{String(gIndex + 1).padStart(2, "0")}</span>
+                        <h2
+                          className={`font-display text-lg sm:text-xl transition-colors group-hover:text-accent ${
+                            isExpanded ? "text-accent" : "text-emerald"
+                          }`}
+                        >
                           {gallery.title}
                         </h2>
                       </div>
-                      {!isExpanded && gallery.description && (
-                        <p className="prose-serif text-[1.05rem] line-clamp-2 text-center">
-                          {gallery.description}
-                        </p>
-                      )}
-                      <span className="label mt-3 inline-block transition-colors group-hover:text-accent text-center w-full">
+                      <span className="label mt-1 block text-center transition-colors group-hover:text-accent">
                         {isExpanded ? "Close —" : `${gallery.images.length} frames`}
                       </span>
-                    </div>
-
-                    {/* Square thumbnail */}
-                    {coverImage ? (
-                      <div className="relative aspect-square w-36 sm:w-48 shrink-0 overflow-hidden rounded-[4px] bg-paper-2">
-                        <Image
-                          src={coverImage.path}
-                          alt={gallery.title}
-                          fill
-                          sizes="192px"
-                          className="object-cover transition-transform duration-500 group-hover:scale-[1.04]"
-                        />
-                      </div>
-                    ) : (
-                      <div className="flex aspect-square w-36 sm:w-48 shrink-0 items-center justify-center rounded-[4px] bg-paper-2">
-                        <p className="label">—</p>
-                      </div>
-                    )}
+                    </Reveal>
                   </div>
 
-                  {/* Expanded Content */}
+                  {/* Unfolded gallery — spans the full grid width below the cover's row */}
                   {isExpanded && (
-                    <div className="mt-6">
-                      {/* Description */}
+                    <div
+                      className="col-span-full border-t border-b border-rule py-8"
+                      style={{ animation: "fadeInUp 0.3s ease forwards" }}
+                    >
                       {gallery.description && (
-                        <p className="prose-serif mb-8 max-w-2xl">{gallery.description}</p>
+                        <p className="prose-serif mx-auto mb-8 max-w-2xl text-center">{gallery.description}</p>
                       )}
 
-                      {/* Image Grid */}
                       {otherImages.length > 0 && (
-                        <div className="grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+                        <div className="grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-3 lg:grid-cols-4">
                           {otherImages.map((image, index) => (
                             <div
                               key={image.id}
@@ -308,7 +308,7 @@ export default function WorkClient({ galleries, videoProjects, socialVideos }: W
                                   src={image.path}
                                   alt={image.caption || image.filename}
                                   fill
-                                  sizes="(max-width: 640px) 50vw, (max-width: 768px) 50vw, 33vw"
+                                  sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
                                   className="object-cover transition-transform duration-500 group-hover/img:scale-105"
                                 />
                               </div>
@@ -319,7 +319,7 @@ export default function WorkClient({ galleries, videoProjects, socialVideos }: W
 
                       {/* Actions */}
                       <div
-                        className="mt-8 flex flex-wrap gap-3"
+                        className="mt-8 flex flex-wrap justify-center gap-3"
                         style={{ animation: "fadeInUp 0.3s ease forwards", animationDelay: "100ms" }}
                       >
                         {gallery.downloadable && (
@@ -338,16 +338,18 @@ export default function WorkClient({ galleries, videoProjects, socialVideos }: W
                           Inquire
                         </button>
 
+                        <button onClick={(e) => { e.stopPropagation(); toggleGallery(gallery); }} className="btn btn-ghost">
+                          Close —
+                        </button>
                       </div>
                     </div>
                   )}
-                  </Reveal>
-                </div>
+                </Fragment>
               );
             })}
 
             {galleries.length === 0 && (
-              <div className="surface py-24 text-center">
+              <div className="surface col-span-full py-24 text-center">
                 <p className="label">No galleries available yet.</p>
               </div>
             )}
