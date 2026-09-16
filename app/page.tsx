@@ -61,9 +61,6 @@ export default function Home() {
               <Link href="/about" className="btn">
                 About
               </Link>
-              <Link href="/work?tab=videography" className="btn">
-                Feature Film
-              </Link>
               <Link href="/work?tab=photography" className="btn">
                 Editorial
               </Link>
