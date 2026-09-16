@@ -4,6 +4,13 @@ import { prisma } from "@/app/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
+export const metadata = {
+  title: "About",
+  description:
+    "About Joshua Isaiah — Creative Director, photographer, and filmmaker working across creative mediums in the Washington, DC metro area.",
+  alternates: { canonical: "/about" },
+};
+
 // Social icons
 function InstagramIcon({ className = "" }: { className?: string }) {
   return (

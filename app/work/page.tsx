@@ -5,6 +5,13 @@ import WorkClient from "./WorkClient";
 // Mark as dynamic to avoid prerendering (requires database)
 export const dynamic = "force-dynamic";
 
+export const metadata = {
+  title: "Work — Photography, Film & Social",
+  description:
+    "Selected work by Joshua Isaiah — photography galleries, films and event coverage, and short-form social video for clients in the Washington, DC metro area.",
+  alternates: { canonical: "/work" },
+};
+
 async function getGalleries() {
   try {
     const galleries = await prisma.gallery.findMany({

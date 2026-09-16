@@ -1,5 +1,12 @@
 import Link from "next/link";
 
+export const metadata = {
+  title: "Rates & Services",
+  description:
+    "2026 photography and videography rates — hourly, half-day, and full-day sessions, event coverage, and editing. Washington, DC metro area.",
+  alternates: { canonical: "/rate-sheet" },
+};
+
 const SECTIONS = [
   {
     title: "Videography Services",

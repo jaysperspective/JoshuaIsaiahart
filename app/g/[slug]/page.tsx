@@ -29,6 +29,8 @@ async function getGallery(slug: string) {
       title: gallery.title,
       description: gallery.description,
       coverImage: gallery.coverImage,
+      unlisted: Boolean((gallery as any).unlisted),
+      slug: (gallery as any).slug || slugify(gallery.title),
       images: gallery.images.map((image) => ({
         id: image.id,
         filename: image.filename,
@@ -51,8 +53,11 @@ export async function generateMetadata({
   if (!gallery) return { title: "Gallery — Joshua Isaiah" };
 
   return {
-    title: `${gallery.title} — Joshua Isaiah`,
-    description: gallery.description || `Photo gallery: ${gallery.title}`,
+    title: gallery.title,
+    description: gallery.description || `Photo gallery: ${gallery.title} — Joshua Isaiah`,
+    alternates: { canonical: `/g/${gallery.slug}` },
+    // Unlisted galleries are private client links — keep them out of search
+    robots: gallery.unlisted ? { index: false, follow: false } : undefined,
     openGraph: {
       title: gallery.title,
       description: gallery.description || undefined,
@@ -73,5 +78,27 @@ export default async function GalleryPage({
     notFound();
   }
 
-  return <GalleryGridClient gallery={gallery} />;
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "ImageGallery",
+    name: gallery.title,
+    description: gallery.description || undefined,
+    url: `https://joshuaisaiah.art/g/${gallery.slug}`,
+    author: { "@id": "https://joshuaisaiah.art/#joshua" },
+    image: gallery.images
+      .slice(0, 10)
+      .map((img) => `https://joshuaisaiah.art${img.path}`),
+  };
+
+  return (
+    <>
+      {!gallery.unlisted && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      )}
+      <GalleryGridClient gallery={gallery} />
+    </>
+  );
 }
