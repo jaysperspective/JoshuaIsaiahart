@@ -84,50 +84,38 @@ export default function SocialClient({ socialVideos }: SocialClientProps) {
                     preload="metadata"
                     className="h-full w-full object-cover"
                   />
-                ) : embedUrl && parsed.platform === "instagram" ? (
-                  // No thumbnail available — show the embed with Instagram's
-                  // header/footer chrome cropped out, inert so clicks open the modal
-                  <div className="pointer-events-none absolute inset-0 overflow-hidden">
-                    <iframe
-                      src={embedUrl}
-                      loading="lazy"
-                      scrolling="no"
-                      className="absolute left-0 w-full"
-                      style={{ top: "-54px", height: "calc(100% + 158px)" }}
-                      title={video.caption || "Social video"}
-                    />
-                  </div>
-                ) : embedUrl ? (
-                  <iframe
-                    src={embedUrl}
-                    loading="lazy"
-                    scrolling="no"
-                    className="pointer-events-none h-full w-full"
-                    title={video.caption || "Social video"}
-                  />
                 ) : (
-                  <div className="flex h-full w-full items-center justify-center">
-                    <svg className="h-12 w-12 text-muted/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
+                  // No thumbnail — embeds can't be de-chromed, so show a clean
+                  // editorial tile; the playable embed opens in the modal
+                  <div className="flex h-full w-full flex-col items-center justify-center gap-4 bg-vigne">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-full border border-paper/25 transition-colors duration-300 group-hover:border-accent group-hover:bg-accent/20">
+                      <svg className="ml-0.5 h-6 w-6 text-paper/80" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z" />
+                      </svg>
+                    </div>
+                    <span className="font-sans text-[0.6rem] font-medium uppercase tracking-[0.22em] text-paper/50">
+                      {parsed.platform ? `Watch on ${PLATFORM_LABELS[parsed.platform]}` : "Watch"}
+                    </span>
                   </div>
                 )}
 
-                {/* Hover overlay + play */}
-                <div className="absolute inset-0 flex items-center justify-center bg-vigne/0 transition-colors duration-300 group-hover:bg-vigne/20">
-                  <div className="flex h-12 w-12 scale-90 items-center justify-center rounded-full bg-vigne/55 opacity-0 backdrop-blur-sm transition-all duration-300 group-hover:scale-100 group-hover:opacity-100">
-                    <svg className="ml-0.5 h-5 w-5 text-paper" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M8 5v14l11-7z" />
-                    </svg>
-                  </div>
-                </div>
+                {/* Hover overlay + play (only over real imagery) */}
+                {(video.thumbnailUrl || parsed.platform === "direct") && (
+                  <>
+                    <div className="absolute inset-0 flex items-center justify-center bg-vigne/0 transition-colors duration-300 group-hover:bg-vigne/20">
+                      <div className="flex h-12 w-12 scale-90 items-center justify-center rounded-full bg-vigne/55 opacity-0 backdrop-blur-sm transition-all duration-300 group-hover:scale-100 group-hover:opacity-100">
+                        <svg className="ml-0.5 h-5 w-5 text-paper" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M8 5v14l11-7z" />
+                        </svg>
+                      </div>
+                    </div>
 
-                {/* Platform badge */}
-                {parsed.platform && (
-                  <span className="absolute bottom-2 left-2 rounded-[2px] bg-vigne/60 px-1.5 py-0.5 font-sans text-[0.58rem] font-medium uppercase tracking-[0.14em] text-paper/90 backdrop-blur-sm">
-                    {PLATFORM_LABELS[parsed.platform]}
-                  </span>
+                    {parsed.platform && (
+                      <span className="absolute bottom-2 left-2 rounded-[2px] bg-vigne/60 px-1.5 py-0.5 font-sans text-[0.58rem] font-medium uppercase tracking-[0.14em] text-paper/90 backdrop-blur-sm">
+                        {PLATFORM_LABELS[parsed.platform]}
+                      </span>
+                    )}
+                  </>
                 )}
               </div>
 
