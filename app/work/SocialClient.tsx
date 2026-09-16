@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { parseSocialUrl, getSocialEmbedUrl } from "@/app/lib/video-utils";
 import Reveal from "./Reveal";
 
@@ -45,19 +46,40 @@ export default function SocialClient({ socialVideos }: SocialClientProps) {
     document.body.style.overflow = "";
   };
 
-  if (socialVideos.length === 0) {
-    return (
-      <div className="surface py-24 text-center">
-        <p className="label">No reels available yet.</p>
-      </div>
-    );
-  }
-
   const activeParsed = activeVideo ? parseSocialUrl(activeVideo.sourceUrl) : null;
   const activeEmbed = activeParsed ? getSocialEmbedUrl(activeParsed) : null;
 
+  const intro = (
+    <Reveal>
+      <div className="mx-auto mb-10 max-w-2xl text-center">
+        <p className="eyebrow mb-4">Short-Form · Client Work</p>
+        <p className="prose-serif">
+          Social-first video made with and for clients — reels, recaps, and
+          campaign moments built to live in the feed. The longer stories are
+          under{" "}
+          <Link href="/work?tab=videography" className="link-underline">
+            Video
+          </Link>
+          .
+        </p>
+      </div>
+    </Reveal>
+  );
+
+  if (socialVideos.length === 0) {
+    return (
+      <>
+        {intro}
+        <div className="surface py-24 text-center">
+          <p className="label">No reels available yet.</p>
+        </div>
+      </>
+    );
+  }
+
   return (
     <>
+      {intro}
       <div className="mx-auto grid w-full max-w-5xl grid-cols-2 gap-2 sm:gap-3 sm:grid-cols-3 lg:grid-cols-4">
         {socialVideos.map((video, index) => {
           const parsed = parseSocialUrl(video.sourceUrl);

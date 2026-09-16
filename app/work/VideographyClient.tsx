@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { parseVideoUrl, getEmbedUrl, getThumbnailUrl } from "@/app/lib/video-utils";
+import Reveal from "./Reveal";
 
 interface VideoProject {
   id: string;
@@ -42,16 +44,36 @@ export default function VideographyClient({ videoProjects }: VideographyClientPr
     return getEmbedUrl(parsed);
   };
 
+  const intro = (
+    <Reveal>
+      <div className="mx-auto mb-10 max-w-2xl text-center">
+        <p className="eyebrow mb-4">Long-Form</p>
+        <p className="prose-serif">
+          Films, event coverage, and interviews — work that takes its time.
+          Short-form social pieces made for clients live under{" "}
+          <Link href="/work?tab=reels" className="link-underline">
+            Reels
+          </Link>
+          .
+        </p>
+      </div>
+    </Reveal>
+  );
+
   if (videoProjects.length === 0) {
     return (
-      <div className="surface py-24 text-center">
-        <p className="label">No video projects available yet.</p>
-      </div>
+      <>
+        {intro}
+        <div className="surface py-24 text-center">
+          <p className="label">No video projects available yet.</p>
+        </div>
+      </>
     );
   }
 
   return (
     <>
+      {intro}
       <div className="max-w-3xl mx-auto flex flex-col">
         {videoProjects.map((project, index) => {
           const thumbnail = getDisplayThumbnail(project);
