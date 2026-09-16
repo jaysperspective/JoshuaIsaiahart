@@ -62,6 +62,16 @@ interface SocialVideo {
   sortOrder: number | null;
 }
 
+type AdminTab = "galleries" | "reels" | "film" | "posts" | "settings";
+
+const ADMIN_TABS: { id: AdminTab; label: string }[] = [
+  { id: "galleries", label: "Galleries" },
+  { id: "reels", label: "Reels" },
+  { id: "film", label: "Film" },
+  { id: "posts", label: "Posts" },
+  { id: "settings", label: "Settings" },
+];
+
 export default function AdminPage() {
   const [galleries, setGalleries] = useState<Gallery[]>([]);
   const [title, setTitle] = useState("");
@@ -118,6 +128,21 @@ export default function AdminPage() {
   const [videoUploadPct, setVideoUploadPct] = useState<number | null>(null);
   const [videoProcessing, setVideoProcessing] = useState(false);
   const [copiedGalleryId, setCopiedGalleryId] = useState<string | null>(null);
+
+  // Section navigation — remembers the last-used tab
+  const [adminTab, setAdminTab] = useState<AdminTab>("galleries");
+
+  useEffect(() => {
+    const saved = localStorage.getItem("adminTab");
+    if (saved && ADMIN_TABS.some((t) => t.id === saved)) {
+      setAdminTab(saved as AdminTab);
+    }
+  }, []);
+
+  const switchTab = (tab: AdminTab) => {
+    setAdminTab(tab);
+    localStorage.setItem("adminTab", tab);
+  };
 
   const fetchGalleries = useCallback(async () => {
     try {
@@ -923,8 +948,8 @@ export default function AdminPage() {
 
   return (
     <AdminAuth>
-      <div className="min-h-[calc(100vh-60px)] flex items-start justify-center p-8">
-        <div className="flex flex-col gap-4 w-full max-w-2xl">
+      <div className="min-h-[calc(100vh-60px)] flex items-start justify-center p-4 sm:p-8">
+        <div className="flex flex-col gap-4 w-full max-w-3xl">
           {/* Status Message */}
           {uploadStatus.step !== "idle" && (
             <div
@@ -1057,8 +1082,35 @@ export default function AdminPage() {
             </div>
           )}
 
+          {/* Section tabs */}
+          <div className="sticky top-4 z-20 flex flex-wrap gap-2 rounded-2xl bg-white/95 p-2 shadow-md backdrop-blur">
+            {ADMIN_TABS.map((tab) => {
+              const count =
+                tab.id === "galleries" ? galleries.length :
+                tab.id === "reels" ? socialVideos.length :
+                tab.id === "film" ? videoProjects.length :
+                tab.id === "posts" ? blogs.length : null;
+              const isActive = adminTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => switchTab(tab.id)}
+                  className={`flex-1 min-w-[5rem] rounded-xl px-3 py-2.5 font-body text-sm transition-colors ${
+                    isActive
+                      ? "bg-[#1a1a1a] text-white"
+                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  }`}
+                >
+                  {tab.label}
+                  {count !== null && count > 0 ? ` (${count})` : ""}
+                </button>
+              );
+            })}
+          </div>
+
+          {adminTab === "galleries" && (<>
           {/* Create/Edit Gallery Card */}
-          <div className="card card-white p-10">
+          <div className="card card-white p-10 order-2">
             <h2 className="font-heading text-xl font-bold mb-2">
               {editingGallery ? "Edit Gallery" : "Create Gallery"}
             </h2>
@@ -1271,7 +1323,9 @@ export default function AdminPage() {
               </button>
             )}
           </div>
+          </>)}
 
+          {adminTab === "settings" && (<>
           {/* Social Links Settings Card */}
           <div className="card card-white p-10">
             <h2 className="font-heading text-xl font-bold mb-2">
@@ -1330,7 +1384,9 @@ export default function AdminPage() {
               {isSavingSettings ? "Saving..." : "Save Links"}
             </button>
           </div>
+          </>)}
 
+          {adminTab === "posts" && (<>
           {/* Blog Post Card - Reddit-style */}
           <div className="card card-white p-10">
             <h2 className="font-heading text-xl font-bold mb-2">
@@ -1408,7 +1464,9 @@ export default function AdminPage() {
               </div>
             )}
           </div>
+          </>)}
 
+          {adminTab === "film" && (<>
           {/* Video Projects Card */}
           <div className="card card-white p-10">
             <h2 className="font-heading text-xl font-bold mb-2">
@@ -1666,7 +1724,9 @@ export default function AdminPage() {
               </div>
             )}
           </div>
+          </>)}
 
+          {adminTab === "reels" && (<>
           {/* Add Reel Card */}
           <div className="card card-white p-10">
             <h2 className="font-heading text-xl font-bold mb-2">
@@ -1955,9 +2015,12 @@ export default function AdminPage() {
               </div>
             )}
           </div>
+          </>)}
 
-          {/* Galleries List Card */}
-          <div className="card card-gray p-10">
+          {adminTab === "galleries" && (<>
+          {/* Galleries List Card — shown above the create form (order-1 vs order-2) since
+              adding to existing galleries is the everyday action */}
+          <div className="card card-gray p-10 order-1">
             <h2 className="font-heading text-xl font-bold mb-2 text-center">
               Your Galleries
             </h2>
@@ -2307,6 +2370,7 @@ export default function AdminPage() {
               </div>
             )}
           </div>
+          </>)}
         </div>
       </div>
     </AdminAuth>
