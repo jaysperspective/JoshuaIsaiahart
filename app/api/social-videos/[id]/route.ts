@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { unlink } from "fs/promises";
 import path from "path";
+import { deleteFromSpaces } from "@/app/lib/storage";
 
 export async function PUT(
   request: NextRequest,
@@ -44,7 +45,7 @@ export async function DELETE(
       where: { id },
     });
 
-    // Remove locally stored files (uploaded thumbnail and/or self-hosted video)
+    // Remove stored files (local disk or Spaces)
     for (const url of [video?.thumbnailUrl, video?.sourceUrl]) {
       if (url?.startsWith("/reels/")) {
         try {
@@ -52,6 +53,8 @@ export async function DELETE(
         } catch (e: any) {
           if (e.code !== "ENOENT") console.error("Could not delete reel file:", e);
         }
+      } else if (url?.startsWith("http")) {
+        await deleteFromSpaces(url);
       }
     }
 

@@ -5,6 +5,7 @@ import path from "path";
 import sharp from "sharp";
 import Busboy from "busboy";
 import { Readable } from "stream";
+import { spacesConfigured, uploadToSpaces, deleteFromSpaces } from "@/app/lib/storage";
 
 export const config = { api: { bodyParser: false } };
 
@@ -60,24 +61,31 @@ export async function POST(
 
     const compressed = await compress(files[0].buffer);
 
-    const reelsDir = path.join(process.cwd(), "public", "reels");
-    await mkdir(reelsDir, { recursive: true });
-
     const filename = `${id}-${Date.now()}.jpg`;
-    await writeFile(path.join(reelsDir, filename), compressed);
+    let thumbnailUrl: string;
+    if (spacesConfigured) {
+      thumbnailUrl = await uploadToSpaces(`reels/${filename}`, compressed, "image/jpeg");
+    } else {
+      const reelsDir = path.join(process.cwd(), "public", "reels");
+      await mkdir(reelsDir, { recursive: true });
+      await writeFile(path.join(reelsDir, filename), compressed);
+      thumbnailUrl = `/reels/${filename}`;
+    }
 
-    // Remove a previously uploaded local thumbnail
+    // Remove a previously uploaded thumbnail (local or Spaces)
     if (video.thumbnailUrl?.startsWith("/reels/")) {
       try {
         await unlink(path.join(process.cwd(), "public", video.thumbnailUrl));
       } catch (e: any) {
         if (e.code !== "ENOENT") console.error("Could not delete old thumbnail:", e);
       }
+    } else if (video.thumbnailUrl?.startsWith("http")) {
+      await deleteFromSpaces(video.thumbnailUrl);
     }
 
     const updated = await (prisma as any).socialVideo.update({
       where: { id },
-      data: { thumbnailUrl: `/reels/${filename}` },
+      data: { thumbnailUrl },
     });
 
     return NextResponse.json(updated);

@@ -5,6 +5,7 @@ import path from "path";
 import sharp from "sharp";
 import Busboy from "busboy";
 import { Readable } from "stream";
+import { spacesConfigured, uploadToSpaces, deleteFromSpaces } from "@/app/lib/storage";
 
 // Disable Next.js body parsing — we handle the stream ourselves
 export const config = { api: { bodyParser: false } };
@@ -63,7 +64,9 @@ export async function POST(
     }
 
     const galleryDir = path.join(process.cwd(), "public", "galleries", id);
-    await mkdir(galleryDir, { recursive: true });
+    if (!spacesConfigured) {
+      await mkdir(galleryDir, { recursive: true });
+    }
 
     const maxOrderImage = await prisma.image.findFirst({
       where: { galleryId: id },
@@ -80,14 +83,19 @@ export async function POST(
       const timestamp = Date.now();
       const baseName = entry.filename.replace(/\.[^.]+$/, "").replace(/[^a-zA-Z0-9-]/g, "_");
       const filename = `${timestamp}-${baseName}.jpg`;
-      const filepath = path.join(galleryDir, filename);
 
-      await writeFile(filepath, compressed);
+      let publicPath: string;
+      if (spacesConfigured) {
+        publicPath = await uploadToSpaces(`galleries/${id}/${filename}`, compressed, "image/jpeg");
+      } else {
+        await writeFile(path.join(galleryDir, filename), compressed);
+        publicPath = `/galleries/${id}/${filename}`;
+      }
 
       const image = await prisma.image.create({
         data: {
           filename,
-          path: `/galleries/${id}/${filename}`,
+          path: publicPath,
           galleryId: id,
           order: currentOrder++,
         },
@@ -98,7 +106,7 @@ export async function POST(
       if (!hasCover) {
         await prisma.gallery.update({
           where: { id },
-          data: { coverImage: `/galleries/${id}/${filename}` },
+          data: { coverImage: publicPath },
         });
         hasCover = true;
       }
@@ -132,11 +140,15 @@ export async function DELETE(
       return NextResponse.json({ error: "Image not found" }, { status: 404 });
     }
 
-    const filePath = path.join(process.cwd(), "public", image.path);
-    try {
-      await unlink(filePath);
-    } catch (e: any) {
-      if (e.code !== "ENOENT") console.error("Could not delete file:", filePath, e);
+    if (image.path.startsWith("http")) {
+      await deleteFromSpaces(image.path);
+    } else {
+      const filePath = path.join(process.cwd(), "public", image.path);
+      try {
+        await unlink(filePath);
+      } catch (e: any) {
+        if (e.code !== "ENOENT") console.error("Could not delete file:", filePath, e);
+      }
     }
 
     await prisma.image.delete({ where: { id: imageId, galleryId: id } });

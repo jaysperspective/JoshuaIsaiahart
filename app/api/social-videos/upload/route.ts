@@ -3,10 +3,11 @@ import { prisma } from "@/app/lib/prisma";
 import Busboy from "busboy";
 import { Readable } from "stream";
 import { createWriteStream } from "fs";
-import { mkdir, unlink, stat } from "fs/promises";
+import { mkdir, unlink, stat, readFile, writeFile } from "fs/promises";
 import path from "path";
 import os from "os";
 import { spawn } from "child_process";
+import { spacesConfigured, uploadToSpaces } from "@/app/lib/storage";
 
 export const config = { api: { bodyParser: false } };
 
@@ -29,12 +30,10 @@ function runFfmpeg(args: string[]): Promise<void> {
 // Runs after the response is sent — the reel record is only created once
 // compression succeeds, so nothing half-processed ever shows publicly.
 async function processVideo(tmpPath: string, caption: string | null) {
-  const reelsDir = path.join(process.cwd(), "public", "reels");
-  await mkdir(reelsDir, { recursive: true });
-
   const base = `video-${Date.now()}`;
-  const outVideo = path.join(reelsDir, `${base}.mp4`);
-  const outPoster = path.join(reelsDir, `${base}.jpg`);
+  // Encode into tmp; final home is Spaces (if configured) or public/reels
+  const outVideo = path.join(os.tmpdir(), `${base}.mp4`);
+  const outPoster = path.join(os.tmpdir(), `${base}.jpg`);
 
   try {
     // 720px-wide H.264 @ CRF 27 — cuts phone footage to a fraction of its
@@ -57,6 +56,20 @@ async function processVideo(tmpPath: string, caption: string | null) {
       `Reel compressed: ${(inSize / 1e6).toFixed(1)}MB -> ${(outSize / 1e6).toFixed(1)}MB (${base}.mp4)`
     );
 
+    let sourceUrl: string;
+    let thumbnailUrl: string;
+    if (spacesConfigured) {
+      sourceUrl = await uploadToSpaces(`reels/${base}.mp4`, await readFile(outVideo), "video/mp4");
+      thumbnailUrl = await uploadToSpaces(`reels/${base}.jpg`, await readFile(outPoster), "image/jpeg");
+    } else {
+      const reelsDir = path.join(process.cwd(), "public", "reels");
+      await mkdir(reelsDir, { recursive: true });
+      await writeFile(path.join(reelsDir, `${base}.mp4`), await readFile(outVideo));
+      await writeFile(path.join(reelsDir, `${base}.jpg`), await readFile(outPoster));
+      sourceUrl = `/reels/${base}.mp4`;
+      thumbnailUrl = `/reels/${base}.jpg`;
+    }
+
     const lastVideo = await (prisma as any).socialVideo.findFirst({
       orderBy: { sortOrder: "desc" },
       select: { sortOrder: true },
@@ -64,19 +77,18 @@ async function processVideo(tmpPath: string, caption: string | null) {
 
     await (prisma as any).socialVideo.create({
       data: {
-        sourceUrl: `/reels/${base}.mp4`,
-        thumbnailUrl: `/reels/${base}.jpg`,
+        sourceUrl,
+        thumbnailUrl,
         caption: caption || null,
         sortOrder: (lastVideo?.sortOrder ?? -1) + 1,
       },
     });
   } catch (error) {
     console.error("Reel video processing failed:", error);
-    for (const f of [outVideo, outPoster]) {
+  } finally {
+    for (const f of [outVideo, outPoster, tmpPath]) {
       try { await unlink(f); } catch {}
     }
-  } finally {
-    try { await unlink(tmpPath); } catch {}
   }
 }
 
