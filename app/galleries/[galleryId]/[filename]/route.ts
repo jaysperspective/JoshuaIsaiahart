@@ -1,9 +1,9 @@
 import { serveUpload } from "@/app/lib/serve-upload";
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ galleryId: string; filename: string }> }
 ) {
   const { galleryId, filename } = await params;
-  return serveUpload("galleries", galleryId, filename);
+  return serveUpload(request, "galleries", galleryId, filename);
 }

@@ -44,12 +44,14 @@ export async function DELETE(
       where: { id },
     });
 
-    // Remove locally uploaded thumbnail file
-    if (video?.thumbnailUrl?.startsWith("/reels/")) {
-      try {
-        await unlink(path.join(process.cwd(), "public", video.thumbnailUrl));
-      } catch (e: any) {
-        if (e.code !== "ENOENT") console.error("Could not delete thumbnail:", e);
+    // Remove locally stored files (uploaded thumbnail and/or self-hosted video)
+    for (const url of [video?.thumbnailUrl, video?.sourceUrl]) {
+      if (url?.startsWith("/reels/")) {
+        try {
+          await unlink(path.join(process.cwd(), "public", url));
+        } catch (e: any) {
+          if (e.code !== "ENOENT") console.error("Could not delete reel file:", e);
+        }
       }
     }
 

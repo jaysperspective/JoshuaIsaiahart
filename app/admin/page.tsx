@@ -114,6 +114,9 @@ export default function AdminPage() {
   const [editingReelField, setEditingReelField] = useState<{ videoId: string; field: "caption" | "sourceUrl" | "thumbnailUrl" } | null>(null);
   const [editReelValue, setEditReelValue] = useState("");
   const [uploadingThumbId, setUploadingThumbId] = useState<string | null>(null);
+  const [reelVideoFile, setReelVideoFile] = useState<File | null>(null);
+  const [videoUploadPct, setVideoUploadPct] = useState<number | null>(null);
+  const [videoProcessing, setVideoProcessing] = useState(false);
   const [copiedGalleryId, setCopiedGalleryId] = useState<string | null>(null);
 
   const fetchGalleries = useCallback(async () => {
@@ -719,6 +722,69 @@ export default function AdminPage() {
   const cancelReelEdit = () => {
     setEditingReelField(null);
     setEditReelValue("");
+  };
+
+  const uploadReelVideo = () => {
+    if (!reelVideoFile) return;
+
+    setReelError(null);
+    setVideoUploadPct(0);
+
+    const formData = new FormData();
+    formData.append("file", reelVideoFile);
+    formData.append("caption", reelCaption);
+
+    const baseline = socialVideos.length;
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", "/api/social-videos/upload");
+
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) {
+        setVideoUploadPct(Math.round((e.loaded / e.total) * 100));
+      }
+    };
+
+    xhr.onload = () => {
+      setVideoUploadPct(null);
+      if (xhr.status === 202) {
+        setReelVideoFile(null);
+        setReelCaption("");
+        setVideoProcessing(true);
+
+        // Poll until the compressed reel shows up (or ~5 min passes)
+        let polls = 0;
+        const interval = setInterval(async () => {
+          polls++;
+          try {
+            const res = await fetch("/api/social-videos");
+            if (res.ok) {
+              const data = await res.json();
+              setSocialVideos(data);
+              if (data.length > baseline || polls > 40) {
+                clearInterval(interval);
+                setVideoProcessing(false);
+              }
+            }
+          } catch {
+            // keep polling
+          }
+        }, 8000);
+      } else {
+        try {
+          const data = JSON.parse(xhr.responseText);
+          setReelError(data.error || "Failed to upload video");
+        } catch {
+          setReelError("Failed to upload video");
+        }
+      }
+    };
+
+    xhr.onerror = () => {
+      setVideoUploadPct(null);
+      setReelError("Upload failed — check your connection and try again");
+    };
+
+    xhr.send(formData);
   };
 
   const uploadReelThumbnail = async (videoId: string, file: File) => {
@@ -1668,6 +1734,57 @@ export default function AdminPage() {
             >
               {isCreatingReel ? "Adding..." : "Add Reel"}
             </button>
+
+            {/* Direct video upload */}
+            <div className="mt-8 pt-6 border-t border-gray-200">
+              <p className="font-body text-sm text-gray-600 mb-1 font-medium">
+                Or upload the video file directly
+              </p>
+              <p className="font-body text-xs text-gray-400 mb-4">
+                Self-hosted — no platform branding anywhere. Compressed on the server (720p H.264) with an auto-generated thumbnail. Caption above applies.
+              </p>
+
+              <div className="flex items-center gap-3">
+                <label className="flex-1">
+                  <input
+                    type="file"
+                    accept="video/*"
+                    className="hidden"
+                    disabled={videoUploadPct !== null || videoProcessing}
+                    onChange={(e) => setReelVideoFile(e.target.files?.[0] || null)}
+                  />
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-3 text-center cursor-pointer hover:border-gray-400 transition-colors">
+                    <p className="font-body text-sm text-gray-500 truncate">
+                      {reelVideoFile
+                        ? `${reelVideoFile.name} (${(reelVideoFile.size / 1024 / 1024).toFixed(1)} MB)`
+                        : "Click to select a video"}
+                    </p>
+                  </div>
+                </label>
+                <button
+                  onClick={uploadReelVideo}
+                  disabled={!reelVideoFile || videoUploadPct !== null || videoProcessing}
+                  className="px-4 py-3 bg-[#1a1a1a] text-white rounded-lg font-body text-sm hover:bg-[#333] transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+                >
+                  {videoUploadPct !== null ? `${videoUploadPct}%` : "Upload Video"}
+                </button>
+              </div>
+
+              {videoUploadPct !== null && (
+                <div className="mt-3 h-1.5 w-full rounded-full bg-blue-100 overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-blue-500 transition-all duration-300"
+                    style={{ width: `${videoUploadPct}%` }}
+                  />
+                </div>
+              )}
+
+              {videoProcessing && (
+                <p className="font-body text-sm text-blue-700 mt-3">
+                  Compressing on the server — the reel will appear in the list below in a minute or two…
+                </p>
+              )}
+            </div>
           </div>
 
           {/* Reels List Card */}
