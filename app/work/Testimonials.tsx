@@ -1,22 +1,19 @@
 import Reveal from "./Reveal";
 
-interface Testimonial {
+export interface Testimonial {
+  id: string;
   quote: string;
   name: string;
-  role: string;
+  role: string | null;
 }
 
-// Add real client quotes here — the section stays hidden while this is empty.
-// Example shape:
-//   {
-//     quote: "Joshua captured our event exactly how it felt in the room.",
-//     name: "Jane Doe",
-//     role: "Event Director, Example Org",
-//   },
-const TESTIMONIALS: Testimonial[] = [];
+interface TestimonialsProps {
+  testimonials: Testimonial[];
+}
 
-export default function Testimonials() {
-  if (TESTIMONIALS.length === 0) return null;
+// Managed in /admin under Stories; section hides itself while empty
+export default function Testimonials({ testimonials }: TestimonialsProps) {
+  if (testimonials.length === 0) return null;
 
   return (
     <section className="mt-20 border-t border-rule pt-14">
@@ -28,15 +25,15 @@ export default function Testimonials() {
       </Reveal>
 
       <div className="space-y-12">
-        {TESTIMONIALS.map((t, i) => (
-          <Reveal key={i} delay={i * 90}>
+        {testimonials.map((t, i) => (
+          <Reveal key={t.id} delay={i * 90}>
             <figure className="mx-auto max-w-2xl text-center">
               <blockquote className="prose-serif text-[1.15rem] italic">
                 &ldquo;{t.quote}&rdquo;
               </blockquote>
               <figcaption className="mt-5">
                 <span className="label text-ink">{t.name}</span>
-                <span className="label block mt-1">{t.role}</span>
+                {t.role && <span className="label block mt-1">{t.role}</span>}
               </figcaption>
             </figure>
           </Reveal>

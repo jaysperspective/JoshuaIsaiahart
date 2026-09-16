@@ -131,6 +131,8 @@ export default function ContactClient() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           date: selectedDate.toISOString(),
+          // Local calendar date — avoids timezone drift in the confirmation invite
+          dateYmd: `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, "0")}-${String(selectedDate.getDate()).padStart(2, "0")}`,
           time: selectedTime,
           ...form,
         }),

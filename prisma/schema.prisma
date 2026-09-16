@@ -21,10 +21,34 @@ model Gallery {
   downloadable Boolean  @default(false)
   slug         String?  @unique
   unlisted     Boolean  @default(false)
+  pin          String?
   sortOrder    Int?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   images       Image[]
+}
+
+model Testimonial {
+  id        String   @id @default(cuid())
+  quote     String
+  name      String
+  role      String?
+  sortOrder Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Metric {
+  id        String   @id @default(cuid())
+  type      String
+  path      String?
+  referrer  String?
+  visitor   String?
+  device    String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([type])
 }
 
 model SocialVideo {
@@ -54,6 +78,7 @@ model Image {
   path      String
   caption   String?
   order     Int      @default(0)
+  selected  Boolean  @default(false)
   galleryId String
   gallery   Gallery  @relation(fields: [galleryId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())

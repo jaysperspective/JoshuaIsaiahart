@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import FloatingBook from "./components/FloatingBook";
+import Tracker from "./components/Tracker";
 
 // Editorial display serif — high contrast, optical sizing.
 // Self-hosted variable font (wght + opsz axes), latin subset.
@@ -124,6 +125,7 @@ export default function RootLayout({
         />
         {children}
         <FloatingBook />
+        <Tracker />
       </body>
     </html>
   );

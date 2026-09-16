@@ -10,6 +10,7 @@ interface Image {
   path: string;
   caption: string | null;
   order: number;
+  selected?: boolean;
 }
 
 interface Gallery {
@@ -20,8 +21,24 @@ interface Gallery {
   downloadable: boolean;
   slug?: string | null;
   unlisted?: boolean;
+  pin?: string | null;
   sortOrder: number | null;
   images: Image[];
+}
+
+interface Testimonial {
+  id: string;
+  quote: string;
+  name: string;
+  role: string | null;
+  sortOrder: number | null;
+}
+
+interface MetricsSummary {
+  totals: { type: string; count: number; visitors: number }[];
+  topPages: { path: string; count: number }[];
+  topReferrers: { referrer: string; count: number }[];
+  byDay: { day: string; count: number }[];
 }
 
 interface UploadStatus {
@@ -62,13 +79,15 @@ interface SocialVideo {
   sortOrder: number | null;
 }
 
-type AdminTab = "galleries" | "reels" | "film" | "posts" | "settings";
+type AdminTab = "galleries" | "reels" | "film" | "posts" | "stories" | "stats" | "settings";
 
 const ADMIN_TABS: { id: AdminTab; label: string }[] = [
   { id: "galleries", label: "Galleries" },
   { id: "reels", label: "Reels" },
   { id: "film", label: "Film" },
   { id: "posts", label: "Posts" },
+  { id: "stories", label: "Stories" },
+  { id: "stats", label: "Stats" },
   { id: "settings", label: "Settings" },
 ];
 
@@ -127,6 +146,19 @@ export default function AdminPage() {
   const [reelVideoFile, setReelVideoFile] = useState<File | null>(null);
   const [videoUploadPct, setVideoUploadPct] = useState<number | null>(null);
   const [videoProcessing, setVideoProcessing] = useState(false);
+
+  // Testimonials (stories) state
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [storyQuote, setStoryQuote] = useState("");
+  const [storyName, setStoryName] = useState("");
+  const [storyRole, setStoryRole] = useState("");
+  const [isCreatingStory, setIsCreatingStory] = useState(false);
+
+  // Metrics state
+  const [metrics, setMetrics] = useState<MetricsSummary | null>(null);
+
+  // Gallery PIN editing
+  const [pinEdits, setPinEdits] = useState<Record<string, string>>({});
   const [copiedGalleryId, setCopiedGalleryId] = useState<string | null>(null);
 
   // Section navigation — remembers the last-used tab
@@ -208,13 +240,104 @@ export default function AdminPage() {
     }
   }, []);
 
+  const fetchTestimonials = useCallback(async () => {
+    try {
+      const res = await fetch("/api/testimonials");
+      if (res.ok) setTestimonials(await res.json());
+    } catch (error) {
+      console.error("Failed to fetch testimonials:", error);
+    }
+  }, []);
+
+  const fetchMetrics = useCallback(async () => {
+    try {
+      const res = await fetch("/api/metrics/summary");
+      if (res.ok) setMetrics(await res.json());
+    } catch (error) {
+      console.error("Failed to fetch metrics:", error);
+    }
+  }, []);
+
   useEffect(() => {
     fetchGalleries();
     fetchBlogs();
     fetchSettings();
     fetchVideoProjects();
     fetchSocialVideos();
-  }, [fetchGalleries, fetchBlogs, fetchSettings, fetchVideoProjects, fetchSocialVideos]);
+    fetchTestimonials();
+  }, [fetchGalleries, fetchBlogs, fetchSettings, fetchVideoProjects, fetchSocialVideos, fetchTestimonials]);
+
+  useEffect(() => {
+    if (adminTab === "stats") fetchMetrics();
+  }, [adminTab, fetchMetrics]);
+
+  const createTestimonial = async () => {
+    if (!storyQuote.trim() || !storyName.trim()) return;
+    setIsCreatingStory(true);
+    try {
+      const res = await fetch("/api/testimonials", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ quote: storyQuote, name: storyName, role: storyRole }),
+      });
+      if (res.ok) {
+        setStoryQuote("");
+        setStoryName("");
+        setStoryRole("");
+        fetchTestimonials();
+      }
+    } catch (error) {
+      console.error("Failed to create testimonial:", error);
+    } finally {
+      setIsCreatingStory(false);
+    }
+  };
+
+  const deleteTestimonial = async (id: string) => {
+    if (!confirm("Delete this story?")) return;
+    try {
+      await fetch(`/api/testimonials/${id}`, { method: "DELETE" });
+      fetchTestimonials();
+    } catch (error) {
+      console.error("Failed to delete testimonial:", error);
+    }
+  };
+
+  const moveTestimonial = async (index: number, direction: "up" | "down") => {
+    const newIndex = direction === "up" ? index - 1 : index + 1;
+    if (newIndex < 0 || newIndex >= testimonials.length) return;
+    const next = [...testimonials];
+    [next[index], next[newIndex]] = [next[newIndex], next[index]];
+    setTestimonials(next);
+    try {
+      await fetch("/api/testimonials/reorder", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: next.map((t) => t.id) }),
+      });
+    } catch {
+      fetchTestimonials();
+    }
+  };
+
+  const saveGalleryPin = async (gallery: Gallery) => {
+    const pin = (pinEdits[gallery.id] ?? "").trim();
+    try {
+      await fetch(`/api/galleries/${gallery.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pin }),
+      });
+      setPinEdits((prev) => {
+        const next = { ...prev };
+        delete next[gallery.id];
+        return next;
+      });
+      fetchGalleries();
+    } catch (error) {
+      console.error("Failed to save PIN:", error);
+    }
+  };
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
@@ -2017,6 +2140,199 @@ export default function AdminPage() {
           </div>
           </>)}
 
+          {adminTab === "stories" && (<>
+          {/* Add Story Card */}
+          <div className="card card-white p-10">
+            <h2 className="font-heading text-xl font-bold mb-2">Add Client Story</h2>
+            <p className="font-body text-[#6b6b6b] mb-6">
+              Shown on the Work page above booking, and the first one is featured on the rate sheet
+            </p>
+
+            <div className="space-y-4">
+              <div>
+                <label className="font-body text-sm text-gray-600 block mb-2">Quote *</label>
+                <textarea
+                  value={storyQuote}
+                  onChange={(e) => setStoryQuote(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl font-body resize-none focus:outline-none focus:border-gray-400 transition-colors"
+                  rows={3}
+                  placeholder="What the client said, in their words"
+                  disabled={isCreatingStory}
+                />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="font-body text-sm text-gray-600 block mb-2">Name *</label>
+                  <input
+                    type="text"
+                    value={storyName}
+                    onChange={(e) => setStoryName(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl font-body focus:outline-none focus:border-gray-400 transition-colors"
+                    placeholder="Client name"
+                    disabled={isCreatingStory}
+                  />
+                </div>
+                <div>
+                  <label className="font-body text-sm text-gray-600 block mb-2">Role / Context</label>
+                  <input
+                    type="text"
+                    value={storyRole}
+                    onChange={(e) => setStoryRole(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl font-body focus:outline-none focus:border-gray-400 transition-colors"
+                    placeholder="e.g. Wedding, May 2026 · or their title"
+                    disabled={isCreatingStory}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={createTestimonial}
+              disabled={isCreatingStory || !storyQuote.trim() || !storyName.trim()}
+              className="w-full mt-6 bg-[#1a1a1a] text-white py-3 rounded-xl font-body hover:bg-[#333] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isCreatingStory ? "Adding..." : "Add Story"}
+            </button>
+          </div>
+
+          {/* Stories List Card */}
+          <div className="card card-gray p-10">
+            <h2 className="font-heading text-xl font-bold mb-2 text-center">Client Stories</h2>
+            <p className="font-body text-[#2f2f2f] mb-6 text-center">
+              {testimonials.length} {testimonials.length === 1 ? "story" : "stories"} — first one is featured on the rate sheet
+            </p>
+
+            {testimonials.length === 0 ? (
+              <p className="font-body text-gray-600 text-center py-4">
+                No stories yet. Add one above — the section on the Work page appears automatically.
+              </p>
+            ) : (
+              <div className="space-y-4">
+                {testimonials.map((t, index) => (
+                  <div key={t.id} className="bg-white/80 rounded-xl p-4">
+                    <div className="flex items-start justify-between">
+                      <div className="flex flex-col gap-1 mr-3 flex-shrink-0">
+                        <button
+                          onClick={() => moveTestimonial(index, "up")}
+                          disabled={index === 0}
+                          className="p-1 rounded hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                          title="Move up"
+                        >
+                          <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => moveTestimonial(index, "down")}
+                          disabled={index === testimonials.length - 1}
+                          className="p-1 rounded hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                          title="Move down"
+                        >
+                          <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </button>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-body text-sm text-gray-700 italic">&ldquo;{t.quote}&rdquo;</p>
+                        <p className="font-body text-xs text-gray-500 mt-2">
+                          {t.name}{t.role ? ` — ${t.role}` : ""}
+                          {index === 0 && <span className="ml-2 text-blue-500">★ featured</span>}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => deleteTestimonial(t.id)}
+                        className="text-gray-500 hover:text-red-500 p-2 rounded-lg hover:bg-gray-100 transition-colors flex-shrink-0"
+                        title="Delete story"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          </>)}
+
+          {adminTab === "stats" && (
+          <div className="card card-white p-10">
+            <h2 className="font-heading text-xl font-bold mb-2">Last 30 Days</h2>
+            <p className="font-body text-[#6b6b6b] mb-6">
+              First-party analytics — no cookies, bots filtered, admin pages excluded
+            </p>
+
+            {!metrics ? (
+              <p className="font-body text-gray-500 py-4">Loading…</p>
+            ) : (
+              <div className="space-y-8">
+                {/* Headline numbers */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {[
+                    { label: "Pageviews", value: metrics.totals.find((t) => t.type === "view")?.count ?? 0 },
+                    { label: "Visitors", value: metrics.totals.find((t) => t.type === "view")?.visitors ?? 0 },
+                    { label: "Book clicks", value: metrics.totals.find((t) => t.type === "book_click")?.count ?? 0 },
+                    { label: "Bookings", value: metrics.totals.find((t) => t.type === "booking")?.count ?? 0 },
+                  ].map((stat) => (
+                    <div key={stat.label} className="bg-gray-50 rounded-xl p-4 text-center">
+                      <p className="font-heading text-2xl font-bold text-[#1a1a1a]">{stat.value}</p>
+                      <p className="font-body text-xs text-gray-500 mt-1">{stat.label}</p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Views by day */}
+                {metrics.byDay.length > 0 && (
+                  <div>
+                    <h3 className="font-heading text-sm font-semibold text-gray-600 mb-3">Views by day</h3>
+                    <div className="flex items-end gap-[3px] h-24">
+                      {metrics.byDay.map((d) => {
+                        const max = Math.max(...metrics.byDay.map((x) => x.count));
+                        return (
+                          <div
+                            key={d.day}
+                            title={`${d.day}: ${d.count}`}
+                            className="flex-1 rounded-t bg-blue-400 min-h-[3px]"
+                            style={{ height: `${Math.max(4, (d.count / max) * 100)}%` }}
+                          />
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Top pages + referrers */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                  <div>
+                    <h3 className="font-heading text-sm font-semibold text-gray-600 mb-3">Top pages</h3>
+                    {metrics.topPages.map((p) => (
+                      <div key={p.path} className="flex items-baseline justify-between py-1.5 border-b border-gray-100">
+                        <span className="font-body text-sm text-gray-700 truncate mr-3">{p.path}</span>
+                        <span className="font-body text-sm text-gray-500 shrink-0">{p.count}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div>
+                    <h3 className="font-heading text-sm font-semibold text-gray-600 mb-3">Referrers</h3>
+                    {metrics.topReferrers.length === 0 ? (
+                      <p className="font-body text-sm text-gray-400">Direct traffic only so far</p>
+                    ) : (
+                      metrics.topReferrers.map((r) => (
+                        <div key={r.referrer} className="flex items-baseline justify-between py-1.5 border-b border-gray-100">
+                          <span className="font-body text-sm text-gray-700 truncate mr-3">{r.referrer}</span>
+                          <span className="font-body text-sm text-gray-500 shrink-0">{r.count}</span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+          )}
+
           {adminTab === "galleries" && (<>
           {/* Galleries List Card — shown above the create form (order-1 vs order-2) since
               adding to existing galleries is the everyday action */}
@@ -2161,6 +2477,11 @@ export default function AdminPage() {
 
                           <p className="font-body text-xs text-gray-400 mt-1">
                             {gallery.images.length} images
+                            {gallery.images.some((img) => img.selected) && (
+                              <span className="text-pink-500 ml-2">
+                                ♥ {gallery.images.filter((img) => img.selected).length} client selects
+                              </span>
+                            )}
                           </p>
                         </div>
                       </div>
@@ -2214,6 +2535,14 @@ export default function AdminPage() {
                                     : "hover:ring-2 hover:ring-gray-300"
                                 }`}
                               />
+                              {image.selected && (
+                                <span
+                                  className="absolute bottom-1 left-1 flex h-5 w-5 items-center justify-center rounded-full bg-pink-500 text-white text-[10px]"
+                                  title="Client selected this photo"
+                                >
+                                  ♥
+                                </span>
+                              )}
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -2364,6 +2693,30 @@ export default function AdminPage() {
                         </svg>
                         {copiedGalleryId === gallery.id ? "Copied!" : "Copy share link"}
                       </button>
+
+                      <div className="flex items-center gap-2" title="Clients must enter this PIN to open the gallery link. Clear it to remove protection.">
+                        <span className="font-body text-sm text-gray-600">PIN</span>
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          maxLength={8}
+                          value={pinEdits[gallery.id] ?? gallery.pin ?? ""}
+                          onChange={(e) =>
+                            setPinEdits((prev) => ({ ...prev, [gallery.id]: e.target.value }))
+                          }
+                          className="w-20 px-2 py-1 border border-gray-300 rounded font-body text-sm focus:outline-none focus:border-gray-400"
+                          placeholder="none"
+                        />
+                        {pinEdits[gallery.id] !== undefined &&
+                          (pinEdits[gallery.id] ?? "") !== (gallery.pin ?? "") && (
+                            <button
+                              onClick={() => saveGalleryPin(gallery)}
+                              className="text-sm text-blue-500 hover:text-blue-600 font-body"
+                            >
+                              Save
+                            </button>
+                          )}
+                      </div>
                     </div>
                   </div>
                 ))}

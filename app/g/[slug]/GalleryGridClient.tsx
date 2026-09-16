@@ -10,6 +10,7 @@ interface GalleryImage {
   filename: string;
   path: string;
   caption: string | null;
+  selected: boolean;
 }
 
 interface Gallery {
@@ -17,6 +18,7 @@ interface Gallery {
   title: string;
   description: string | null;
   coverImage: string | null;
+  downloadable: boolean;
   images: GalleryImage[];
 }
 
@@ -26,7 +28,29 @@ interface GalleryGridClientProps {
 
 export default function GalleryGridClient({ gallery }: GalleryGridClientProps) {
   const [lightboxImage, setLightboxImage] = useState<GalleryImage | null>(null);
+  const [selections, setSelections] = useState<Record<string, boolean>>(() =>
+    Object.fromEntries(gallery.images.map((img) => [img.id, img.selected]))
+  );
   const touchStartX = useRef<number | null>(null);
+
+  const selectedCount = Object.values(selections).filter(Boolean).length;
+
+  const toggleSelect = async (image: GalleryImage, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const next = !selections[image.id];
+    setSelections((prev) => ({ ...prev, [image.id]: next }));
+    try {
+      const res = await fetch(`/api/images/${image.id}/select`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ selected: next }),
+      });
+      if (!res.ok) throw new Error();
+    } catch {
+      // Revert on failure
+      setSelections((prev) => ({ ...prev, [image.id]: !next }));
+    }
+  };
 
   useEffect(() => {
     if (!lightboxImage) return;
@@ -83,6 +107,7 @@ export default function GalleryGridClient({ gallery }: GalleryGridClientProps) {
           </Link>
           <span className="label numeral">
             {gallery.images.length} frames
+            {selectedCount > 0 && ` · ${selectedCount} selected`}
           </span>
         </header>
         <hr className="rule mt-5" />
@@ -93,6 +118,19 @@ export default function GalleryGridClient({ gallery }: GalleryGridClientProps) {
           <h1 className="display text-[clamp(2.5rem,8vw,5rem)]">{gallery.title}</h1>
           {gallery.description && (
             <p className="prose-serif mx-auto mt-6 max-w-2xl">{gallery.description}</p>
+          )}
+          <p className="label mt-6 normal-case tracking-normal">
+            Tap the heart on your favorites — the selections are saved for Joshua automatically.
+          </p>
+          {gallery.downloadable && (
+            <div className="mt-6">
+              <a href={`/api/galleries/${gallery.id}/download`} className="btn">
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Download All
+              </a>
+            </div>
           )}
         </section>
 
@@ -105,7 +143,11 @@ export default function GalleryGridClient({ gallery }: GalleryGridClientProps) {
                   className="group cursor-pointer"
                   onClick={() => openLightbox(image)}
                 >
-                  <div className="relative aspect-square overflow-hidden rounded-[3px] bg-paper-2">
+                  <div
+                    className={`relative aspect-square overflow-hidden rounded-[3px] bg-paper-2 ${
+                      selections[image.id] ? "ring-2 ring-accent" : ""
+                    }`}
+                  >
                     <Image
                       src={image.path}
                       alt={image.caption || image.filename}
@@ -113,6 +155,25 @@ export default function GalleryGridClient({ gallery }: GalleryGridClientProps) {
                       sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
                       className="object-cover transition-transform duration-500 group-hover:scale-105"
                     />
+                    {/* Favorite toggle */}
+                    <button
+                      onClick={(e) => toggleSelect(image, e)}
+                      aria-label={selections[image.id] ? "Remove from selects" : "Add to selects"}
+                      className={`absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full backdrop-blur-sm transition-all ${
+                        selections[image.id]
+                          ? "bg-accent text-paper"
+                          : "bg-vigne/40 text-paper/80 opacity-70 hover:opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
+                      }`}
+                    >
+                      <svg
+                        className="h-4 w-4"
+                        fill={selections[image.id] ? "currentColor" : "none"}
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                      </svg>
+                    </button>
                   </div>
                 </div>
               </Reveal>

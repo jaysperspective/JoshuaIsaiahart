@@ -95,6 +95,22 @@ async function getSocialVideos() {
   }
 }
 
+async function getTestimonials() {
+  try {
+    const testimonials = await (prisma as any).testimonial.findMany({
+      orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+    });
+    return testimonials.map((t: any) => ({
+      id: t.id,
+      quote: t.quote,
+      name: t.name,
+      role: t.role,
+    }));
+  } catch {
+    return [];
+  }
+}
+
 function LoadingFallback() {
   return (
     <div className="min-h-screen bg-paper flex items-center justify-center">
@@ -104,15 +120,21 @@ function LoadingFallback() {
 }
 
 export default async function WorkPage() {
-  const [galleries, videoProjects, socialVideos] = await Promise.all([
+  const [galleries, videoProjects, socialVideos, testimonials] = await Promise.all([
     getGalleries(),
     getVideoProjects(),
     getSocialVideos(),
+    getTestimonials(),
   ]);
 
   return (
     <Suspense fallback={<LoadingFallback />}>
-      <WorkClient galleries={galleries} videoProjects={videoProjects} socialVideos={socialVideos} />
+      <WorkClient
+        galleries={galleries}
+        videoProjects={videoProjects}
+        socialVideos={socialVideos}
+        testimonials={testimonials}
+      />
     </Suspense>
   );
 }

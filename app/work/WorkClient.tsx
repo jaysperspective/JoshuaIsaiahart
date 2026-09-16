@@ -7,7 +7,7 @@ import Link from "next/link";
 import WorkNavigation, { WorkTab } from "./WorkNavigation";
 import VideographyClient from "./VideographyClient";
 import ContactClient from "./ContactClient";
-import Testimonials from "./Testimonials";
+import Testimonials, { Testimonial } from "./Testimonials";
 import Reveal from "./Reveal";
 import SocialClient, { SocialVideo } from "./SocialClient";
 
@@ -41,9 +41,10 @@ interface WorkClientProps {
   galleries: Gallery[];
   videoProjects: VideoProject[];
   socialVideos: SocialVideo[];
+  testimonials: Testimonial[];
 }
 
-export default function WorkClient({ galleries, videoProjects, socialVideos }: WorkClientProps) {
+export default function WorkClient({ galleries, videoProjects, socialVideos, testimonials }: WorkClientProps) {
   const [expandedGalleryId, setExpandedGalleryId] = useState<string | null>(null);
   const [lightboxImage, setLightboxImage] = useState<Image | null>(null);
   const [isAnimating, setIsAnimating] = useState(false);
@@ -358,7 +359,7 @@ export default function WorkClient({ galleries, videoProjects, socialVideos }: W
 
         {/* Client stories + booking — placed right after the work, while it's fresh */}
         <div className="max-w-3xl mx-auto w-full">
-          <Testimonials />
+          <Testimonials testimonials={testimonials} />
 
           <section id="book" className="mt-20 border-t border-rule pt-14 scroll-mt-8">
             <Reveal>

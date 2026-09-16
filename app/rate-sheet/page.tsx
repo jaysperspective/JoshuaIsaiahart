@@ -1,4 +1,18 @@
 import Link from "next/link";
+import { prisma } from "@/app/lib/prisma";
+
+// Pulls the featured client quote from the database
+export const dynamic = "force-dynamic";
+
+async function getFeaturedQuote() {
+  try {
+    return await (prisma as any).testimonial.findFirst({
+      orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+    });
+  } catch {
+    return null;
+  }
+}
 
 export const metadata = {
   title: "Rates & Services",
@@ -81,7 +95,8 @@ const SECTIONS = [
   },
 ];
 
-export default function RateSheet() {
+export default async function RateSheet() {
+  const quote = await getFeaturedQuote();
   return (
     <main className="min-h-screen bg-paper text-ink">
       <div className="w-full max-w-4xl mx-auto px-5 sm:px-8 lg:px-12">
@@ -156,6 +171,19 @@ export default function RateSheet() {
             </section>
           ))}
         </div>
+
+        {/* Featured client quote */}
+        {quote && (
+          <figure className="mx-auto mt-20 max-w-2xl text-center sm:mt-28">
+            <blockquote className="prose-serif text-[1.15rem] italic">
+              &ldquo;{quote.quote}&rdquo;
+            </blockquote>
+            <figcaption className="mt-5">
+              <span className="label text-ink">{quote.name}</span>
+              {quote.role && <span className="label mt-1 block">{quote.role}</span>}
+            </figcaption>
+          </figure>
+        )}
 
         {/* CTA */}
         <section className="mt-20 sm:mt-28 py-14 border-t border-b border-rule">

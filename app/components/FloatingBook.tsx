@@ -38,9 +38,21 @@ export default function FloatingBook() {
 
   const visible = scrolled && !bookInView;
 
+  const trackClick = () => {
+    try {
+      navigator.sendBeacon(
+        "/api/metrics",
+        new Blob([JSON.stringify({ type: "book_click", path: pathname })], {
+          type: "application/json",
+        })
+      );
+    } catch {}
+  };
+
   return (
     <Link
       href="/work#book"
+      onClick={trackClick}
       aria-hidden={!visible}
       tabIndex={visible ? 0 : -1}
       className={`fixed right-5 z-40 flex items-center gap-2 rounded-full bg-accent px-5 py-3 font-sans text-[0.7rem] font-medium uppercase tracking-[0.16em] text-paper shadow-[0_6px_24px_rgba(24,32,28,0.28)] transition-all duration-300 hover:bg-[--accent-deep] ${

@@ -1,8 +1,11 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { cookies } from "next/headers";
 import { prisma } from "@/app/lib/prisma";
 import { slugify } from "@/app/lib/slug";
+import { pinToken, pinCookieName } from "@/app/lib/pin";
 import GalleryGridClient from "./GalleryGridClient";
+import PinGate from "./PinGate";
 
 // Requires database at request time
 export const dynamic = "force-dynamic";
@@ -30,12 +33,15 @@ async function getGallery(slug: string) {
       description: gallery.description,
       coverImage: gallery.coverImage,
       unlisted: Boolean((gallery as any).unlisted),
+      downloadable: gallery.downloadable,
+      pin: ((gallery as any).pin as string | null) || null,
       slug: (gallery as any).slug || slugify(gallery.title),
       images: gallery.images.map((image) => ({
         id: image.id,
         filename: image.filename,
         path: image.path,
         caption: image.caption,
+        selected: Boolean((image as any).selected),
       })),
     };
   } catch {
@@ -76,6 +82,15 @@ export default async function GalleryPage({
 
   if (!gallery) {
     notFound();
+  }
+
+  // PIN-protected galleries show the gate until the cookie checks out
+  if (gallery.pin) {
+    const jar = await cookies();
+    const cookie = jar.get(pinCookieName(gallery.id))?.value;
+    if (cookie !== pinToken(gallery.id, gallery.pin)) {
+      return <PinGate slug={gallery.slug} title={gallery.title} />;
+    }
   }
 
   const jsonLd = {
