@@ -55,6 +55,9 @@ export default function Home() {
               <Link href="/rate-sheet" className="btn">
                 Rate Sheet
               </Link>
+              <Link href="/about" className="btn">
+                About
+              </Link>
               <Link href="/work?tab=videography" className="btn">
                 Feature Film
               </Link>
