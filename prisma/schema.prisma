@@ -33,6 +33,7 @@ model Testimonial {
   quote     String
   name      String
   role      String?
+  approved  Boolean  @default(false)
   sortOrder Int?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

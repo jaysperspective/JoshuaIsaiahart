@@ -7,6 +7,7 @@ export const dynamic = "force-dynamic";
 async function getFeaturedQuote() {
   try {
     return await (prisma as any).testimonial.findFirst({
+      where: { approved: true },
       orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
     });
   } catch {

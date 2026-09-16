@@ -98,6 +98,7 @@ async function getSocialVideos() {
 async function getTestimonials() {
   try {
     const testimonials = await (prisma as any).testimonial.findMany({
+      where: { approved: true },
       orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
     });
     return testimonials.map((t: any) => ({

@@ -7,7 +7,7 @@ export async function PUT(
 ) {
   try {
     const { id } = await params;
-    const { quote, name, role } = await request.json();
+    const { quote, name, role, approved } = await request.json();
 
     const testimonial = await (prisma as any).testimonial.update({
       where: { id },
@@ -15,6 +15,7 @@ export async function PUT(
         ...(quote !== undefined && { quote }),
         ...(name !== undefined && { name }),
         ...(role !== undefined && { role: role || null }),
+        ...(approved !== undefined && { approved: Boolean(approved) }),
       },
     });
 

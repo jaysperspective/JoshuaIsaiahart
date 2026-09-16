@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    // ?all=1 (admin) includes pending submissions; public gets approved only
+    const includeAll = new URL(request.url).searchParams.get("all") === "1";
     const testimonials = await (prisma as any).testimonial.findMany({
+      ...(includeAll ? {} : { where: { approved: true } }),
       orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
     });
     return NextResponse.json(testimonials);
@@ -31,6 +34,7 @@ export async function POST(request: NextRequest) {
         quote: quote.trim(),
         name: name.trim(),
         role: role?.trim() || null,
+        approved: true, // admin-created stories go live immediately
         sortOrder: (last?.sortOrder ?? -1) + 1,
       },
     });

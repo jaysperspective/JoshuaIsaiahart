@@ -31,6 +31,7 @@ interface Testimonial {
   quote: string;
   name: string;
   role: string | null;
+  approved?: boolean;
   sortOrder: number | null;
 }
 
@@ -242,12 +243,25 @@ export default function AdminPage() {
 
   const fetchTestimonials = useCallback(async () => {
     try {
-      const res = await fetch("/api/testimonials");
+      const res = await fetch("/api/testimonials?all=1");
       if (res.ok) setTestimonials(await res.json());
     } catch (error) {
       console.error("Failed to fetch testimonials:", error);
     }
   }, []);
+
+  const approveTestimonial = async (id: string) => {
+    try {
+      await fetch(`/api/testimonials/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ approved: true }),
+      });
+      fetchTestimonials();
+    } catch (error) {
+      console.error("Failed to approve testimonial:", error);
+    }
+  };
 
   const fetchMetrics = useCallback(async () => {
     try {
@@ -304,17 +318,20 @@ export default function AdminPage() {
   };
 
   const moveTestimonial = async (index: number, direction: "up" | "down") => {
+    // Reorders within the approved (published) list only
+    const approved = testimonials.filter((t) => t.approved);
     const newIndex = direction === "up" ? index - 1 : index + 1;
-    if (newIndex < 0 || newIndex >= testimonials.length) return;
-    const next = [...testimonials];
+    if (newIndex < 0 || newIndex >= approved.length) return;
+    const next = [...approved];
     [next[index], next[newIndex]] = [next[newIndex], next[index]];
-    setTestimonials(next);
+    setTestimonials([...next, ...testimonials.filter((t) => !t.approved)]);
     try {
       await fetch("/api/testimonials/reorder", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ids: next.map((t) => t.id) }),
       });
+      fetchTestimonials();
     } catch {
       fetchTestimonials();
     }
@@ -2141,6 +2158,67 @@ export default function AdminPage() {
           </>)}
 
           {adminTab === "stories" && (<>
+          {/* Client submission link */}
+          <div className="card card-white p-6">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="font-body text-sm font-medium text-[#1a1a1a]">Client submission link</p>
+                <p className="font-body text-xs text-gray-500 mt-0.5">
+                  Send this to clients — their stories land below as pending until you approve them
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText("https://joshuaisaiah.art/testimonial");
+                  setCopiedGalleryId("__testimonial__");
+                  setTimeout(() => setCopiedGalleryId(null), 2000);
+                }}
+                className="flex items-center gap-1.5 text-sm text-blue-500 hover:text-blue-600 font-body shrink-0"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                </svg>
+                {copiedGalleryId === "__testimonial__" ? "Copied!" : "joshuaisaiah.art/testimonial"}
+              </button>
+            </div>
+          </div>
+
+          {/* Pending approvals */}
+          {testimonials.some((t) => !t.approved) && (
+            <div className="card card-white p-10 border-2 border-amber-300">
+              <h2 className="font-heading text-xl font-bold mb-2">
+                Pending Approval ({testimonials.filter((t) => !t.approved).length})
+              </h2>
+              <p className="font-body text-[#6b6b6b] mb-6">
+                Client submissions — approve to publish, delete to discard
+              </p>
+              <div className="space-y-4">
+                {testimonials.filter((t) => !t.approved).map((t) => (
+                  <div key={t.id} className="bg-amber-50 rounded-xl p-4">
+                    <p className="font-body text-sm text-gray-700 italic">&ldquo;{t.quote}&rdquo;</p>
+                    <p className="font-body text-xs text-gray-500 mt-2">
+                      {t.name}{t.role ? ` — ${t.role}` : ""}
+                    </p>
+                    <div className="flex gap-2 mt-3">
+                      <button
+                        onClick={() => approveTestimonial(t.id)}
+                        className="px-4 py-2 bg-green-600 text-white rounded-lg font-body text-sm hover:bg-green-700 transition-colors"
+                      >
+                        Approve
+                      </button>
+                      <button
+                        onClick={() => deleteTestimonial(t.id)}
+                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-body text-sm hover:bg-red-100 hover:text-red-600 transition-colors"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Add Story Card */}
           <div className="card card-white p-10">
             <h2 className="font-heading text-xl font-bold mb-2">Add Client Story</h2>
@@ -2197,18 +2275,18 @@ export default function AdminPage() {
 
           {/* Stories List Card */}
           <div className="card card-gray p-10">
-            <h2 className="font-heading text-xl font-bold mb-2 text-center">Client Stories</h2>
+            <h2 className="font-heading text-xl font-bold mb-2 text-center">Published Stories</h2>
             <p className="font-body text-[#2f2f2f] mb-6 text-center">
-              {testimonials.length} {testimonials.length === 1 ? "story" : "stories"} — first one is featured on the rate sheet
+              {testimonials.filter((t) => t.approved).length} live — first one is featured on the rate sheet
             </p>
 
-            {testimonials.length === 0 ? (
+            {testimonials.filter((t) => t.approved).length === 0 ? (
               <p className="font-body text-gray-600 text-center py-4">
-                No stories yet. Add one above — the section on the Work page appears automatically.
+                No published stories yet. Add one above or approve a client submission.
               </p>
             ) : (
               <div className="space-y-4">
-                {testimonials.map((t, index) => (
+                {testimonials.filter((t) => t.approved).map((t, index) => (
                   <div key={t.id} className="bg-white/80 rounded-xl p-4">
                     <div className="flex items-start justify-between">
                       <div className="flex flex-col gap-1 mr-3 flex-shrink-0">
@@ -2224,7 +2302,7 @@ export default function AdminPage() {
                         </button>
                         <button
                           onClick={() => moveTestimonial(index, "down")}
-                          disabled={index === testimonials.length - 1}
+                          disabled={index === testimonials.filter((x) => x.approved).length - 1}
                           className="p-1 rounded hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                           title="Move down"
                         >
