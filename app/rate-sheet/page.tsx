@@ -21,7 +21,7 @@ const SECTIONS = [
           {
             label: "Same-Day Social Media Gallery",
             note: "25 curated images — add-on",
-            price: "$300",
+            price: "$150",
           },
         ],
       },
