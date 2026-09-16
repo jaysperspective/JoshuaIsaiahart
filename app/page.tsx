@@ -43,8 +43,9 @@ export default function Home() {
               <span className="italic font-light">Isaiah</span>
             </h1>
             <p className="prose-serif mt-6 max-w-md">
-              A polymath working across creative mediums — collecting tools, perspectives,
-              and languages in search of the most honest way to be of service.
+              Award-winning craft, built over a decade in broadcast — photographs
+              and films made with the discipline of a newsroom and the care of
+              someone who believes every story deserves to be told honestly.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-2.5">
               <Link href="/work" className="btn btn-accent">
