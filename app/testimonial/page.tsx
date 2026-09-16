@@ -2,9 +2,23 @@ import Link from "next/link";
 import SubmitForm from "./SubmitForm";
 
 export const metadata = {
-  title: "Share Your Story",
-  description: "Worked with Joshua? Share your experience in your own words.",
+  title: "Testimonial",
+  description: "Share your story — a few words about working with Joshua.",
   robots: { index: false, follow: false },
+  openGraph: {
+    title: "Testimonial",
+    description: "Share your story — a few words about working with Joshua.",
+    url: "https://joshuaisaiah.art/testimonial",
+    siteName: "Joshua Isaiah",
+    images: [{ url: "/og-testimonial.jpg", width: 1200, height: 630 }],
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Testimonial",
+    description: "Share your story — a few words about working with Joshua.",
+    images: ["/og-testimonial.jpg"],
+  },
 };
 
 export default function TestimonialPage() {

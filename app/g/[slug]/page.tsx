@@ -58,16 +58,31 @@ export async function generateMetadata({
   const gallery = await getGallery(slug);
   if (!gallery) return { title: "Gallery — Joshua Isaiah" };
 
+  // Cover photo (or first image) fronts the link preview — including for
+  // PIN galleries, where the gate protects everything past the one frame
+  const previewImage = gallery.coverImage || gallery.images[0]?.path || "/og-image.jpg";
+  const description =
+    gallery.description || `${gallery.images.length} photographs by Joshua Isaiah`;
+
   return {
     title: gallery.title,
-    description: gallery.description || `Photo gallery: ${gallery.title} — Joshua Isaiah`,
+    description,
     alternates: { canonical: `/g/${gallery.slug}` },
     // Unlisted galleries are private client links — keep them out of search
     robots: gallery.unlisted ? { index: false, follow: false } : undefined,
     openGraph: {
       title: gallery.title,
-      description: gallery.description || undefined,
-      images: gallery.coverImage ? [gallery.coverImage] : undefined,
+      description,
+      url: `https://joshuaisaiah.art/g/${gallery.slug}`,
+      siteName: "Joshua Isaiah",
+      images: [previewImage], // dimensions vary per photo — let platforms measure
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: gallery.title,
+      description,
+      images: [previewImage],
     },
   };
 }
