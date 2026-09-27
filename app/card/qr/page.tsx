@@ -6,6 +6,10 @@ export const metadata: Metadata = {
   title: "Scan to Connect",
   description: `Scan to open ${CARD.name}'s digital business card.`,
   robots: { index: false, follow: false },
+  // Home-screen icon = the QR itself (iOS uses apple-touch-icon).
+  icons: {
+    apple: [{ url: "/card-qr-icon.png", sizes: "180x180", type: "image/png" }],
+  },
 };
 
 // Full-screen QR to show in person. Points to /card.
