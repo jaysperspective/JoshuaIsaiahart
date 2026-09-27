@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { prisma } from "@/app/lib/prisma";
+import Markdown from "@/app/components/Markdown";
 
 export const dynamic = "force-dynamic";
 
@@ -206,9 +207,7 @@ export default async function About() {
                   </div>
                   <div className="md:col-span-9 max-w-3xl">
                     <h3 className="headline mb-3 text-[1.5rem]">{blog.title}</h3>
-                    <p className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-ink-soft">
-                      {blog.content}
-                    </p>
+                    <Markdown>{blog.content}</Markdown>
                   </div>
                 </article>
               ))}

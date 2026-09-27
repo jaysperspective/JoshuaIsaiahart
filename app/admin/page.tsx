@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import AdminAuth from "@/app/components/AdminAuth";
+import PostEditor from "./PostEditor";
 import { slugify } from "@/app/lib/slug";
 
 interface Image {
@@ -110,11 +111,8 @@ export default function AdminPage() {
   const [editingField, setEditingField] = useState<{ galleryId: string; field: "title" | "description" } | null>(null);
   const [editValue, setEditValue] = useState("");
 
-  // Blog state
+  // Blog state (create form lives in <PostEditor/>)
   const [blogs, setBlogs] = useState<Blog[]>([]);
-  const [blogTitle, setBlogTitle] = useState("");
-  const [blogContent, setBlogContent] = useState("");
-  const [isPostingBlog, setIsPostingBlog] = useState(false);
 
   // Settings state
   const [settings, setSettings] = useState<Settings>({
@@ -630,29 +628,6 @@ export default function AdminPage() {
     if (e.target.files) {
       const files = Array.from(e.target.files);
       setNewImages((prev) => [...prev, ...files]);
-    }
-  };
-
-  const createBlog = async () => {
-    if (!blogTitle.trim() || !blogContent.trim()) return;
-
-    setIsPostingBlog(true);
-    try {
-      const res = await fetch("/api/blogs", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: blogTitle, content: blogContent }),
-      });
-
-      if (res.ok) {
-        setBlogTitle("");
-        setBlogContent("");
-        fetchBlogs();
-      }
-    } catch (error) {
-      console.error("Failed to create blog:", error);
-    } finally {
-      setIsPostingBlog(false);
     }
   };
 
@@ -1536,35 +1511,7 @@ export default function AdminPage() {
               Share thoughts, updates, or reflections
             </p>
 
-            <div className="mb-4">
-              <input
-                type="text"
-                value={blogTitle}
-                onChange={(e) => setBlogTitle(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl font-body focus:outline-none focus:border-gray-400 transition-colors"
-                placeholder="Title"
-                disabled={isPostingBlog}
-              />
-            </div>
-
-            <div className="mb-6">
-              <textarea
-                value={blogContent}
-                onChange={(e) => setBlogContent(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl font-body resize-none focus:outline-none focus:border-gray-400 transition-colors"
-                rows={5}
-                placeholder="What's on your mind?"
-                disabled={isPostingBlog}
-              />
-            </div>
-
-            <button
-              onClick={createBlog}
-              disabled={isPostingBlog || !blogTitle.trim() || !blogContent.trim()}
-              className="w-full bg-[#1a1a1a] text-white py-3 rounded-xl font-body hover:bg-[#333] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isPostingBlog ? "Posting..." : "Post"}
-            </button>
+            <PostEditor onCreated={fetchBlogs} />
 
             {/* Existing posts */}
             {blogs.length > 0 && (
