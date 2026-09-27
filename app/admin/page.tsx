@@ -90,7 +90,7 @@ const ADMIN_TABS: { id: AdminTab; label: string }[] = [
   { id: "film", label: "Film" },
   { id: "posts", label: "Posts" },
   { id: "stories", label: "Stories" },
-  { id: "files", label: "Files" },
+  { id: "files", label: "Jropbox" },
   { id: "stats", label: "Stats" },
   { id: "settings", label: "Settings" },
 ];

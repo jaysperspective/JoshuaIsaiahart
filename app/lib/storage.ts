@@ -4,6 +4,7 @@ import {
   DeleteObjectCommand,
   DeleteObjectsCommand,
   ListObjectsV2Command,
+  CopyObjectCommand,
 } from "@aws-sdk/client-s3";
 
 // DigitalOcean Spaces (S3-compatible) — when configured, uploads go to the
@@ -189,6 +190,48 @@ export async function createFolderMarker(prefix: string): Promise<void> {
   await getClient().send(
     new PutObjectCommand({ Bucket: bucket, Key: key, Body: Buffer.alloc(0) })
   );
+}
+
+// Copy one object to a new key (S3/Spaces has no native rename/move).
+async function copyObject(srcKey: string, destKey: string): Promise<void> {
+  // CopySource must be "bucket/key" with each path segment URL-encoded but
+  // slashes preserved (keys can contain spaces / special chars).
+  const source = `${bucket}/${srcKey}`
+    .split("/")
+    .map(encodeURIComponent)
+    .join("/");
+  await getClient().send(
+    new CopyObjectCommand({
+      Bucket: bucket,
+      CopySource: source,
+      Key: destKey,
+      ACL: "public-read",
+      MetadataDirective: "COPY",
+    })
+  );
+}
+
+// Rename a single object (copy to new key, delete old). Returns new URL.
+export async function renameKey(oldKey: string, newKey: string): Promise<string> {
+  if (!oldKey || !newKey || oldKey === newKey) return keyToUrl(oldKey);
+  await copyObject(oldKey, newKey);
+  await getClient().send(new DeleteObjectCommand({ Bucket: bucket, Key: oldKey }));
+  return keyToUrl(newKey);
+}
+
+// Rename a "folder": copy every object under oldPrefix to newPrefix, then
+// delete the old prefix. Both prefixes must end in "/". Returns object count.
+export async function renamePrefix(oldPrefix: string, newPrefix: string): Promise<number> {
+  if (!oldPrefix || !newPrefix) throw new Error("Both prefixes required");
+  if (oldPrefix === newPrefix) return 0;
+  const keys = await listAllKeys(oldPrefix);
+  for (const key of keys) {
+    const dest = newPrefix + key.slice(oldPrefix.length);
+    // eslint-disable-next-line no-await-in-loop
+    await copyObject(key, dest);
+  }
+  await deletePrefix(oldPrefix);
+  return keys.length;
 }
 
 // Recursively collect image files under a prefix (for "share as album").

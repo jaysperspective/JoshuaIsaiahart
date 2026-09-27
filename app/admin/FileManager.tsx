@@ -136,6 +136,26 @@ export default function FileManager() {
     }
   }
 
+  async function rename(payload: { prefix?: string; key?: string }, current: string, kind: string) {
+    const name = window.prompt(`Rename ${kind}`, current);
+    if (!name || !name.trim() || name.trim() === current) return;
+    setBusy("Renaming…");
+    setError(null);
+    try {
+      const res = await fetch("/api/files/rename", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...payload, newName: name.trim() }),
+      });
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || "Failed");
+      await load(prefix);
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setBusy(null);
+    }
+  }
+
   async function deleteFolder(folder: Folder) {
     if (!confirm(`Delete folder "${folder.name}" and EVERYTHING inside it? This cannot be undone.`)) return;
     setBusy("Deleting folder…");
@@ -227,6 +247,10 @@ export default function FileManager() {
                     </button>
                     <div className="flex shrink-0 gap-1">
                       <ShareButton prefix={folder.prefix} name={folder.name} disabled={!!busy} />
+                      <button onClick={() => rename({ prefix: folder.prefix }, folder.name, "folder")} disabled={!!busy}
+                        title="Rename folder" className="rounded p-1.5 text-gray-400 hover:bg-gray-200 hover:text-gray-700 disabled:opacity-50">
+                        <PencilIcon />
+                      </button>
                       <button onClick={() => deleteFolder(folder)} disabled={!!busy}
                         title="Delete folder" className="rounded p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500 disabled:opacity-50">
                         <TrashIcon />
@@ -264,10 +288,16 @@ export default function FileManager() {
                         <p className="truncate font-body text-xs text-gray-700" title={f.name}>{f.name}</p>
                         {f.size > 0 && <p className="font-body text-[0.65rem] text-gray-400">{humanSize(f.size)}</p>}
                       </div>
-                      <button onClick={() => deleteFile(f)} disabled={!!busy}
-                        title="Delete" className="shrink-0 rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-500 disabled:opacity-50">
-                        <TrashIcon />
-                      </button>
+                      <div className="flex shrink-0">
+                        <button onClick={() => rename({ key: f.key }, f.name, "file")} disabled={!!busy}
+                          title="Rename" className="rounded p-1 text-gray-400 hover:bg-gray-200 hover:text-gray-700 disabled:opacity-50">
+                          <PencilIcon />
+                        </button>
+                        <button onClick={() => deleteFile(f)} disabled={!!busy}
+                          title="Delete" className="rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-500 disabled:opacity-50">
+                          <TrashIcon />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -284,6 +314,14 @@ function TrashIcon() {
   return (
     <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+    </svg>
+  );
+}
+
+function PencilIcon() {
+  return (
+    <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Z" />
     </svg>
   );
 }
