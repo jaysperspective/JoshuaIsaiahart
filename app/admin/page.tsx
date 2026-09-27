@@ -110,8 +110,8 @@ export default function AdminPage() {
   const [newImages, setNewImages] = useState<File[]>([]);
   const [localUploadProgress, setLocalUploadProgress] = useState<{ done: number; total: number } | null>(null);
   const [draggedImage, setDraggedImage] = useState<{ galleryId: string; imageId: string } | null>(null);
-  const [editingField, setEditingField] = useState<{ galleryId: string; field: "title" | "description" } | null>(null);
-  const [editValue, setEditValue] = useState("");
+  // Per-gallery unsaved edits to title/description (draft until "Save changes").
+  const [galleryDrafts, setGalleryDrafts] = useState<Record<string, { title: string; description: string }>>({});
 
   // Blog state (create form lives in <PostEditor/>)
   const [blogs, setBlogs] = useState<Blog[]>([]);
@@ -525,33 +525,43 @@ export default function AdminPage() {
     }
   };
 
-  const startEditing = (galleryId: string, field: "title" | "description", currentValue: string) => {
-    setEditingField({ galleryId, field });
-    setEditValue(currentValue || "");
+  const draftTitle = (g: Gallery) => galleryDrafts[g.id]?.title ?? g.title;
+  const draftDescription = (g: Gallery) => galleryDrafts[g.id]?.description ?? g.description ?? "";
+
+  const setGalleryDraft = (g: Gallery, patch: Partial<{ title: string; description: string }>) => {
+    setGalleryDrafts((prev) => {
+      const base = prev[g.id] ?? { title: g.title, description: g.description || "" };
+      return { ...prev, [g.id]: { ...base, ...patch } };
+    });
   };
 
-  const saveInlineEdit = async () => {
-    if (!editingField) return;
+  const isGalleryDirty = (g: Gallery) => {
+    const d = galleryDrafts[g.id];
+    return !!d && (d.title !== g.title || d.description !== (g.description || ""));
+  };
 
+  const discardGalleryEdits = (g: Gallery) => {
+    setGalleryDrafts((prev) => {
+      const next = { ...prev };
+      delete next[g.id];
+      return next;
+    });
+  };
+
+  const saveGalleryEdits = async (g: Gallery) => {
+    const d = galleryDrafts[g.id];
+    if (!d) return;
     try {
-      await fetch(`/api/galleries/${editingField.galleryId}`, {
+      await fetch(`/api/galleries/${g.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          [editingField.field]: editValue,
-        }),
+        body: JSON.stringify({ title: d.title, description: d.description }),
       });
-      setEditingField(null);
-      setEditValue("");
+      discardGalleryEdits(g);
       fetchGalleries();
     } catch (error) {
       console.error("Failed to update:", error);
     }
-  };
-
-  const cancelInlineEdit = () => {
-    setEditingField(null);
-    setEditValue("");
   };
 
   const deleteImage = async (galleryId: string, imageId: string) => {
@@ -2433,76 +2443,23 @@ export default function AdminPage() {
                           </div>
                         )}
                         <div className="flex-1 min-w-0">
-                          {/* Title - Inline Edit */}
-                          {editingField?.galleryId === gallery.id && editingField.field === "title" ? (
-                            <div className="flex items-center gap-2">
-                              <input
-                                type="text"
-                                value={editValue}
-                                onChange={(e) => setEditValue(e.target.value)}
-                                className="font-heading font-bold text-[#1a1a1a] bg-white border border-gray-300 rounded px-2 py-1 flex-1"
-                                autoFocus
-                                onKeyDown={(e) => {
-                                  if (e.key === "Enter") saveInlineEdit();
-                                  if (e.key === "Escape") cancelInlineEdit();
-                                }}
-                              />
-                              <button onClick={saveInlineEdit} className="text-green-500 hover:text-green-600">
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                </svg>
-                              </button>
-                              <button onClick={cancelInlineEdit} className="text-gray-400 hover:text-gray-600">
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                              </button>
-                            </div>
-                          ) : (
-                            <h3
-                              className="font-heading font-bold text-[#1a1a1a] cursor-pointer hover:text-blue-600 transition-colors"
-                              onClick={() => startEditing(gallery.id, "title", gallery.title)}
-                              title="Click to edit title"
-                            >
-                              {gallery.title}
-                            </h3>
-                          )}
+                          {/* Title - editable */}
+                          <input
+                            type="text"
+                            value={draftTitle(gallery)}
+                            onChange={(e) => setGalleryDraft(gallery, { title: e.target.value })}
+                            className="w-full -ml-2 rounded border border-transparent bg-transparent px-2 py-1 font-heading font-bold text-[#1a1a1a] transition-colors hover:border-gray-200 focus:border-gray-300 focus:bg-white focus:outline-none"
+                            placeholder="Gallery title"
+                          />
 
-                          {/* Description - Inline Edit */}
-                          {editingField?.galleryId === gallery.id && editingField.field === "description" ? (
-                            <div className="flex items-start gap-2 mt-1">
-                              <textarea
-                                value={editValue}
-                                onChange={(e) => setEditValue(e.target.value)}
-                                className="font-body text-sm text-gray-600 bg-white border border-gray-300 rounded px-2 py-1 flex-1 resize-none"
-                                rows={2}
-                                autoFocus
-                                onKeyDown={(e) => {
-                                  if (e.key === "Escape") cancelInlineEdit();
-                                }}
-                              />
-                              <div className="flex flex-col gap-1">
-                                <button onClick={saveInlineEdit} className="text-green-500 hover:text-green-600">
-                                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                  </svg>
-                                </button>
-                                <button onClick={cancelInlineEdit} className="text-gray-400 hover:text-gray-600">
-                                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                  </svg>
-                                </button>
-                              </div>
-                            </div>
-                          ) : (
-                            <p
-                              className="font-body text-sm text-gray-500 cursor-pointer hover:text-blue-600 transition-colors mt-1"
-                              onClick={() => startEditing(gallery.id, "description", gallery.description || "")}
-                              title="Click to edit description"
-                            >
-                              {gallery.description || "Click to add description..."}
-                            </p>
-                          )}
+                          {/* Description - editable */}
+                          <textarea
+                            value={draftDescription(gallery)}
+                            onChange={(e) => setGalleryDraft(gallery, { description: e.target.value })}
+                            rows={2}
+                            className="mt-1 w-full -ml-2 resize-none rounded border border-transparent bg-transparent px-2 py-1 font-body text-sm text-gray-600 transition-colors hover:border-gray-200 focus:border-gray-300 focus:bg-white focus:outline-none"
+                            placeholder="Add a description…"
+                          />
 
                           <p className="font-body text-xs text-gray-400 mt-1">
                             {gallery.images.length} images
@@ -2746,6 +2703,24 @@ export default function AdminPage() {
                             </button>
                           )}
                       </div>
+
+                      {/* Save title/description changes */}
+                      {isGalleryDirty(gallery) && (
+                        <div className="ml-auto flex items-center gap-2">
+                          <button
+                            onClick={() => discardGalleryEdits(gallery)}
+                            className="font-body text-sm text-gray-500 hover:text-gray-700"
+                          >
+                            Discard
+                          </button>
+                          <button
+                            onClick={() => saveGalleryEdits(gallery)}
+                            className="rounded-lg bg-[#1a1a1a] px-4 py-1.5 font-body text-sm text-white transition-colors hover:bg-[#333]"
+                          >
+                            Save changes
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
