@@ -45,7 +45,10 @@ export async function POST(request: NextRequest) {
     }
 
     const title = (body.title && String(body.title).trim()) || titleFromPrefix(prefix);
-    const pin = body.pin && String(body.pin).trim() ? String(body.pin).trim() : null;
+    // Public (show on /work) when unlisted === false; otherwise private link.
+    const unlisted = body.unlisted !== false;
+    // A public on-site gallery is never PIN-locked.
+    const pin = unlisted && body.pin && String(body.pin).trim() ? String(body.pin).trim() : null;
     const downloadable = Boolean(body.downloadable);
 
     // Unique slug (mirrors app/api/galleries/route.ts collision handling).
@@ -64,7 +67,7 @@ export async function POST(request: NextRequest) {
       data: {
         title,
         slug,
-        unlisted: true,
+        unlisted,
         downloadable,
         pin,
         sortOrder,
@@ -82,7 +85,7 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json(
-      { slug, url: `/g/${slug}`, count: images.length, galleryId: gallery.id },
+      { slug, url: `/g/${slug}`, count: images.length, galleryId: gallery.id, unlisted },
       { status: 201 }
     );
   } catch (e) {

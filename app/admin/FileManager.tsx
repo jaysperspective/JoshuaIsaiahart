@@ -329,15 +329,17 @@ function PencilIcon() {
 // Share-as-album modal trigger.
 function ShareButton({ prefix, name, disabled }: { prefix: string; name: string; disabled: boolean }) {
   const [open, setOpen] = useState(false);
+  const [visibility, setVisibility] = useState<"private" | "public">("private");
   const [title, setTitle] = useState("");
   const [pin, setPin] = useState("");
   const [downloadable, setDownloadable] = useState(true);
   const [working, setWorking] = useState(false);
-  const [result, setResult] = useState<{ url: string; count: number } | null>(null);
+  const [result, setResult] = useState<{ url: string; count: number; unlisted: boolean } | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
   function openModal() {
+    setVisibility("private");
     setTitle("");
     setPin("");
     setDownloadable(true);
@@ -354,11 +356,17 @@ function ShareButton({ prefix, name, disabled }: { prefix: string; name: string;
       const res = await fetch("/api/files/share", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prefix, title: title.trim() || undefined, pin: pin.trim() || undefined, downloadable }),
+        body: JSON.stringify({
+          prefix,
+          title: title.trim() || undefined,
+          pin: visibility === "private" ? pin.trim() || undefined : undefined,
+          downloadable,
+          unlisted: visibility === "private",
+        }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || "Failed to create album");
-      setResult({ url: data.url, count: data.count });
+      setResult({ url: data.url, count: data.count, unlisted: data.unlisted });
     } catch (e: any) {
       setErr(e.message);
     } finally {
@@ -370,7 +378,7 @@ function ShareButton({ prefix, name, disabled }: { prefix: string; name: string;
 
   return (
     <>
-      <button onClick={openModal} disabled={disabled} title="Share as album"
+      <button onClick={openModal} disabled={disabled} title="Publish as gallery (site or private link)"
         className="rounded p-1.5 text-gray-400 hover:bg-emerald-50 hover:text-emerald-600 disabled:opacity-50">
         <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" d="M8.7 10.7 15.3 7M8.7 13.3l6.6 3.7M18 5.5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0ZM8.5 12a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0Zm9.5 6.5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0Z" />
@@ -380,26 +388,44 @@ function ShareButton({ prefix, name, disabled }: { prefix: string; name: string;
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setOpen(false)}>
           <div className="w-full max-w-md rounded-2xl bg-white p-6 text-black" onClick={(e) => e.stopPropagation()}>
-            <h3 className="mb-1 font-heading text-lg font-bold">Share “{name}” as an album</h3>
+            <h3 className="mb-1 font-heading text-lg font-bold">Publish “{name}”</h3>
             <p className="mb-4 font-body text-sm text-gray-500">
-              Creates a private, unlisted gallery link (not shown on your site).
+              Turn this folder into a gallery — on your site or as a private link.
             </p>
 
             {!result ? (
               <div className="space-y-4">
+                {/* Visibility */}
                 <div>
-                  <label className="mb-1 block font-body text-xs text-gray-600">Album title (optional)</label>
+                  <label className="mb-1 block font-body text-xs text-gray-600">Where should it live?</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button type="button" onClick={() => setVisibility("public")}
+                      className={`rounded-xl border px-3 py-2 text-left font-body text-sm transition-colors ${visibility === "public" ? "border-black bg-gray-900 text-white" : "border-gray-300 text-gray-700 hover:bg-gray-50"}`}>
+                      <span className="block font-medium">Show on my site</span>
+                      <span className={`block text-xs ${visibility === "public" ? "text-gray-300" : "text-gray-400"}`}>Public gallery on /work</span>
+                    </button>
+                    <button type="button" onClick={() => setVisibility("private")}
+                      className={`rounded-xl border px-3 py-2 text-left font-body text-sm transition-colors ${visibility === "private" ? "border-black bg-gray-900 text-white" : "border-gray-300 text-gray-700 hover:bg-gray-50"}`}>
+                      <span className="block font-medium">Private link</span>
+                      <span className={`block text-xs ${visibility === "private" ? "text-gray-300" : "text-gray-400"}`}>Unlisted, share by URL</span>
+                    </button>
+                  </div>
+                </div>
+                <div>
+                  <label className="mb-1 block font-body text-xs text-gray-600">Gallery title (optional)</label>
                   <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={name}
                     className="w-full rounded-xl border border-gray-300 px-3 py-2 font-body text-sm focus:border-gray-400 focus:outline-none" />
                 </div>
-                <div>
-                  <label className="mb-1 block font-body text-xs text-gray-600">PIN (optional — viewers must enter it)</label>
-                  <input value={pin} onChange={(e) => setPin(e.target.value)} inputMode="numeric" placeholder="e.g. 1234"
-                    className="w-full rounded-xl border border-gray-300 px-3 py-2 font-body text-sm focus:border-gray-400 focus:outline-none" />
-                </div>
+                {visibility === "private" && (
+                  <div>
+                    <label className="mb-1 block font-body text-xs text-gray-600">PIN (optional — viewers must enter it)</label>
+                    <input value={pin} onChange={(e) => setPin(e.target.value)} inputMode="numeric" placeholder="e.g. 1234"
+                      className="w-full rounded-xl border border-gray-300 px-3 py-2 font-body text-sm focus:border-gray-400 focus:outline-none" />
+                  </div>
+                )}
                 <label className="flex items-center gap-2 font-body text-sm text-gray-700">
                   <input type="checkbox" checked={downloadable} onChange={(e) => setDownloadable(e.target.checked)} />
-                  Allow visitors to download the album (zip)
+                  Allow visitors to download it (zip)
                 </label>
                 {err && <p className="font-body text-sm text-red-500">{err}</p>}
                 <div className="flex justify-end gap-2 pt-2">
@@ -408,14 +434,16 @@ function ShareButton({ prefix, name, disabled }: { prefix: string; name: string;
                   </button>
                   <button onClick={share} disabled={working}
                     className="rounded-lg bg-[#1a1a1a] px-4 py-2 font-body text-sm text-white hover:bg-[#333] disabled:opacity-50">
-                    {working ? "Creating…" : "Create album"}
+                    {working ? "Creating…" : visibility === "public" ? "Publish to site" : "Create link"}
                   </button>
                 </div>
               </div>
             ) : (
               <div className="space-y-4">
                 <p className="font-body text-sm text-gray-700">
-                  Album created with {result.count} photo{result.count === 1 ? "" : "s"}.
+                  {result.unlisted
+                    ? `Private album created with ${result.count} photo${result.count === 1 ? "" : "s"}.`
+                    : `Published to your site with ${result.count} photo${result.count === 1 ? "" : "s"} — it now appears on /work and in your Galleries tab.`}
                 </p>
                 <div className="flex items-center gap-2">
                   <input readOnly value={fullUrl}
@@ -429,7 +457,7 @@ function ShareButton({ prefix, name, disabled }: { prefix: string; name: string;
                 <div className="flex justify-end gap-2">
                   <a href={result.url} target="_blank" rel="noopener noreferrer"
                     className="rounded-lg border border-gray-300 px-4 py-2 font-body text-sm text-gray-700 hover:bg-gray-100">
-                    Open album
+                    Open gallery
                   </a>
                   <button onClick={() => setOpen(false)} className="rounded-lg bg-[#1a1a1a] px-4 py-2 font-body text-sm text-white hover:bg-[#333]">
                     Done
