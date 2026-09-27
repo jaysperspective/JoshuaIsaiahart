@@ -84,3 +84,23 @@ model Image {
   gallery   Gallery  @relation(fields: [galleryId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
 }
+
+// Blog/posts and site settings. These tables already exist in the production
+// DB (created via prisma/migrations/{add_blog_model,add_blog_and_settings})
+// but were missing from this schema, so the generated client couldn't expose
+// them and every prisma.blog / prisma.settings call failed. Fields mirror the
+// migration SQL exactly. Do NOT `prisma db push` this DB — only `prisma generate`.
+model Blog {
+  id        String   @id @default(cuid())
+  title     String
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Settings {
+  id           String @id @default(cuid())
+  instagramUrl String @default("")
+  linkedinUrl  String @default("")
+  youtubeUrl   String @default("")
+}
