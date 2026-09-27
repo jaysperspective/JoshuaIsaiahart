@@ -3,8 +3,9 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { pinToken, pinCookieName } from "@/app/lib/pin";
 import { slugify } from "@/app/lib/slug";
-import * as archiverNs from "archiver";
-const archiver = (archiverNs as any).default || archiverNs;
+// archiver v8 is native ESM exporting classes (no callable default) — the old
+// `archiver("zip", …)` form throws "c is not a function" in the bundle.
+import { Archiver } from "archiver";
 import { PassThrough, Readable } from "stream";
 import { readFile } from "fs/promises";
 import path from "path";
@@ -37,7 +38,7 @@ export async function GET(
       }
     }
 
-    const archive = archiver("zip", { zlib: { level: 0 } }); // JPEGs don't recompress
+    const archive = new Archiver("zip", { zlib: { level: 0 } }); // JPEGs don't recompress
     const out = new PassThrough();
     archive.pipe(out);
 
