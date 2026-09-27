@@ -8,6 +8,7 @@ import path from "path";
 import os from "os";
 import { spawn } from "child_process";
 import { spacesConfigured, uploadToSpaces } from "@/app/lib/storage";
+import { requireAdmin, unauthorized } from "@/app/lib/admin-auth";
 
 export const config = { api: { bodyParser: false } };
 
@@ -93,6 +94,7 @@ async function processVideo(tmpPath: string, caption: string | null) {
 }
 
 export async function POST(request: NextRequest) {
+  if (!requireAdmin(request)) return unauthorized();
   try {
     if (!request.body) {
       return NextResponse.json({ error: "No body" }, { status: 400 });

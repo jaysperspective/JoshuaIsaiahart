@@ -6,6 +6,7 @@ import sharp from "sharp";
 import Busboy from "busboy";
 import { Readable } from "stream";
 import { spacesConfigured, uploadToSpaces, deleteFromSpaces } from "@/app/lib/storage";
+import { requireAdmin, unauthorized } from "@/app/lib/admin-auth";
 
 export const config = { api: { bodyParser: false } };
 
@@ -46,6 +47,7 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  if (!requireAdmin(request)) return unauthorized();
   try {
     const { id } = await params;
 

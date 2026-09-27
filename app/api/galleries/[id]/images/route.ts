@@ -6,6 +6,7 @@ import sharp from "sharp";
 import Busboy from "busboy";
 import { Readable } from "stream";
 import { spacesConfigured, uploadToSpaces, deleteFromSpaces } from "@/app/lib/storage";
+import { requireAdmin, unauthorized } from "@/app/lib/admin-auth";
 
 // Disable Next.js body parsing — we handle the stream ourselves
 export const config = { api: { bodyParser: false } };
@@ -48,6 +49,7 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  if (!requireAdmin(request)) return unauthorized();
   try {
     const { id } = await params;
 
@@ -123,6 +125,7 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  if (!requireAdmin(request)) return unauthorized();
   try {
     const { id } = await params;
     const { searchParams } = new URL(request.url);

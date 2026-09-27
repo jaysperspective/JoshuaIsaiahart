@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { slugify } from "@/app/lib/slug";
+import { requireAdmin, unauthorized } from "@/app/lib/admin-auth";
 
 export async function GET() {
   try {
@@ -28,6 +29,7 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  if (!requireAdmin(request)) return unauthorized();
   try {
     const body = await request.json();
     const { title, description, downloadable } = body;

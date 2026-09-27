@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
+import { requireAdmin, unauthorized } from "@/app/lib/admin-auth";
 
 // GET settings (or return defaults)
 export async function GET() {
@@ -29,6 +30,7 @@ export async function GET() {
 
 // PUT to update settings
 export async function PUT(request: NextRequest) {
+  if (!requireAdmin(request)) return unauthorized();
   try {
     const body = await request.json();
     const { instagramUrl, linkedinUrl, youtubeUrl } = body;

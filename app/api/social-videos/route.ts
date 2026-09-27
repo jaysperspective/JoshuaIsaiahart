@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { parseSocialUrl } from "@/app/lib/video-utils";
+import { requireAdmin, unauthorized } from "@/app/lib/admin-auth";
 
 export async function GET() {
   try {
@@ -47,6 +48,7 @@ async function autoThumbnail(sourceUrl: string): Promise<string | null> {
 }
 
 export async function POST(request: NextRequest) {
+  if (!requireAdmin(request)) return unauthorized();
   try {
     const body = await request.json();
     const { sourceUrl, caption, thumbnailUrl } = body;

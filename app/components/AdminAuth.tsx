@@ -14,11 +14,28 @@ export default function AdminAuth({ children }: AdminAuthProps) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const auth = sessionStorage.getItem("adminAuth");
-    if (auth === "true") {
-      setIsAuthenticated(true);
-    }
-    setIsLoading(false);
+    // Verify a live server session (httpOnly cookie) rather than trusting
+    // sessionStorage alone. sessionStorage is only a fast-path UI hint.
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/admin/auth", { method: "GET" });
+        const data = await res.json().catch(() => ({}));
+        if (!cancelled && data?.authenticated) {
+          setIsAuthenticated(true);
+          sessionStorage.setItem("adminAuth", "true");
+        } else if (!cancelled) {
+          sessionStorage.removeItem("adminAuth");
+        }
+      } catch {
+        /* offline — leave gated */
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -43,7 +60,12 @@ export default function AdminAuth({ children }: AdminAuthProps) {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/admin/auth", { method: "DELETE" });
+    } catch {
+      /* ignore */
+    }
     sessionStorage.removeItem("adminAuth");
     setIsAuthenticated(false);
     setPassword("");

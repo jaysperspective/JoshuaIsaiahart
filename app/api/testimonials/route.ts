@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
+import { requireAdmin, unauthorized } from "@/app/lib/admin-auth";
 
 export async function GET(request: NextRequest) {
   try {
@@ -17,6 +18,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  if (!requireAdmin(request)) return unauthorized();
   try {
     const { quote, name, role } = await request.json();
 

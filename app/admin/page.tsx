@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import AdminAuth from "@/app/components/AdminAuth";
 import PostEditor from "./PostEditor";
+import FileManager from "./FileManager";
 import { slugify } from "@/app/lib/slug";
 
 interface Image {
@@ -81,7 +82,7 @@ interface SocialVideo {
   sortOrder: number | null;
 }
 
-type AdminTab = "galleries" | "reels" | "film" | "posts" | "stories" | "stats" | "settings";
+type AdminTab = "galleries" | "reels" | "film" | "posts" | "stories" | "files" | "stats" | "settings";
 
 const ADMIN_TABS: { id: AdminTab; label: string }[] = [
   { id: "galleries", label: "Galleries" },
@@ -89,6 +90,7 @@ const ADMIN_TABS: { id: AdminTab; label: string }[] = [
   { id: "film", label: "Film" },
   { id: "posts", label: "Posts" },
   { id: "stories", label: "Stories" },
+  { id: "files", label: "Files" },
   { id: "stats", label: "Stats" },
   { id: "settings", label: "Settings" },
 ];
@@ -2281,6 +2283,8 @@ export default function AdminPage() {
             )}
           </div>
           </>)}
+
+          {adminTab === "files" && <FileManager />}
 
           {adminTab === "stats" && (
           <div className="card card-white p-10">

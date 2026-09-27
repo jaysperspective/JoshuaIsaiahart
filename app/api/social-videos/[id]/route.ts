@@ -3,11 +3,13 @@ import { prisma } from "@/app/lib/prisma";
 import { unlink } from "fs/promises";
 import path from "path";
 import { deleteFromSpaces } from "@/app/lib/storage";
+import { requireAdmin, unauthorized } from "@/app/lib/admin-auth";
 
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  if (!requireAdmin(request)) return unauthorized();
   try {
     const { id } = await params;
     const body = await request.json();
@@ -36,6 +38,7 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  if (!requireAdmin(request)) return unauthorized();
   try {
     const { id } = await params;
 

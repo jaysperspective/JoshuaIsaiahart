@@ -1,4 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireAdmin, setAdminCookie, clearAdminCookie } from "@/app/lib/admin-auth";
+
+// Verify an existing session (used by the client on mount).
+export async function GET(request: NextRequest) {
+  return NextResponse.json({ authenticated: requireAdmin(request) });
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,7 +22,9 @@ export async function POST(request: NextRequest) {
     }
 
     if (password === adminPassword) {
-      return NextResponse.json({ authenticated: true });
+      const res = NextResponse.json({ authenticated: true });
+      setAdminCookie(res);
+      return res;
     }
 
     return NextResponse.json(
@@ -30,4 +38,11 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+// Logout — clear the session cookie.
+export async function DELETE() {
+  const res = NextResponse.json({ authenticated: false });
+  clearAdminCookie(res);
+  return res;
 }
