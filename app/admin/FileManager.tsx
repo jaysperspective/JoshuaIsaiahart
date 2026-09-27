@@ -334,9 +334,14 @@ function ShareButton({ prefix, name, disabled }: { prefix: string; name: string;
   const [pin, setPin] = useState("");
   const [downloadable, setDownloadable] = useState(true);
   const [working, setWorking] = useState(false);
-  const [result, setResult] = useState<{ url: string; count: number; unlisted: boolean } | null>(null);
+  const [result, setResult] = useState<{ url: string; count: number; unlisted: boolean; updated?: boolean; added?: number; removed?: number } | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [checking, setChecking] = useState(false);
+  const [existing, setExisting] = useState<
+    | { id: string; title: string; slug: string; unlisted: boolean; downloadable: boolean; hasPin: boolean; count: number }
+    | null
+  >(null);
 
   function openModal() {
     setVisibility("private");
@@ -346,10 +351,25 @@ function ShareButton({ prefix, name, disabled }: { prefix: string; name: string;
     setResult(null);
     setErr(null);
     setCopied(false);
+    setExisting(null);
     setOpen(true);
+    // Detect whether this folder is already a gallery.
+    setChecking(true);
+    fetch(`/api/files/share?prefix=${encodeURIComponent(prefix)}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (d?.existing) {
+          setExisting(d.existing);
+          setTitle(d.existing.title || "");
+          setVisibility(d.existing.unlisted ? "private" : "public");
+          setDownloadable(!!d.existing.downloadable);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setChecking(false));
   }
 
-  async function share() {
+  async function share(mode: "create" | "update") {
     setWorking(true);
     setErr(null);
     try {
@@ -362,11 +382,12 @@ function ShareButton({ prefix, name, disabled }: { prefix: string; name: string;
           pin: visibility === "private" ? pin.trim() || undefined : undefined,
           downloadable,
           unlisted: visibility === "private",
+          ...(mode === "update" && existing ? { update: true, galleryId: existing.id } : {}),
         }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || "Failed to create album");
-      setResult({ url: data.url, count: data.count, unlisted: data.unlisted });
+      if (!res.ok) throw new Error(data.error || "Failed to publish");
+      setResult({ url: data.url, count: data.count, unlisted: data.unlisted, updated: data.updated, added: data.added, removed: data.removed });
     } catch (e: any) {
       setErr(e.message);
     } finally {
@@ -395,6 +416,20 @@ function ShareButton({ prefix, name, disabled }: { prefix: string; name: string;
 
             {!result ? (
               <div className="space-y-4">
+                {checking && (
+                  <p className="font-body text-sm text-gray-400">Checking if this folder is already a gallery…</p>
+                )}
+                {existing && (
+                  <div className="rounded-xl border border-amber-300 bg-amber-50 p-3">
+                    <p className="font-body text-sm text-amber-900">
+                      This folder is already a gallery: <span className="font-semibold">“{existing.title}”</span>{" "}
+                      ({existing.unlisted ? "private" : "public"}, {existing.count} photo{existing.count === 1 ? "" : "s"}).
+                    </p>
+                    <p className="mt-1 font-body text-xs text-amber-700">
+                      Update it to re-sync photos (adds new, removes deleted) and keep the same link — or create a separate new one.
+                    </p>
+                  </div>
+                )}
                 {/* Visibility */}
                 <div>
                   <label className="mb-1 block font-body text-xs text-gray-600">Where should it live?</label>
@@ -432,16 +467,32 @@ function ShareButton({ prefix, name, disabled }: { prefix: string; name: string;
                   <button onClick={() => setOpen(false)} className="rounded-lg px-4 py-2 font-body text-sm text-gray-600 hover:bg-gray-100">
                     Cancel
                   </button>
-                  <button onClick={share} disabled={working}
-                    className="rounded-lg bg-[#1a1a1a] px-4 py-2 font-body text-sm text-white hover:bg-[#333] disabled:opacity-50">
-                    {working ? "Creating…" : visibility === "public" ? "Publish to site" : "Create link"}
-                  </button>
+                  {existing ? (
+                    <>
+                      <button onClick={() => share("create")} disabled={working}
+                        className="rounded-lg border border-gray-300 px-4 py-2 font-body text-sm text-gray-700 hover:bg-gray-100 disabled:opacity-50">
+                        Create new
+                      </button>
+                      <button onClick={() => share("update")} disabled={working}
+                        className="rounded-lg bg-[#1a1a1a] px-4 py-2 font-body text-sm text-white hover:bg-[#333] disabled:opacity-50">
+                        {working ? "Updating…" : "Update existing"}
+                      </button>
+                    </>
+                  ) : (
+                    <button onClick={() => share("create")} disabled={working || checking}
+                      className="rounded-lg bg-[#1a1a1a] px-4 py-2 font-body text-sm text-white hover:bg-[#333] disabled:opacity-50">
+                      {working ? "Creating…" : visibility === "public" ? "Publish to site" : "Create link"}
+                    </button>
+                  )}
                 </div>
               </div>
             ) : (
               <div className="space-y-4">
                 <p className="font-body text-sm text-gray-700">
-                  {result.unlisted
+                  {result.updated
+                    ? `Updated “${title || name}” — now ${result.count} photo${result.count === 1 ? "" : "s"}` +
+                      (result.added || result.removed ? ` (+${result.added ?? 0} added, −${result.removed ?? 0} removed).` : ".")
+                    : result.unlisted
                     ? `Private album created with ${result.count} photo${result.count === 1 ? "" : "s"}.`
                     : `Published to your site with ${result.count} photo${result.count === 1 ? "" : "s"} — it now appears on /work and in your Galleries tab.`}
                 </p>
