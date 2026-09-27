@@ -31,8 +31,12 @@ export default function FloatingBook() {
     return () => observer.disconnect();
   }, [pathname]);
 
-  // Keep it off admin and the Uraenis art piece
-  if (pathname.startsWith("/admin") || pathname.startsWith("/Uraenis")) {
+  // Keep it off admin, the Uraenis art piece, and the digital business card
+  if (
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/Uraenis") ||
+    pathname.startsWith("/card")
+  ) {
     return null;
   }
 
