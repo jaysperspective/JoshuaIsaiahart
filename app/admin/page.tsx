@@ -97,6 +97,7 @@ const ADMIN_TABS: { id: AdminTab; label: string }[] = [
 
 export default function AdminPage() {
   const [galleries, setGalleries] = useState<Gallery[]>([]);
+  const [galleryViews, setGalleryViews] = useState<Record<string, number>>({});
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -184,6 +185,9 @@ export default function AdminPage() {
         const data = await res.json();
         setGalleries(data);
       }
+      // Lifetime view counts per gallery (admin-only endpoint)
+      const vres = await fetch("/api/metrics/galleries");
+      if (vres.ok) setGalleryViews(await vres.json());
     } catch (error) {
       console.error("Failed to fetch galleries:", error);
     }
@@ -2463,6 +2467,10 @@ export default function AdminPage() {
 
                           <p className="font-body text-xs text-gray-400 mt-1">
                             {gallery.images.length} images
+                            <span className="ml-2">
+                              · {(galleryViews[gallery.id] ?? 0).toLocaleString()}{" "}
+                              {(galleryViews[gallery.id] ?? 0) === 1 ? "view" : "views"}
+                            </span>
                             {gallery.images.some((img) => img.selected) && (
                               <span className="text-pink-500 ml-2">
                                 ♥ {gallery.images.filter((img) => img.selected).length} client selects
