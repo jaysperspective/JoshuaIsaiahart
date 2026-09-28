@@ -222,6 +222,20 @@ export default function GalleryGridClient({ gallery }: GalleryGridClientProps) {
             </svg>
           </button>
 
+          {gallery.downloadable && (
+            <a
+              href={`/api/images/${lightboxImage.id}/download`}
+              download
+              onClick={(e) => e.stopPropagation()}
+              aria-label="Download this photo"
+              className="absolute top-6 right-[4.25rem] text-paper/50 hover:text-paper transition-colors z-10"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+            </a>
+          )}
+
           {lightboxIndex && (
             <div className="absolute top-6 left-6 text-khaki/70 label numeral z-10">
               {lightboxIndex} / {gallery.images.length}
