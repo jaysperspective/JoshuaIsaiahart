@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { parseVideoUrl, getEmbedUrl, getThumbnailUrl } from "@/app/lib/video-utils";
+import { slugify } from "@/app/lib/slug";
 import Reveal from "./Reveal";
 
 interface VideoProject {
@@ -20,6 +21,26 @@ interface VideographyClientProps {
 
 export default function VideographyClient({ videoProjects }: VideographyClientProps) {
   const [lightboxVideo, setLightboxVideo] = useState<VideoProject | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const shareFilm = async (project: VideoProject) => {
+    const url = `https://joshuaisaiah.art/film/${slugify(project.title)}`;
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try {
+        await navigator.share({ title: project.title, url });
+        return;
+      } catch {
+        /* cancelled — fall through to copy */
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopiedId(project.id);
+      setTimeout(() => setCopiedId((id) => (id === project.id ? null : id)), 1800);
+    } catch {
+      /* clipboard blocked */
+    }
+  };
 
   const getDisplayThumbnail = (project: VideoProject) => {
     if (project.thumbnailUrl) {
@@ -93,9 +114,28 @@ export default function VideographyClient({ videoProjects }: VideographyClientPr
                     {project.title}
                   </h2>
                 </div>
-                {parsed.service && parsed.service !== "direct" && (
-                  <span className="label shrink-0 self-center capitalize">{parsed.service}</span>
-                )}
+                <div className="flex shrink-0 items-center gap-4 self-center">
+                  {parsed.service && parsed.service !== "direct" && (
+                    <span className="label capitalize">{parsed.service}</span>
+                  )}
+                  <button
+                    onClick={(e) => { e.stopPropagation(); shareFilm(project); }}
+                    className="label flex items-center gap-1.5 transition-colors hover:text-accent"
+                    title="Copy a shareable link to this film"
+                  >
+                    {copiedId === project.id ? (
+                      "Copied"
+                    ) : (
+                      <>
+                        <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                            d="M8.7 10.7 15.3 7M8.7 13.3l6.6 3.7M18 5.5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0ZM8.5 12a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0Zm9.5 6.5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0Z" />
+                        </svg>
+                        Share
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
 
               {/* Thumbnail */}
