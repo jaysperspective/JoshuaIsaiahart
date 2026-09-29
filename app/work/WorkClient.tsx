@@ -10,6 +10,7 @@ import ContactClient from "./ContactClient";
 import Testimonials, { Testimonial } from "./Testimonials";
 import Reveal from "./Reveal";
 import SocialClient, { SocialVideo } from "./SocialClient";
+import CreativeDirectorClient from "./CreativeDirectorClient";
 
 interface Image {
   id: string;
@@ -75,7 +76,7 @@ export default function WorkClient({ galleries, videoProjects, socialVideos, tes
   // Handle URL-driven initialization
   useEffect(() => {
     const tabParam = searchParams.get("tab") as WorkTab | null;
-    if (tabParam && ["photography", "videography", "reels"].includes(tabParam)) {
+    if (tabParam && ["photography", "videography", "reels", "creative-director"].includes(tabParam)) {
       setActiveTab(tabParam);
     }
 
@@ -227,6 +228,10 @@ export default function WorkClient({ galleries, videoProjects, socialVideos, tes
 
         {activeTab === "reels" && (
           <SocialClient socialVideos={socialVideos} />
+        )}
+
+        {activeTab === "creative-director" && (
+          <CreativeDirectorClient />
         )}
 
         {/* Photography — cover grid; clicking a cover unfolds that gallery */}

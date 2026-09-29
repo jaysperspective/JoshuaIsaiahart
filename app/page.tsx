@@ -1,5 +1,33 @@
 import Link from "next/link";
 import Image from "next/image";
+import { prisma } from "@/app/lib/prisma";
+
+// Approved testimonials are fetched at request time.
+export const dynamic = "force-dynamic";
+
+interface HomeTestimonial {
+  id: string;
+  quote: string;
+  name: string;
+  role: string | null;
+}
+
+async function getApprovedTestimonials(): Promise<HomeTestimonial[]> {
+  try {
+    const rows = await prisma.testimonial.findMany({
+      where: { approved: true },
+      orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+    });
+    return rows.map((t) => ({
+      id: t.id,
+      quote: t.quote,
+      name: t.name,
+      role: t.role ?? null,
+    }));
+  } catch {
+    return [];
+  }
+}
 
 function ArrowIcon({ className = "" }: { className?: string }) {
   return (
@@ -23,7 +51,8 @@ function ArrowIcon({ className = "" }: { className?: string }) {
   );
 }
 
-export default function Home() {
+export default async function Home() {
+  const testimonials = await getApprovedTestimonials();
   return (
     <main className="relative min-h-screen overflow-hidden bg-paper text-ink">
       <div className="grid grid-cols-1 md:grid-cols-[1.4fr_1fr] lg:grid-cols-[1.5fr_1fr]">
@@ -68,6 +97,32 @@ export default function Home() {
                 Testimonial
               </Link>
             </div>
+
+            {/* Approved client reviews — surfaced as formatted quotes */}
+            {testimonials.length > 0 && (
+              <div className="mt-12 max-w-xl border-t border-rule pt-8">
+                <p className="eyebrow mb-6">Kind Words</p>
+                <div className="space-y-8">
+                  {testimonials.map((t) => (
+                    <figure key={t.id} className="relative pl-7">
+                      <span
+                        aria-hidden
+                        className="absolute left-0 -top-3 font-display text-5xl leading-none text-accent/50"
+                      >
+                        &ldquo;
+                      </span>
+                      <blockquote className="prose-serif text-[1.05rem] italic leading-relaxed">
+                        {t.quote}
+                      </blockquote>
+                      <figcaption className="mt-3 flex flex-wrap items-baseline gap-x-2">
+                        <span className="label text-ink">{t.name}</span>
+                        {t.role && <span className="label">· {t.role}</span>}
+                      </figcaption>
+                    </figure>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
