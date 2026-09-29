@@ -51,14 +51,14 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const film = await getFilm(slug);
-  if (!film) return { title: "Film — Joshua Isaiah" };
+  if (!film) return { title: "Film" };
 
   const description = film.description || `A film by Joshua Isaiah`;
   const image = previewImage(film);
   const url = `https://joshuaisaiah.art/film/${film.slug}`;
 
   return {
-    title: `${film.title} — Joshua Isaiah`,
+    title: film.title,
     description,
     alternates: { canonical: `/film/${film.slug}` },
     openGraph: {
