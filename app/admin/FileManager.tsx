@@ -20,6 +20,7 @@ interface Listing {
 }
 
 const IMG_RE = /\.(jpe?g|png|webp|gif|avif|heic|heif|tiff?|svg)$/i;
+const VIDEO_RE = /\.(mp4|mov|m4v|webm|ogg|ogv)$/i;
 const UPLOAD_BATCH = 20;
 
 function humanSize(n: number): string {
@@ -39,6 +40,7 @@ export default function FileManager() {
   const [listing, setListing] = useState<Listing | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null); // transient success message
   const [busy, setBusy] = useState<string | null>(null); // status text while working
 
   const fileInput = useRef<HTMLInputElement>(null);
@@ -117,6 +119,28 @@ export default function FileManager() {
       await load(prefix);
     } catch (e: any) {
       setError(e.message);
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  // One-click: create a Film (video project) that points at this file's URL.
+  async function sendToFilm(f: FileObj) {
+    const title = f.name.replace(/\.[^.]+$/, "");
+    setBusy("Adding to Film…");
+    setError(null);
+    setNotice(null);
+    try {
+      const res = await fetch("/api/video-projects", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, videoUrl: f.url }),
+      });
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || "Failed to add to Film");
+      setNotice(`Added “${title}” to Film. Set a thumbnail or description in the Film tab.`);
+      setTimeout(() => setNotice(null), 6000);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to add to Film");
     } finally {
       setBusy(null);
     }
@@ -222,6 +246,7 @@ export default function FileManager() {
       </div>
 
       {busy && <p className="mb-3 font-body text-sm text-blue-600">{busy}</p>}
+      {notice && <p className="mb-3 font-body text-sm text-emerald-600">{notice}</p>}
       {error && <p className="mb-3 font-body text-sm text-red-500">{error}</p>}
       {loading && <p className="font-body text-sm text-gray-400">Loading…</p>}
 
@@ -276,6 +301,8 @@ export default function FileManager() {
                         {IMG_RE.test(f.name) ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img src={f.url} alt={f.name} loading="lazy" className="h-full w-full object-cover" />
+                        ) : VIDEO_RE.test(f.name) ? (
+                          <FilmIcon className="h-10 w-10 text-gray-300" />
                         ) : (
                           <svg className="h-10 w-10 text-gray-300" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M14 3v4a1 1 0 0 0 1 1h4M5 3h9l5 5v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z" />
@@ -289,6 +316,12 @@ export default function FileManager() {
                         {f.size > 0 && <p className="font-body text-[0.65rem] text-gray-400">{humanSize(f.size)}</p>}
                       </div>
                       <div className="flex shrink-0">
+                        {VIDEO_RE.test(f.name) && (
+                          <button onClick={() => sendToFilm(f)} disabled={!!busy}
+                            title="Send to Film" className="rounded p-1 text-gray-400 hover:bg-emerald-50 hover:text-emerald-600 disabled:opacity-50">
+                            <FilmIcon className="h-4 w-4" />
+                          </button>
+                        )}
                         <button onClick={() => rename({ key: f.key }, f.name, "file")} disabled={!!busy}
                           title="Rename" className="rounded p-1 text-gray-400 hover:bg-gray-200 hover:text-gray-700 disabled:opacity-50">
                           <PencilIcon />
@@ -314,6 +347,14 @@ function TrashIcon() {
   return (
     <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+    </svg>
+  );
+}
+
+function FilmIcon({ className = "h-4 w-4" }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 4.5h16.5v15H3.75v-15Zm0 5h16.5m-16.5 5h16.5M7.5 4.5v15m9-15v15" />
     </svg>
   );
 }
