@@ -26,8 +26,25 @@ interface Availability {
 
 const STEP_TITLES = ["Your details", "Your inquiry", "Pick a time"];
 
+// Joshua's number for the text-follow-up SMS link. Mirrors CARD.phone in
+// app/lib/contact.ts (that module is server-only — it imports prisma — so the
+// value is repeated here for the client bundle).
+const JOSHUA_SMS = "+14344893932";
+
+type Outcome = "booked" | "texted" | "emailed";
+
 function ymd(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+/** Phones/tablets that have a Messages app — route the text follow-up to SMS. */
+function isMobileDevice(): boolean {
+  if (typeof navigator === "undefined") return false;
+  const ua = navigator.userAgent || "";
+  if (/iPhone|iPad|iPod|Android/i.test(ua)) return true;
+  // iPadOS 13+ reports as "Macintosh" but is touch-capable.
+  if (/Macintosh/.test(ua) && (navigator.maxTouchPoints ?? 0) > 1) return true;
+  return false;
 }
 
 function formatLong(date: Date): string {
@@ -114,17 +131,17 @@ export default function ContactClient() {
     setError(null);
   }
 
+  const [outcome, setOutcome] = useState<Outcome>("booked");
+
   const canLeaveDetails = form.name.trim().length > 0 && emailLooksValid(form.email);
   const canLeaveInquiry = form.description.trim().length > 0;
   const needsPhone = contactPref === "text" && form.phone.trim().length === 0;
-  const canConfirm = !!selectedDate && !!selectedTime && !needsPhone;
+  // Video needs a scheduled slot; text just needs a number to reach them.
+  const canConfirm = contactPref === "text" ? !needsPhone : !!selectedDate && !!selectedTime;
 
-  async function submit() {
+  // Scheduled video call — persists + emails a calendar invite.
+  async function submitBooking() {
     if (!selectedDate || !selectedTime) return;
-    if (needsPhone) {
-      setError("Add a number so I can text you.");
-      return;
-    }
     setSubmitting(true);
     setError(null);
     try {
@@ -133,9 +150,9 @@ export default function ContactClient() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           date: selectedDate.toISOString(),
-          dateYmd: `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, "0")}-${String(selectedDate.getDate()).padStart(2, "0")}`,
+          dateYmd: ymd(selectedDate),
           time: selectedTime,
-          contactPref,
+          contactPref: "video",
           company, // honeypot
           ...form,
         }),
@@ -149,6 +166,45 @@ export default function ContactClient() {
         }
         throw new Error(data.error || "Failed to book. Please try again.");
       }
+      setOutcome("booked");
+      go(3);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Something went wrong.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  // Text follow-up — on a phone, open Messages prefilled; on desktop, email Joshua.
+  async function sendText() {
+    if (needsPhone) {
+      setError("Add a number so I can text you.");
+      return;
+    }
+    const body = `Hi Joshua, this is ${form.name || "someone"} from your site.\n\n${form.description}`.trim();
+
+    if (isMobileDevice()) {
+      setOutcome("texted");
+      go(3);
+      // Open the Messages app prefilled. `?&body=` is the broadly-compatible form.
+      window.location.href = `sms:${JOSHUA_SMS}?&body=${encodeURIComponent(body)}`;
+      return;
+    }
+
+    // Desktop — no Messages app, so email Joshua instead.
+    setSubmitting(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/booking", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contactPref: "text", company, ...form }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to send. Please try again.");
+      }
+      setOutcome("emailed");
       go(3);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
@@ -160,6 +216,7 @@ export default function ContactClient() {
   function reset() {
     setForm({ name: "", phone: "", email: "", description: "" });
     setContactPref("video");
+    setOutcome("booked");
     setSelectedDate(null);
     setSelectedTime(null);
     setCompany("");
@@ -198,7 +255,7 @@ export default function ContactClient() {
     </button>
   );
 
-  const stepHeader = (i: number) => (
+  const stepHeader = (i: number, titleOverride?: string) => (
     <div className="mb-6">
       <div className="mb-3 flex items-center gap-1.5">
         {[0, 1, 2].map((n) => (
@@ -212,7 +269,7 @@ export default function ContactClient() {
       <p className="font-sans text-[0.68rem] uppercase tracking-[0.16em]" style={{ color: ACCENT }}>
         Step {i + 1} of 3
       </p>
-      <h3 className="headline mt-1 text-[1.5rem]">{STEP_TITLES[i]}</h3>
+      <h3 className="headline mt-1 text-[1.5rem]">{titleOverride ?? STEP_TITLES[i]}</h3>
     </div>
   );
 
@@ -300,7 +357,7 @@ export default function ContactClient() {
     if (i === 2) {
       return (
         <>
-          {stepHeader(2)}
+          {stepHeader(2, contactPref === "text" ? "Text follow-up" : "Pick a time")}
 
           {/* Follow-up preference */}
           <p className="label mb-2">How should we connect?</p>
@@ -332,7 +389,7 @@ export default function ContactClient() {
 
           {/* Inline phone capture when a text follow-up is chosen */}
           {contactPref === "text" && (
-            <div className="mb-6">
+            <div className="mb-4">
               <label className="block label mb-2">Best number to text</label>
               <input
                 type="tel"
@@ -341,99 +398,118 @@ export default function ContactClient() {
                 className="field"
                 placeholder="(555) 123-4567"
               />
+              <p className="label normal-case tracking-normal mt-3" style={{ color: "var(--muted)" }}>
+                Your note is ready to send — this opens Messages on your phone, or emails Joshua from a computer.
+              </p>
             </div>
           )}
 
-          {/* Day strip — two weeks of weekdays, not a full calendar */}
-          <p className="label mb-2">Pick a day</p>
-          <div className="mb-5 flex flex-wrap gap-2">
-            {days.map((d) => {
-              const active = selectedDate && d.toDateString() === selectedDate.toDateString();
-              return (
-                <button
-                  key={d.toISOString()}
-                  type="button"
-                  onClick={() => { setSelectedDate(d); setSelectedTime(null); }}
-                  className="flex min-w-[4rem] flex-col items-center rounded-[6px] border px-3 py-2 transition-colors"
-                  style={{
-                    borderColor: active ? ACCENT : "var(--rule)",
-                    background: active ? ACCENT : "transparent",
-                    color: active ? "var(--paper)" : "var(--ink-soft)",
-                  }}
-                >
-                  <span className="font-sans text-[0.6rem] uppercase tracking-[0.1em] opacity-80">
-                    {d.toLocaleDateString("en-US", { weekday: "short" })}
-                  </span>
-                  <span className="font-sans text-sm numeral">
-                    {d.toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Time slots for the chosen day */}
-          {selectedDate && (
-            <div className="mb-2">
-              <p className="label mb-2">Pick a time · Eastern</p>
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                {slots.map((t) => {
-                  const active = selectedTime === t;
-                  const isTaken = (taken[ymd(selectedDate)] ?? []).includes(t);
+          {/* Scheduling — only for a video call. Text skips straight to sending. */}
+          {contactPref !== "text" && (
+            <>
+              {/* Day strip — two weeks of weekdays, not a full calendar */}
+              <p className="label mb-2">Pick a day</p>
+              <div className="mb-5 flex flex-wrap gap-2">
+                {days.map((d) => {
+                  const active = selectedDate && d.toDateString() === selectedDate.toDateString();
                   return (
                     <button
-                      key={t}
+                      key={d.toISOString()}
                       type="button"
-                      disabled={isTaken}
-                      onClick={() => !isTaken && setSelectedTime(t)}
-                      className="rounded-[6px] border px-2 py-2 font-sans text-sm numeral transition-colors disabled:cursor-not-allowed"
+                      onClick={() => { setSelectedDate(d); setSelectedTime(null); }}
+                      className="flex min-w-[4rem] flex-col items-center rounded-[6px] border px-3 py-2 transition-colors"
                       style={{
                         borderColor: active ? ACCENT : "var(--rule)",
                         background: active ? ACCENT : "transparent",
                         color: active ? "var(--paper)" : "var(--ink-soft)",
-                        opacity: isTaken ? 0.35 : 1,
-                        textDecoration: isTaken ? "line-through" : "none",
                       }}
                     >
-                      {t}
+                      <span className="font-sans text-[0.6rem] uppercase tracking-[0.1em] opacity-80">
+                        {d.toLocaleDateString("en-US", { weekday: "short" })}
+                      </span>
+                      <span className="font-sans text-sm numeral">
+                        {d.toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                      </span>
                     </button>
                   );
                 })}
               </div>
-            </div>
+
+              {/* Time slots for the chosen day */}
+              {selectedDate && (
+                <div className="mb-2">
+                  <p className="label mb-2">Pick a time · Eastern</p>
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                    {slots.map((t) => {
+                      const active = selectedTime === t;
+                      const isTaken = (taken[ymd(selectedDate)] ?? []).includes(t);
+                      return (
+                        <button
+                          key={t}
+                          type="button"
+                          disabled={isTaken}
+                          onClick={() => !isTaken && setSelectedTime(t)}
+                          className="rounded-[6px] border px-2 py-2 font-sans text-sm numeral transition-colors disabled:cursor-not-allowed"
+                          style={{
+                            borderColor: active ? ACCENT : "var(--rule)",
+                            background: active ? ACCENT : "transparent",
+                            color: active ? "var(--paper)" : "var(--ink-soft)",
+                            opacity: isTaken ? 0.35 : 1,
+                            textDecoration: isTaken ? "line-through" : "none",
+                          }}
+                        >
+                          {t}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </>
           )}
 
           {error && <p className="mt-4 font-sans text-sm text-earth">{error}</p>}
 
           <div className="mt-8 flex items-center justify-between">
             {backBtn(1)}
-            {primaryBtn(submitting ? "Booking…" : "Confirm booking", submit, !canConfirm || submitting)}
+            {contactPref === "text"
+              ? primaryBtn(submitting ? "Sending…" : "Send a text", sendText, !canConfirm || submitting)
+              : primaryBtn(submitting ? "Booking…" : "Confirm booking", submitBooking, !canConfirm || submitting)}
           </div>
         </>
       );
     }
 
-    // Step 3 — confirmation
+    // Step 3 — confirmation (branches on how it was sent)
+    const eyebrow = outcome === "booked" ? "You're booked" : outcome === "texted" ? "Almost there" : "Message sent";
+    const heading = outcome === "booked" ? "See you soon" : outcome === "texted" ? "Finish in Messages" : "Thanks — talk soon";
     return (
       <div className="py-4 text-center">
         <span
           className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full"
           style={{ background: ACCENT_SOFT }}
         >
-          <svg className="h-7 w-7" fill="none" stroke={ACCENT} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M5 13l4 4L19 7" />
-          </svg>
+          {outcome === "texted" ? (
+            <svg className="h-7 w-7" fill="none" stroke={ACCENT} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M8 10h8M8 14h5M21 12a8 8 0 01-11.6 7.1L3 20l1-5.3A8 8 0 1121 12z" />
+            </svg>
+          ) : (
+            <svg className="h-7 w-7" fill="none" stroke={ACCENT} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M5 13l4 4L19 7" />
+            </svg>
+          )}
         </span>
-        <p className="eyebrow mb-2" style={{ color: ACCENT }}>You&rsquo;re booked</p>
-        <h3 className="headline mb-3 text-[1.6rem]">See you soon</h3>
-        {selectedDate && selectedTime && (
+        <p className="eyebrow mb-2" style={{ color: ACCENT }}>{eyebrow}</p>
+        <h3 className="headline mb-3 text-[1.6rem]">{heading}</h3>
+        {outcome === "booked" && selectedDate && selectedTime && (
           <p className="font-sans text-sm text-ink-soft">
-            {formatLong(selectedDate)} at {selectedTime} ·{" "}
-            {contactPref === "video" ? "Video call" : "Text follow-up"}
+            {formatLong(selectedDate)} at {selectedTime} · Video call
           </p>
         )}
         <p className="label normal-case tracking-normal mt-2">
-          A confirmation is on its way to {form.email}.
+          {outcome === "booked" && `A confirmation is on its way to ${form.email}.`}
+          {outcome === "texted" && "Hit send in your Messages app and Joshua will take it from there."}
+          {outcome === "emailed" && "Your note is with Joshua — he'll reply by text shortly."}
         </p>
         <button
           type="button"
@@ -441,7 +517,7 @@ export default function ContactClient() {
           className="btn mt-7"
           style={{ borderColor: ACCENT, color: ACCENT }}
         >
-          Book another
+          Start over
         </button>
       </div>
     );

@@ -74,11 +74,18 @@ export async function POST(request: Request) {
     }
 
     const pref: ContactPref = contactPref === "text" ? "text" : "video";
+    // Video calls are scheduled; text follow-ups are not.
+    const scheduled = pref === "video" && !!date && !!time;
 
-    // Phone is optional — but required for a text follow-up.
-    if (!date || !time || !name || !email || !description) {
+    if (!name || !email || !description) {
       return NextResponse.json(
-        { error: "Name, email, inquiry, date and time are required" },
+        { error: "Name, email and inquiry are required" },
+        { status: 400 }
+      );
+    }
+    if (pref === "video" && (!date || !time)) {
+      return NextResponse.json(
+        { error: "Pick a date and time for a video call" },
         { status: 400 }
       );
     }
@@ -108,26 +115,28 @@ export async function POST(request: Request) {
     }
 
     const channelLabel = pref === "text" ? "Text follow-up" : "Video call (Google Meet)";
-    const bookingDate = new Date(date);
-    const formattedDate = bookingDate.toLocaleDateString("en-US", {
-      weekday: "long",
-      month: "long",
-      day: "numeric",
-      year: "numeric",
-    });
+    const bookingDate = date ? new Date(date) : new Date();
+    const formattedDate = scheduled
+      ? bookingDate.toLocaleDateString("en-US", {
+          weekday: "long",
+          month: "long",
+          day: "numeric",
+          year: "numeric",
+        })
+      : null;
 
     const emailHtml = `
       <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #333;">New Consultation Booking</h2>
+        <h2 style="color: #333;">${scheduled ? "New Consultation Booking" : "New Text Follow-up Request"}</h2>
         <table style="width: 100%; border-collapse: collapse;">
-          <tr>
+          ${scheduled ? `<tr>
             <td style="padding: 8px 0; color: #888; width: 120px;">Date</td>
             <td style="padding: 8px 0; color: #333;">${formattedDate}</td>
           </tr>
           <tr>
             <td style="padding: 8px 0; color: #888;">Time</td>
             <td style="padding: 8px 0; color: #333;">${time} (30 minutes)</td>
-          </tr>
+          </tr>` : ""}
           <tr>
             <td style="padding: 8px 0; color: #888;">Follow-up</td>
             <td style="padding: 8px 0; color: #547890; font-weight: 600;">${channelLabel}</td>
@@ -157,24 +166,36 @@ export async function POST(request: Request) {
       from: process.env.RESEND_FROM || "onboarding@resend.dev",
       to: "josh@plusntrust.org",
       reply_to: email,
-      subject: `Consultation Booking: ${name} — ${formattedDate} at ${time}`,
+      subject: scheduled
+        ? `Consultation Booking: ${name} — ${formattedDate} at ${time}`
+        : `Text follow-up request: ${name}`,
       html: emailHtml,
     });
 
     // Confirmation to the client with a calendar invite — best effort
     try {
-      const ics = dateYmd ? buildIcs(dateYmd, time, name, pref) : null;
-      const channelLine = pref === "text"
-        ? `I'll text you${phone && String(phone).trim() ? ` at <strong>${phone}</strong>` : ""} around then — no video needed.`
-        : `It'll be a Google Meet — the link will come your way before the call.`;
-      const clientHtml = `
+      const ics = scheduled && dateYmd ? buildIcs(dateYmd, time, name, pref) : null;
+      const clientHtml = scheduled
+        ? `
         <div style="font-family: Georgia, serif; max-width: 560px; margin: 0 auto; color: #18201c;">
           <h2 style="font-weight: 500; color: #547890;">You're booked.</h2>
           <p>Hi ${name},</p>
           <p>Your 30-minute consultation with Joshua Isaiah is confirmed for
-          <strong>${formattedDate} at ${time}</strong> (Eastern). ${channelLine}</p>
+          <strong>${formattedDate} at ${time}</strong> (Eastern). It'll be a Google Meet —
+          the link will come your way before the call.</p>
           <p>The attached calendar file adds it to your calendar in one click.
           Need to reschedule? Just reply to this email.</p>
+          <p style="margin-top: 28px;">— Joshua<br/>
+          <a href="https://joshuaisaiah.art" style="color: #547890;">joshuaisaiah.art</a></p>
+        </div>
+      `
+        : `
+        <div style="font-family: Georgia, serif; max-width: 560px; margin: 0 auto; color: #18201c;">
+          <h2 style="font-weight: 500; color: #547890;">Got your note.</h2>
+          <p>Hi ${name},</p>
+          <p>Thanks for reaching out — your message is with Joshua and he'll follow up
+          by text${phone && String(phone).trim() ? ` at <strong>${phone}</strong>` : ""} shortly.</p>
+          <p>Need anything sooner? Just reply to this email.</p>
           <p style="margin-top: 28px;">— Joshua<br/>
           <a href="https://joshuaisaiah.art" style="color: #547890;">joshuaisaiah.art</a></p>
         </div>
@@ -183,7 +204,9 @@ export async function POST(request: Request) {
         from: process.env.RESEND_FROM || "onboarding@resend.dev",
         to: email,
         reply_to: "josh@plusntrust.org",
-        subject: `Confirmed: consultation with Joshua Isaiah — ${formattedDate}, ${time}`,
+        subject: scheduled
+          ? `Confirmed: consultation with Joshua Isaiah — ${formattedDate}, ${time}`
+          : `Got your note — Joshua Isaiah`,
         html: clientHtml,
         ...(ics
           ? {
@@ -206,8 +229,8 @@ export async function POST(request: Request) {
       await (prisma as any).booking.create({
         data: {
           date: bookingDate,
-          dateYmd: dateYmd ?? null,
-          time,
+          dateYmd: scheduled ? (dateYmd ?? null) : null,
+          time: scheduled ? time : "Text follow-up",
           name,
           email,
           phone: phone && String(phone).trim() ? String(phone) : null,
