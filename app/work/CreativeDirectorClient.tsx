@@ -206,18 +206,26 @@ export default function CreativeDirectorClient() {
                 </Reveal>
               </InsertSlot>
 
-              {/* Lede + body */}
+              {/* Lede */}
               <Reveal delay={60}>
                 <div className="mx-auto mt-8 max-w-2xl">
                   <p className="prose-serif text-center" style={{ color: PAPER }}>{s.intro}</p>
-                  {s.body.map((p, i) => (
-                    <p key={i} className="prose-serif mt-5" style={{ color: BODY }}>{p}</p>
-                  ))}
                 </div>
               </Reveal>
 
-              {/* Brand system — its own light section (with the full logo system) */}
+              {/* Brand system — palette/identity, sits between the lede and the body */}
               <BrandSystem showcase={s} />
+
+              {/* Body — the supporting paragraphs, below the palette */}
+              {s.body.length > 0 && (
+                <Reveal>
+                  <div className="mx-auto mt-14 max-w-2xl">
+                    {s.body.map((p, i) => (
+                      <p key={i} className="prose-serif mt-5 first:mt-0" style={{ color: BODY }}>{p}</p>
+                    ))}
+                  </div>
+                </Reveal>
+              )}
 
               {/* Applied identity — flyers, covers, the feed */}
               {s.collateral && s.collateral.length > 0 && (
