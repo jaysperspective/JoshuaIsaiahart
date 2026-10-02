@@ -30,7 +30,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.6,
     }));
 
-    return [...staticRoutes, ...galleryRoutes];
+    // Film pages carry VideoObject JSON-LD; listing them lets Google crawl
+    // and discover the videos (otherwise "Discovered videos: 0" in Search Console).
+    let filmRoutes: MetadataRoute.Sitemap = [];
+    try {
+      const films = await prisma.videoProject.findMany({
+        select: { title: true, createdAt: true },
+      });
+      filmRoutes = films.map((f) => ({
+        url: `${BASE}/film/${slugify(f.title)}`,
+        lastModified: f.createdAt,
+        changeFrequency: "monthly" as const,
+        priority: 0.7,
+      }));
+    } catch {
+      // videoProject unavailable — fall through with galleries only
+    }
+
+    return [...staticRoutes, ...galleryRoutes, ...filmRoutes];
   } catch {
     return staticRoutes;
   }

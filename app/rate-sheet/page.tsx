@@ -16,9 +16,9 @@ async function getFeaturedQuote() {
 }
 
 export const metadata = {
-  title: "Rates & Services",
+  title: "Photography Rates & Booking — Washington DC",
   description:
-    "2026 photography and videography rates — hourly, half-day, and full-day sessions, event coverage, and editing. Washington, DC metro area.",
+    "Hire a Washington, DC photographer and filmmaker. 2026 rates for hourly, half-day, and full-day sessions, event coverage, portraits, and editing across DC, Maryland, and Northern Virginia.",
   alternates: { canonical: "/rate-sheet" },
 };
 

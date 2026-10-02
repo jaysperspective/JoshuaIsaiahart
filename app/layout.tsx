@@ -27,26 +27,38 @@ const geist = localFont({
 export const metadata: Metadata = {
   metadataBase: new URL("https://joshuaisaiah.art"),
   title: {
-    default: "Joshua Isaiah — Creative Director, Photographer & Filmmaker",
+    default: "Joshua Isaiah — Washington DC Photographer & Filmmaker",
     template: "%s — Joshua Isaiah",
   },
   description:
-    "Joshua Isaiah is a Creative Director, photographer, and filmmaker in the Washington, DC metro area — event photography, films, and social-first video for clients.",
+    "Book Joshua Isaiah, a photographer and filmmaker in the Washington, DC metro area — event, portrait, and editorial photography plus social-first video. Available for hire across DC, Maryland, and Northern Virginia.",
+  keywords: [
+    "Washington DC photographer",
+    "DC event photographer",
+    "Northern Virginia photographer",
+    "Maryland photographer",
+    "portrait photographer DC",
+    "editorial photographer DC",
+    "hire photographer Washington DC",
+    "filmmaker Washington DC",
+    "Joshua Isaiah",
+  ],
   alternates: { canonical: "/" },
   openGraph: {
-    title: "Joshua Isaiah — Creative Director",
+    title: "Joshua Isaiah — Washington DC Photographer & Filmmaker",
     description:
-      "Photographer & filmmaker. Selected work in photography, film, and social.",
+      "Photographer & filmmaker in the Washington, DC metro area. Available for hire — events, portraits, editorial, and social-first video.",
     url: "https://joshuaisaiah.art",
     siteName: "Joshua Isaiah",
     images: [{ url: "/og-image.jpg", width: 1200, height: 630 }],
     type: "website",
+    locale: "en_US",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Joshua Isaiah — Creative Director",
+    title: "Joshua Isaiah — Washington DC Photographer & Filmmaker",
     description:
-      "Photographer & filmmaker. Selected work in photography, film, and social.",
+      "Photographer & filmmaker in the Washington, DC metro area. Available for hire — events, portraits, editorial, and social-first video.",
     images: ["/og-image.jpg"],
   },
 };
@@ -60,16 +72,22 @@ const JSON_LD = {
       "@type": "Person",
       "@id": "https://joshuaisaiah.art/#joshua",
       name: "Joshua Isaiah",
-      jobTitle: "Creative Director",
+      jobTitle: "Photographer & Filmmaker",
       description:
-        "Creative Director, photographer, and filmmaker in the Washington, DC metro area.",
+        "Photographer, filmmaker, and creative director in the Washington, DC metro area.",
       url: "https://joshuaisaiah.art",
       image: "https://joshuaisaiah.art/og-image.jpg",
       email: "mailto:joshualharrington@gmail.com",
+      sameAs: [
+        "https://instagram.com/fototrophic",
+        "https://www.linkedin.com/in/jharringtonphoto/",
+      ],
       knowsAbout: [
         "Photography",
-        "Videography",
         "Event Photography",
+        "Portrait Photography",
+        "Editorial Photography",
+        "Videography",
         "Creative Direction",
         "Social Media Video",
       ],
@@ -78,12 +96,25 @@ const JSON_LD = {
       "@type": "ProfessionalService",
       "@id": "https://joshuaisaiah.art/#business",
       name: "Joshua Isaiah — Photography & Film",
+      description:
+        "Washington, DC metro area photographer and filmmaker for events, portraits, editorial, and social-first video. Available for hire across DC, Maryland, and Northern Virginia.",
       url: "https://joshuaisaiah.art",
       image: "https://joshuaisaiah.art/og-image.jpg",
       telephone: "+1-434-489-3932",
       email: "joshualharrington@gmail.com",
       priceRange: "$$",
-      areaServed: { "@type": "AdministrativeArea", name: "Washington, DC Metro Area" },
+      sameAs: [
+        "https://instagram.com/fototrophic",
+        "https://www.linkedin.com/in/jharringtonphoto/",
+      ],
+      areaServed: [
+        { "@type": "City", name: "Washington, DC" },
+        { "@type": "AdministrativeArea", name: "Northern Virginia" },
+        { "@type": "City", name: "Arlington, VA" },
+        { "@type": "City", name: "Alexandria, VA" },
+        { "@type": "City", name: "Bethesda, MD" },
+        { "@type": "AdministrativeArea", name: "Maryland" },
+      ],
       address: { "@type": "PostalAddress", addressRegion: "DC", addressCountry: "US" },
       founder: { "@id": "https://joshuaisaiah.art/#joshua" },
       makesOffer: [
