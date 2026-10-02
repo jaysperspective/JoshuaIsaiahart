@@ -116,8 +116,9 @@ model Blog {
 }
 
 model Settings {
-  id           String @id @default(cuid())
-  instagramUrl String @default("")
-  linkedinUrl  String @default("")
-  youtubeUrl   String @default("")
+  id            String  @id @default(cuid())
+  instagramUrl  String  @default("")
+  linkedinUrl   String  @default("")
+  youtubeUrl    String  @default("")
+  bookingConfig String? // JSON — booking availability window/hours
 }

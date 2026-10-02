@@ -89,6 +89,24 @@ export async function POST(request: Request) {
       );
     }
 
+    // Double-booking guard — reject if this exact slot is already taken.
+    if (dateYmd) {
+      try {
+        const clash = await (prisma as any).booking.findFirst({
+          where: { dateYmd, time, status: { not: "cancelled" } },
+          select: { id: true },
+        });
+        if (clash) {
+          return NextResponse.json(
+            { error: "That time was just taken — please pick another." },
+            { status: 409 }
+          );
+        }
+      } catch {
+        // Table missing — skip the guard.
+      }
+    }
+
     const channelLabel = pref === "text" ? "Text follow-up" : "Video call (Google Meet)";
     const bookingDate = new Date(date);
     const formattedDate = bookingDate.toLocaleDateString("en-US", {

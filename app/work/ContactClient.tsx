@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useMemo, useRef, useLayoutEffect, type ReactNode } from "react";
+import { useState, useMemo, useRef, useLayoutEffect, useEffect, useCallback, type ReactNode } from "react";
+import { DEFAULT_BOOKING_CONFIG, generateSlots } from "@/app/lib/booking-config";
 
 // Slate-blue accent for the booking card (News-EP brand blue).
 const ACCENT = "#547890";
@@ -16,22 +17,17 @@ interface BookingForm {
 
 type ContactPref = "video" | "text";
 
-const TIME_SLOTS = [
-  "3:00 PM",
-  "3:30 PM",
-  "4:00 PM",
-  "4:30 PM",
-  "5:00 PM",
-  "5:30 PM",
-  "6:00 PM",
-  "6:30 PM",
-];
+interface Availability {
+  days: number[];
+  windowDays: number;
+  slots: string[];
+  taken: Record<string, string[]>;
+}
 
 const STEP_TITLES = ["Your details", "Your inquiry", "Pick a time"];
 
-function isWeekday(date: Date): boolean {
-  const day = date.getDay();
-  return day >= 1 && day <= 5;
+function ymd(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 function formatLong(date: Date): string {
@@ -70,18 +66,33 @@ export default function ContactClient() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Two weeks of weekday availability, starting tomorrow (never today/past).
+  // --- availability (configurable hours + already-taken slots) ---
+  const [avail, setAvail] = useState<Availability | null>(null);
+  const loadAvail = useCallback(() => {
+    fetch("/api/booking/availability")
+      .then((r) => r.json())
+      .then((d: Availability) => setAvail(d))
+      .catch(() => {});
+  }, []);
+  useEffect(() => { loadAvail(); }, [loadAvail]);
+
+  const allowedDays = avail?.days ?? DEFAULT_BOOKING_CONFIG.days;
+  const windowDays = avail?.windowDays ?? DEFAULT_BOOKING_CONFIG.windowDays;
+  const slots = avail?.slots ?? generateSlots(DEFAULT_BOOKING_CONFIG);
+  const taken = avail?.taken ?? {};
+
+  // Availability window, starting tomorrow (never today/past).
   const days = useMemo(() => {
     const base = new Date();
     base.setHours(0, 0, 0, 0);
     const out: Date[] = [];
-    for (let i = 1; i <= 14; i++) {
+    for (let i = 1; i <= windowDays; i++) {
       const d = new Date(base);
       d.setDate(base.getDate() + i);
-      if (isWeekday(d)) out.push(d);
+      if (allowedDays.includes(d.getDay())) out.push(d);
     }
     return out;
-  }, []);
+  }, [allowedDays, windowDays]);
 
   // --- height measurement so the flip card grows/shrinks per step ---
   const frontRef = useRef<HTMLDivElement>(null);
@@ -131,6 +142,11 @@ export default function ContactClient() {
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
+        if (res.status === 409) {
+          // Slot was taken between load and submit — refresh and let them repick.
+          setSelectedTime(null);
+          loadAvail();
+        }
         throw new Error(data.error || "Failed to book. Please try again.");
       }
       go(3);
@@ -361,18 +377,22 @@ export default function ContactClient() {
             <div className="mb-2">
               <p className="label mb-2">Pick a time · Eastern</p>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                {TIME_SLOTS.map((t) => {
+                {slots.map((t) => {
                   const active = selectedTime === t;
+                  const isTaken = (taken[ymd(selectedDate)] ?? []).includes(t);
                   return (
                     <button
                       key={t}
                       type="button"
-                      onClick={() => setSelectedTime(t)}
-                      className="rounded-[6px] border px-2 py-2 font-sans text-sm numeral transition-colors"
+                      disabled={isTaken}
+                      onClick={() => !isTaken && setSelectedTime(t)}
+                      className="rounded-[6px] border px-2 py-2 font-sans text-sm numeral transition-colors disabled:cursor-not-allowed"
                       style={{
                         borderColor: active ? ACCENT : "var(--rule)",
                         background: active ? ACCENT : "transparent",
                         color: active ? "var(--paper)" : "var(--ink-soft)",
+                        opacity: isTaken ? 0.35 : 1,
+                        textDecoration: isTaken ? "line-through" : "none",
                       }}
                     >
                       {t}
