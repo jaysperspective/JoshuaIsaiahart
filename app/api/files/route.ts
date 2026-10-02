@@ -10,6 +10,7 @@ import {
   deletePrefix,
   keyToUrl,
 } from "@/app/lib/storage";
+import { removeSpacesUrlRefs } from "@/app/lib/url-refs";
 
 // Normalize a user-supplied key: no leading slashes, no "." / ".." segments.
 function cleanKey(s: string): string {
@@ -136,12 +137,15 @@ export async function DELETE(request: NextRequest) {
       const clean = cleanKey(key);
       if (!clean) return NextResponse.json({ error: "Invalid key" }, { status: 400 });
       await deleteFromSpaces(keyToUrl(clean));
+      // Drop any DB rows that referenced the now-deleted object.
+      await removeSpacesUrlRefs(clean);
       return NextResponse.json({ success: true, deleted: 1 });
     }
     if (prefixParam) {
       const prefix = normalizePrefix(prefixParam);
       if (!prefix) return NextResponse.json({ error: "Invalid prefix" }, { status: 400 });
       const count = await deletePrefix(prefix);
+      await removeSpacesUrlRefs(prefix);
       return NextResponse.json({ success: true, deleted: count });
     }
     return NextResponse.json({ error: "key or prefix required" }, { status: 400 });

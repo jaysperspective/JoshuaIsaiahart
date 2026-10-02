@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin, unauthorized } from "@/app/lib/admin-auth";
 import { spacesConfigured, renameKey, renamePrefix, keyToUrl } from "@/app/lib/storage";
+import { rewriteSpacesUrlRefs } from "@/app/lib/url-refs";
 
 // A single safe path segment (no slashes, no "." / "..").
 function cleanSegment(s: string): string {
@@ -37,7 +38,10 @@ export async function POST(request: NextRequest) {
       const oldPrefix = `${old}/`;
       if (newPrefix === oldPrefix) return NextResponse.json({ success: true, prefix: newPrefix });
       const count = await renamePrefix(oldPrefix, newPrefix);
-      return NextResponse.json({ success: true, prefix: newPrefix, moved: count });
+      // Keep DB URLs (gallery photos, covers, thumbnails) pointing at the
+      // moved objects — otherwise the rename orphans them and they 404.
+      const relinked = await rewriteSpacesUrlRefs(oldPrefix, newPrefix);
+      return NextResponse.json({ success: true, prefix: newPrefix, moved: count, relinked });
     }
 
     // File rename
@@ -53,7 +57,8 @@ export async function POST(request: NextRequest) {
       const newKey = dir + finalName;
       if (newKey === old) return NextResponse.json({ success: true, key: old, url: keyToUrl(old) });
       const url = await renameKey(old, newKey);
-      return NextResponse.json({ success: true, key: newKey, url });
+      const relinked = await rewriteSpacesUrlRefs(old, newKey);
+      return NextResponse.json({ success: true, key: newKey, url, relinked });
     }
 
     return NextResponse.json({ error: "prefix or key required" }, { status: 400 });
