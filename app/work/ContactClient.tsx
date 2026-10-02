@@ -181,7 +181,7 @@ export default function ContactClient() {
       setError("Add a number so I can text you.");
       return;
     }
-    const body = `Hi Joshua, this is ${form.name || "someone"} from your site.\n\n${form.description}`.trim();
+    const body = `Hi Joshua, this is ${form.name || "someone"} inquiring about ${form.description}`.trim();
 
     if (isMobileDevice()) {
       setOutcome("texted");
