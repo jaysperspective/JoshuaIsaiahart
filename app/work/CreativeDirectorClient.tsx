@@ -40,9 +40,14 @@ function BrandSystem({ showcase }: { showcase: Showcase }) {
           {/* Mark + type */}
           <div className="flex flex-col items-start gap-6 bg-card p-8 sm:p-10">
             <span className="label" style={{ letterSpacing: "0.2em" }}>Identity</span>
-            <PlusMark color={brand.primary} />
+            {brand.mark ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={brand.mark} alt={`${showcase.client} mark`} className="h-[92px] w-auto object-contain" />
+            ) : (
+              <PlusMark color={brand.primary} />
+            )}
             <div>
-              <p className="font-display text-2xl" style={{ color: brand.ink }}>Plus N Trust</p>
+              <p className="font-display text-2xl" style={{ color: brand.ink }}>{showcase.client}</p>
               {brand.type && (
                 <p className="mt-2 text-[0.8rem]" style={{ fontFamily: MONO, color: "var(--muted)" }}>typeface: {brand.type}</p>
               )}
@@ -138,7 +143,7 @@ export default function CreativeDirectorClient() {
   return (
     // Full-bleed dark background for the whole section; content stays in-column.
     <div style={{ width: "100vw", marginLeft: "calc(50% - 50vw)", marginRight: "calc(50% - 50vw)", background: DARK, color: PAPER }}>
-      <div className="mx-auto max-w-5xl px-5 pb-20 pt-14 sm:px-8 lg:px-12">
+      <div className="mx-auto max-w-5xl px-5 pt-14 sm:px-8 lg:px-12">
         {/* Section intro */}
         <Reveal>
           <div className="mx-auto mb-4 max-w-2xl text-center">
@@ -153,12 +158,27 @@ export default function CreativeDirectorClient() {
 
         {showcases.map((s) => {
           const brand = s.brand;
+          // Accent for anything drawn on the section background (labels, eyebrows, link borders).
+          const accent = s.sectionAccent ?? brand.primary;
+          // A showcase can opt into its own full-bleed background band with a crisp top divider.
+          const banded = !!s.sectionBg;
           return (
-            <section key={s.id} className="mx-auto mt-12 max-w-5xl pt-6">
+            <section
+              key={s.id}
+              className={banded ? "mt-16 pb-20 pt-14" : "mx-auto mt-12 max-w-5xl pt-6"}
+              style={banded ? {
+                background: s.sectionBg,
+                width: "100vw",
+                marginLeft: "calc(50% - 50vw)",
+                marginRight: "calc(50% - 50vw)",
+                borderTop: "1px solid rgba(244,236,210,0.22)",
+              } : undefined}
+            >
+            <div className={banded ? "mx-auto max-w-5xl px-5 sm:px-8 lg:px-12" : ""}>
               {/* Case-study header */}
               <Reveal>
                 <div className="text-center">
-                  <p className="label numeral" style={{ color: brand.primary, letterSpacing: "0.22em" }}>
+                  <p className="label numeral" style={{ color: accent, letterSpacing: "0.22em" }}>
                     Showcase №&nbsp;{s.no} · {s.client}
                   </p>
                   <h2 className="display mt-4" style={{ color: PAPER }}>{s.title}</h2>
@@ -204,8 +224,8 @@ export default function CreativeDirectorClient() {
                 <div className="mt-16">
                   <Reveal>
                     <div className="mb-6 flex items-baseline justify-between">
-                      <h3 className="headline text-[1.5rem] sm:text-[1.9rem]" style={{ color: PAPER }}>The collateral</h3>
-                      <span className="label normal-case" style={{ fontFamily: MONO, letterSpacing: "0.06em", color: MUT }}>Applied identity</span>
+                      <h3 className="headline text-[1.5rem] sm:text-[1.9rem]" style={{ color: PAPER }}>{s.collateralTitle ?? "The collateral"}</h3>
+                      <span className="label normal-case" style={{ fontFamily: MONO, letterSpacing: "0.06em", color: MUT }}>{s.collateralKicker ?? "Applied identity"}</span>
                     </div>
                   </Reveal>
 
@@ -247,7 +267,7 @@ export default function CreativeDirectorClient() {
               <InsertSlot filled={!!(s.directorsNote && s.directorsNote.length)}>
                 <Reveal>
                   <div className="mx-auto mt-14 max-w-2xl">
-                    <p className="eyebrow mb-4" style={{ color: brand.primary }}>Director&rsquo;s Note</p>
+                    <p className="eyebrow mb-4" style={{ color: accent }}>Director&rsquo;s Note</p>
                     {s.directorsNote?.map((p, i) => (
                       <p key={i} className="prose-serif mt-4 first:mt-0" style={{ color: BODY }}>{p}</p>
                     ))}
@@ -370,7 +390,7 @@ export default function CreativeDirectorClient() {
                       {/* Copy + QR + download */}
                       <div>
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src="/creative-director/plusntrust/logos/pnt-logo-plusone.png" alt="plusONE" className="h-9 w-auto object-contain" />
+                        <img src={s.app.logo ?? "/creative-director/plusntrust/logos/pnt-logo-plusone.png"} alt={s.app.name} className="h-9 w-auto object-contain" />
                         <p className="prose-serif mt-4" style={{ color: BODY }}>{s.app.description}</p>
                         <div className="mt-6 flex items-center gap-5">
                           <div className="shrink-0 rounded-[10px] bg-white p-2.5">
@@ -398,7 +418,7 @@ export default function CreativeDirectorClient() {
               <InsertSlot filled={!!(s.credits && s.credits.length)}>
                 <Reveal>
                   <div className="mt-16 border-t pt-8" style={{ borderColor: HAIR }}>
-                    <p className="mb-5 eyebrow" style={{ color: brand.primary }}>Credits</p>
+                    <p className="mb-5 eyebrow" style={{ color: accent }}>Credits</p>
                     <dl className="grid grid-cols-1 gap-x-10 sm:grid-cols-2">
                       {s.credits?.map((c, i) => (
                         <div key={i} className="flex items-baseline justify-between gap-4 border-b py-2.5" style={{ borderColor: HAIR }}>
@@ -415,17 +435,19 @@ export default function CreativeDirectorClient() {
               {s.links.length > 0 && (
                 <Reveal>
                   <div className="mt-16 border-t pt-12 text-center" style={{ borderColor: HAIR }}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src="/creative-director/plusntrust/logos/pnt-logo-creators.png"
-                      alt="Plus N Trust — the creators"
-                      className="mx-auto mb-6 h-16 w-auto object-contain sm:h-20"
-                    />
+                    {s.worldLogo && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={s.worldLogo}
+                        alt={`${s.client} — enter the world`}
+                        className="mx-auto mb-6 h-16 w-auto object-contain sm:h-20"
+                      />
+                    )}
                     <p className="eyebrow" style={{ color: brand.secondary }}>Enter the world</p>
                     <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
                       {s.links.map((l) => (
                         <a key={l.href} href={l.href} target="_blank" rel="noopener noreferrer" className="btn"
-                          style={{ borderColor: brand.primary, color: PAPER, fontFamily: MONO }}>
+                          style={{ borderColor: accent, color: PAPER, fontFamily: MONO }}>
                           {l.label}
                           <svg className="-mr-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5.5 14.5L14.5 5.5M14.5 5.5H7.5M14.5 5.5V12.5" />
@@ -436,6 +458,7 @@ export default function CreativeDirectorClient() {
                   </div>
                 </Reveal>
               )}
+            </div>
             </section>
           );
         })}

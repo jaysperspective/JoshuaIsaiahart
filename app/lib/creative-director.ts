@@ -32,6 +32,7 @@ export interface AppShowcase {
   description: string;
   appStoreUrl: string;
   qr: string; // path to QR image
+  logo?: string; // wordmark shown above the copy (falls back to PNT's plusONE mark)
   screenshots: ShowcaseImage[];
 }
 
@@ -58,6 +59,7 @@ export interface Showcase {
     secondary: string;
     ink: string;
     type?: string; // brand typeface note
+    mark?: string; // path to the identity mark image; falls back to the built-in PNT "+" SVG
   };
   intro: string; // lede paragraph
   body: string[]; // supporting paragraphs
@@ -70,6 +72,14 @@ export interface Showcase {
   logos?: { src: string; label: string }[]; // logo system variants
   brandAsset?: { label: string; href: string }; // e.g. brand guide PDF
   collateral?: ShowcaseImage[]; // applied identity — flyers, covers, the feed
+  collateralTitle?: string; // section heading for the collateral grid (default "The collateral")
+  collateralKicker?: string; // right-aligned kicker on that heading (default "Applied identity")
+  worldLogo?: string; // logo shown above the closing "Enter the world" links
+  // Optional: give this showcase its own full-bleed background band (default: the shared charcoal).
+  sectionBg?: string;
+  // Accent for elements drawn directly on sectionBg (labels, eyebrows, link borders).
+  // Defaults to brand.primary — override when brand.primary would clash with sectionBg.
+  sectionAccent?: string;
   images: ShowcaseImage[];
   liveVideo?: LiveVideo; // a portrait motion clip featured in the live grid
   app?: AppShowcase; // a product built for the world
@@ -213,6 +223,7 @@ export const showcases: Showcase[] = [
       alt: "Plus N Trust live — motion clip",
       caption: "Live — motion",
     },
+    worldLogo: "/creative-director/plusntrust/logos/pnt-logo-creators.png",
     app: {
       name: "plusONE",
       tagline: "Tickets",
@@ -220,6 +231,7 @@ export const showcases: Showcase[] = [
         "The world needed its own front door. plusONE is the ticketing app for the Plus N Trust universe — events, RSVPs, and community in one place, carrying the same mark and voice all the way down to the app icon.",
       appStoreUrl: "https://apps.apple.com/us/app/plusone-tickets/id6789144671",
       qr: "/creative-director/plusntrust/app/plusone-qr.png",
+      logo: "/creative-director/plusntrust/logos/pnt-logo-plusone.png",
       screenshots: [
         { src: "/creative-director/plusntrust/app/pnt-app-01.jpg", alt: "plusONE app — upcoming events feed" },
         { src: "/creative-director/plusntrust/app/pnt-app-02.jpg", alt: "plusONE app — event detail" },
@@ -235,6 +247,84 @@ export const showcases: Showcase[] = [
       { label: "plusntrust.com", href: "https://plusntrust.com" },
       { label: "Instagram", href: "https://www.instagram.com/plusntrust" },
       { label: "YouTube", href: "https://www.youtube.com/@plusntrust/featured" },
+    ],
+  },
+  {
+    id: "news-ep",
+    no: "02",
+    title: "A Lead, Not the Law",
+    client: "Executive Producer",
+    role: "Creative Director",
+    year: "2025 — Present",
+    brand: {
+      primary: "#547890", // the lens — slate blue
+      secondary: "#cdbca2", // warm sand, for accents on dark
+      ink: "#20160e", // near-black warm brown
+      type: "SF Mono",
+      mark: "/creative-director/news-ep/logos/news-ep-mark.png",
+    },
+    intro:
+      "Executive Producer (newsEP) is a news-market story finder for working journalists. It reads ~45 public sources per metro — government press rooms, broadcast outlets, local papers, neighborhood blogs, subreddits — dedupes them into clusters, scores what's newsworthy, and surfaces what's breaking across 21 US markets. I built the whole brand and product: the identity, the voice, and the interface itself.",
+    body: [
+      "The world is a newsroom, so the identity is a newsroom instrument: spare, monospaced, and legible at a glance. Everything is set in SF Mono on warm newsprint paper, with hard black borders and a single slate-blue \"lens\" mark that reads as both a camera iris and a scanning wave — the product's whole job in one shape.",
+      "The discipline that holds it together is editorial, not visual: \"a lead, not the law.\" The product surfaces, it never confirms. Every cluster points back to the original outlet, and anything the system judged — the summary, the score — is labeled as the system's judgment, not the source's. That honesty is the brand.",
+    ],
+    pullQuote: "A lead, not the law.",
+    directorsNote: [
+      "A tool for journalists has to earn trust in the first three seconds, so the design never pretends to be more certain than it is. The score sits in the corner, not the headline. The WHO / WHAT / WHEN / WHERE / WHY breakdown is plain text, not a verdict. The paper-and-ink palette is deliberately un-slick — this is an instrument, not a feed to doomscroll.",
+      "The hardest call was restraint: no gradients, no hero imagery, no illustration. Just the mark, the monospace, and the stories. When the whole product is about signal over noise, the brand has to practice what it preaches.",
+    ],
+    sectionBg: "#547890",
+    sectionAccent: "#ecdcb4", // warm cream — reads on the slate band (brand.primary is the same slate)
+    collateralTitle: "The product",
+    collateralKicker: "The interface",
+    collateral: [
+      {
+        src: "/creative-director/news-ep/news-ep-dashboard.png",
+        alt: "Executive Producer dashboard — Today's Stories, ranked clusters with WHO/WHAT/WHEN/WHERE/WHY and a newsworthiness score",
+        caption: "Today's Stories · the ranked feed",
+      },
+      {
+        src: "/creative-director/news-ep/news-ep-national.png",
+        alt: "National rollups — the same story surfacing across multiple US metros, ranked by cross-market weight",
+        caption: "National · cross-market rollups",
+      },
+      {
+        src: "/creative-director/news-ep/news-ep-sources.png",
+        alt: "Sources page — 61 feeds grouped by credibility tier, official government feeds at the top",
+        caption: "Sources · by credibility tier",
+      },
+      {
+        src: "/creative-director/news-ep/news-ep-home.png",
+        alt: "Sign-in screen — the Executive Producer wordmark and lens mark on warm paper with hard black borders",
+        caption: "Sign-in · the front door",
+      },
+      {
+        src: "/creative-director/news-ep/news-ep-feed.png",
+        alt: "Executive Producer on mobile — the story feed with category pills, scores, and source attribution",
+        caption: "Mobile · the feed in the field",
+      },
+    ],
+    swatches: [
+      { hex: "547890", name: "Lens Slate" },
+      { hex: "84483c", name: "Oxblood" },
+      { hex: "e8ddd0", name: "Newsprint" },
+      { hex: "20160e", name: "Ink" },
+    ],
+    worldLogo: "/creative-director/news-ep/logos/news-ep-mark-light.png",
+    credits: [
+      { role: "Creative Direction", name: "Joshua Isaiah" },
+      { role: "Brand & Identity", name: "Joshua Isaiah" },
+      { role: "Product & UI Design", name: "Joshua Isaiah" },
+      { role: "Engineering", name: "Next.js · FastAPI" },
+    ],
+    images: [],
+    videos: [],
+    links: [
+      { label: "news-ep.com", href: "https://news-ep.com" },
+      { label: "National rollups", href: "https://news-ep.com/national" },
+      { label: "Sources", href: "https://news-ep.com/sources" },
+      { label: "Docs & API", href: "https://news-ep.com/docs" },
     ],
   },
 ];
