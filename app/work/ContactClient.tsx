@@ -1,6 +1,11 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useLayoutEffect, type ReactNode } from "react";
+
+// Slate-blue accent for the booking card (News-EP brand blue).
+const ACCENT = "#547890";
+const ACCENT_DEEP = "#466579";
+const ACCENT_SOFT = "rgba(84,120,144,0.12)";
 
 interface BookingForm {
   name: string;
@@ -8,6 +13,8 @@ interface BookingForm {
   email: string;
   description: string;
 }
+
+type ContactPref = "video" | "text";
 
 const TIME_SLOTS = [
   "3:00 PM",
@@ -20,20 +27,14 @@ const TIME_SLOTS = [
   "6:30 PM",
 ];
 
+const STEP_TITLES = ["Your details", "Your inquiry", "Pick a time"];
+
 function isWeekday(date: Date): boolean {
   const day = date.getDay();
   return day >= 1 && day <= 5;
 }
 
-function isSameDay(a: Date, b: Date): boolean {
-  return (
-    a.getFullYear() === b.getFullYear() &&
-    a.getMonth() === b.getMonth() &&
-    a.getDate() === b.getDate()
-  );
-}
-
-function formatDate(date: Date): string {
+function formatLong(date: Date): string {
   return date.toLocaleDateString("en-US", {
     weekday: "long",
     month: "long",
@@ -42,293 +43,184 @@ function formatDate(date: Date): string {
   });
 }
 
-const MONTH_NAMES = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
-];
-
-const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+function emailLooksValid(v: string): boolean {
+  return /^\S+@\S+\.\S+$/.test(v.trim());
+}
 
 export default function ContactClient() {
-  const today = useMemo(() => {
-    const d = new Date();
-    d.setHours(0, 0, 0, 0);
-    return d;
-  }, []);
-
-  const [currentMonth, setCurrentMonth] = useState(() => ({
-    month: today.getMonth(),
-    year: today.getFullYear(),
-  }));
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  // --- form state ---
   const [form, setForm] = useState<BookingForm>({
     name: "",
     phone: "",
     email: "",
     description: "",
   });
+  const [contactPref, setContactPref] = useState<ContactPref>("video");
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  const [company, setCompany] = useState(""); // honeypot — real users never fill this
+
+  // --- flow state (flip card) ---
+  const [step, setStep] = useState(0); // 0..3 (3 = confirmation)
+  const [flipped, setFlipped] = useState(false);
+  const [frontStep, setFrontStep] = useState(0);
+  const [backStep, setBackStep] = useState(1);
+
+  // --- submit state ---
   const [submitting, setSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const weeks = useMemo(() => {
-    const firstOfMonth = new Date(currentMonth.year, currentMonth.month, 1);
-    const lastOfMonth = new Date(currentMonth.year, currentMonth.month + 1, 0);
-    const startDate = new Date(firstOfMonth);
-    startDate.setDate(startDate.getDate() - startDate.getDay());
-
-    const endDate = new Date(lastOfMonth);
-    endDate.setDate(endDate.getDate() + (6 - endDate.getDay()));
-
-    const weeksArr: Date[][] = [];
-    const current = new Date(startDate);
-    while (current <= endDate) {
-      const week: Date[] = [];
-      for (let i = 0; i < 7; i++) {
-        week.push(new Date(current));
-        current.setDate(current.getDate() + 1);
-      }
-      weeksArr.push(week);
+  // Two weeks of weekday availability, starting tomorrow (never today/past).
+  const days = useMemo(() => {
+    const base = new Date();
+    base.setHours(0, 0, 0, 0);
+    const out: Date[] = [];
+    for (let i = 1; i <= 14; i++) {
+      const d = new Date(base);
+      d.setDate(base.getDate() + i);
+      if (isWeekday(d)) out.push(d);
     }
-    return weeksArr;
-  }, [currentMonth]);
+    return out;
+  }, []);
 
-  const canGoPrev = currentMonth.year > today.getFullYear() ||
-    (currentMonth.year === today.getFullYear() && currentMonth.month > today.getMonth());
+  // --- height measurement so the flip card grows/shrinks per step ---
+  const frontRef = useRef<HTMLDivElement>(null);
+  const backRef = useRef<HTMLDivElement>(null);
+  const [height, setHeight] = useState<number | undefined>(undefined);
 
-  function prevMonth() {
-    if (!canGoPrev) return;
-    setCurrentMonth((prev) => {
-      if (prev.month === 0) return { month: 11, year: prev.year - 1 };
-      return { month: prev.month - 1, year: prev.year };
-    });
+  useLayoutEffect(() => {
+    const el = flipped ? backRef.current : frontRef.current;
+    if (el) setHeight(el.offsetHeight);
+  }, [flipped, frontStep, backStep, step, selectedDate, selectedTime, contactPref, error, submitting, form]);
+
+  // Flip to a new step, loading its content onto the face that's about to show.
+  function go(next: number) {
+    if (next === step) return;
+    if (flipped) setFrontStep(next);
+    else setBackStep(next);
+    setFlipped((f) => !f);
+    setStep(next);
+    setError(null);
   }
 
-  function nextMonth() {
-    setCurrentMonth((prev) => {
-      if (prev.month === 11) return { month: 0, year: prev.year + 1 };
-      return { month: prev.month + 1, year: prev.year };
-    });
-  }
+  const canLeaveDetails = form.name.trim().length > 0 && emailLooksValid(form.email);
+  const canLeaveInquiry = form.description.trim().length > 0;
+  const needsPhone = contactPref === "text" && form.phone.trim().length === 0;
+  const canConfirm = !!selectedDate && !!selectedTime && !needsPhone;
 
-  function handleDateClick(date: Date) {
-    if (!isWeekday(date) || date < today) return;
-    setSelectedDate(date);
-    setSelectedTime(null);
-  }
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function submit() {
     if (!selectedDate || !selectedTime) return;
-
+    if (needsPhone) {
+      setError("Add a number so I can text you.");
+      return;
+    }
     setSubmitting(true);
     setError(null);
-
     try {
       const res = await fetch("/api/booking", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           date: selectedDate.toISOString(),
-          // Local calendar date — avoids timezone drift in the confirmation invite
           dateYmd: `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, "0")}-${String(selectedDate.getDate()).padStart(2, "0")}`,
           time: selectedTime,
+          contactPref,
+          company, // honeypot
           ...form,
         }),
       });
-
       if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Failed to book consultation");
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to book. Please try again.");
       }
-
-      setSubmitted(true);
-    } catch (err: any) {
-      setError(err.message);
+      go(3);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
       setSubmitting(false);
     }
   }
 
-  if (submitted) {
-    return (
-      <div className="surface p-12 text-center">
-        <p className="eyebrow mb-3">Confirmed</p>
-        <p className="headline mb-3">Consultation Booked</p>
-        <p className="font-sans text-sm text-ink-soft mb-1">
-          {formatDate(selectedDate!)} at {selectedTime}
-        </p>
-        <p className="label normal-case tracking-normal">
-          A confirmation email has been sent to {form.email}
-        </p>
-        <button
-          onClick={() => {
-            setSubmitted(false);
-            setSelectedDate(null);
-            setSelectedTime(null);
-            setForm({ name: "", phone: "", email: "", description: "" });
-          }}
-          className="btn mt-7"
-        >
-          Book Another
-        </button>
-      </div>
-    );
+  function reset() {
+    setForm({ name: "", phone: "", email: "", description: "" });
+    setContactPref("video");
+    setSelectedDate(null);
+    setSelectedTime(null);
+    setCompany("");
+    setError(null);
+    setStep(0);
+    setFlipped(false);
+    setFrontStep(0);
+    setBackStep(1);
   }
 
-  return (
-    <div className="max-w-3xl space-y-12">
-      {/* Contact Info */}
-      <div>
-        <h2 className="label mb-4">Contact</h2>
-        <hr className="rule mb-5" />
-        <dl className="grid gap-2 font-sans text-sm sm:grid-cols-[6rem_1fr]">
-          <dt className="label">Name</dt>
-          <dd className="text-ink-soft">Joshua</dd>
-          <dt className="label">Email</dt>
-          <dd>
-            <a href="mailto:Josh@plusntrust.org" className="link-underline">
-              Josh@plusntrust.org
-            </a>
-          </dd>
-        </dl>
+  // --- shared bits ---
+  const primaryBtn = (label: string, onClick: () => void, disabled = false) => (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className="inline-flex items-center justify-center gap-2 rounded-full px-6 py-2.5 font-sans text-[0.72rem] font-medium uppercase tracking-[0.14em] text-paper transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+      style={{ background: disabled ? ACCENT : ACCENT }}
+      onMouseEnter={(e) => { if (!disabled) e.currentTarget.style.background = ACCENT_DEEP; }}
+      onMouseLeave={(e) => { e.currentTarget.style.background = ACCENT; }}
+    >
+      {label}
+    </button>
+  );
+
+  const backBtn = (to: number) => (
+    <button
+      type="button"
+      onClick={() => go(to)}
+      className="inline-flex items-center gap-1.5 font-sans text-[0.72rem] font-medium uppercase tracking-[0.14em] text-muted transition-colors hover:text-ink"
+    >
+      <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.6} d="M15 19l-7-7 7-7" />
+      </svg>
+      Back
+    </button>
+  );
+
+  const stepHeader = (i: number) => (
+    <div className="mb-6">
+      <div className="mb-3 flex items-center gap-1.5">
+        {[0, 1, 2].map((n) => (
+          <span
+            key={n}
+            className="h-1 flex-1 rounded-full transition-colors duration-300"
+            style={{ background: n <= i ? ACCENT : ACCENT_SOFT }}
+          />
+        ))}
       </div>
+      <p className="font-sans text-[0.68rem] uppercase tracking-[0.16em]" style={{ color: ACCENT }}>
+        Step {i + 1} of 3
+      </p>
+      <h3 className="headline mt-1 text-[1.5rem]">{STEP_TITLES[i]}</h3>
+    </div>
+  );
 
-      {/* Booking Section */}
-      <div>
-        <p className="label normal-case tracking-normal mb-6">
-          30-minute Google Meet session · Weekdays 3 PM – 7 PM
-        </p>
-
-        {/* Calendar */}
-        <div className="surface p-6 mb-6">
-          {/* Month navigation */}
-          <div className="flex items-center justify-between mb-5">
-            <button
-              onClick={prevMonth}
-              disabled={!canGoPrev}
-              className={`p-1.5 rounded-full transition-colors ${
-                canGoPrev
-                  ? "text-ink-soft hover:text-accent hover:bg-paper-2"
-                  : "text-muted/30 cursor-not-allowed"
-              }`}
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            <span className="font-display text-lg font-medium text-emerald">
-              {MONTH_NAMES[currentMonth.month]} {currentMonth.year}
-            </span>
-            <button
-              onClick={nextMonth}
-              className="p-1.5 rounded-full text-ink-soft hover:text-accent hover:bg-paper-2 transition-colors"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-          </div>
-
-          {/* Day headers */}
-          <div className="grid grid-cols-7 gap-1 mb-1">
-            {DAY_LABELS.map((d) => (
-              <div key={d} className="text-center label text-[0.6rem] py-1">
-                {d}
-              </div>
-            ))}
-          </div>
-
-          {/* Calendar grid */}
-          <div className="grid grid-cols-7 gap-1">
-            {weeks.flat().map((date, i) => {
-              const inMonth = date.getMonth() === currentMonth.month;
-              const weekday = isWeekday(date);
-              const past = date < today;
-              const isSelected = selectedDate && isSameDay(date, selectedDate);
-              const isToday = isSameDay(date, today);
-              const clickable = inMonth && weekday && !past;
-
-              return (
-                <button
-                  key={i}
-                  onClick={() => clickable && handleDateClick(date)}
-                  disabled={!clickable}
-                  className={`
-                    aspect-square flex items-center justify-center rounded-[3px] font-sans text-sm numeral transition-all
-                    ${!inMonth ? "text-muted/25" : ""}
-                    ${inMonth && !weekday ? "text-muted/30" : ""}
-                    ${inMonth && weekday && past ? "text-muted/40" : ""}
-                    ${clickable && !isSelected ? "text-ink-soft hover:bg-paper-2 hover:text-accent cursor-pointer" : ""}
-                    ${isSelected ? "bg-emerald text-paper font-medium" : ""}
-                    ${isToday && !isSelected ? "ring-1 ring-accent/40" : ""}
-                    ${!clickable ? "cursor-default" : ""}
-                  `}
-                >
-                  {date.getDate()}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Time Slots */}
-        {selectedDate && (
-          <div className="mb-6">
-            <p className="label mb-3">
-              Available times for {formatDate(selectedDate)}
-            </p>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              {TIME_SLOTS.map((time) => (
-                <button
-                  key={time}
-                  onClick={() => setSelectedTime(time)}
-                  className={`px-3 py-2.5 rounded-[3px] font-sans text-sm numeral border transition-all ${
-                    selectedTime === time
-                      ? "bg-emerald border-emerald text-paper font-medium"
-                      : "border-rule text-ink-soft hover:border-accent hover:text-accent"
-                  }`}
-                >
-                  {time}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Booking Form */}
-        {selectedDate && selectedTime && (
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div>
-                <label className="block label mb-2">Name</label>
-                <input
-                  type="text"
-                  required
-                  value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  className="field"
-                  placeholder="Your name"
-                />
-              </div>
-              <div>
-                <label className="block label mb-2">Phone Number</label>
-                <input
-                  type="tel"
-                  required
-                  value={form.phone}
-                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                  className="field"
-                  placeholder="(555) 123-4567"
-                />
-              </div>
+  function renderStep(i: number): ReactNode {
+    // Step 0 — contact details
+    if (i === 0) {
+      return (
+        <>
+          {stepHeader(0)}
+          <div className="space-y-5">
+            <div>
+              <label className="block label mb-2">Name</label>
+              <input
+                type="text"
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                className="field"
+                placeholder="Your name"
+              />
             </div>
             <div>
               <label className="block label mb-2">Email</label>
               <input
                 type="email"
-                required
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
                 className="field"
@@ -336,29 +228,257 @@ export default function ContactClient() {
               />
             </div>
             <div>
-              <label className="block label mb-2">What are you looking for?</label>
-              <textarea
-                required
-                rows={3}
-                value={form.description}
-                onChange={(e) => setForm({ ...form, description: e.target.value })}
-                className="field resize-none"
-                placeholder="Brief description of what you're looking for..."
+              <label className="block label mb-2">
+                Phone <span className="normal-case tracking-normal text-muted">· optional</span>
+              </label>
+              <input
+                type="tel"
+                value={form.phone}
+                onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                className="field"
+                placeholder="(555) 123-4567"
               />
             </div>
+            {/* Honeypot — hidden from humans, catches bots */}
+            <input
+              type="text"
+              tabIndex={-1}
+              autoComplete="off"
+              value={company}
+              onChange={(e) => setCompany(e.target.value)}
+              aria-hidden="true"
+              style={{ position: "absolute", left: "-9999px", width: 1, height: 1, opacity: 0 }}
+            />
+          </div>
+          <div className="mt-8 flex items-center justify-end">
+            {primaryBtn("Continue", () => canLeaveDetails && go(1), !canLeaveDetails)}
+          </div>
+        </>
+      );
+    }
 
-            {error && <p className="font-sans text-sm text-earth">{error}</p>}
+    // Step 1 — the inquiry
+    if (i === 1) {
+      return (
+        <>
+          {stepHeader(1)}
+          <div>
+            <label className="block label mb-2">What are you looking for?</label>
+            <textarea
+              rows={5}
+              value={form.description}
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
+              className="field resize-none"
+              placeholder="A short note on the project, the vibe, timeline, budget — whatever's on your mind."
+            />
+          </div>
+          <div className="mt-8 flex items-center justify-between">
+            {backBtn(0)}
+            {primaryBtn("Continue", () => canLeaveInquiry && go(2), !canLeaveInquiry)}
+          </div>
+        </>
+      );
+    }
 
-            <button
-              type="submit"
-              disabled={submitting}
-              className="btn btn-accent w-full justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {submitting ? "Booking..." : "Book Consultation"}
-            </button>
-          </form>
+    // Step 2 — availability + follow-up preference
+    if (i === 2) {
+      return (
+        <>
+          {stepHeader(2)}
+
+          {/* Follow-up preference */}
+          <p className="label mb-2">How should we connect?</p>
+          <div className="mb-6 grid grid-cols-2 gap-2">
+            {([
+              { key: "video", title: "Video call", sub: "Google Meet" },
+              { key: "text", title: "Text follow-up", sub: "A quick thread" },
+            ] as const).map((opt) => {
+              const active = contactPref === opt.key;
+              return (
+                <button
+                  key={opt.key}
+                  type="button"
+                  onClick={() => setContactPref(opt.key)}
+                  className="rounded-[6px] border px-4 py-3 text-left transition-colors"
+                  style={{
+                    borderColor: active ? ACCENT : "var(--rule)",
+                    background: active ? ACCENT_SOFT : "transparent",
+                  }}
+                >
+                  <span className="block font-sans text-sm font-medium" style={{ color: active ? ACCENT_DEEP : "var(--ink)" }}>
+                    {opt.title}
+                  </span>
+                  <span className="block font-sans text-xs text-muted">{opt.sub}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Inline phone capture when a text follow-up is chosen */}
+          {contactPref === "text" && (
+            <div className="mb-6">
+              <label className="block label mb-2">Best number to text</label>
+              <input
+                type="tel"
+                value={form.phone}
+                onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                className="field"
+                placeholder="(555) 123-4567"
+              />
+            </div>
+          )}
+
+          {/* Day strip — two weeks of weekdays, not a full calendar */}
+          <p className="label mb-2">Pick a day</p>
+          <div className="mb-5 flex flex-wrap gap-2">
+            {days.map((d) => {
+              const active = selectedDate && d.toDateString() === selectedDate.toDateString();
+              return (
+                <button
+                  key={d.toISOString()}
+                  type="button"
+                  onClick={() => { setSelectedDate(d); setSelectedTime(null); }}
+                  className="flex min-w-[4rem] flex-col items-center rounded-[6px] border px-3 py-2 transition-colors"
+                  style={{
+                    borderColor: active ? ACCENT : "var(--rule)",
+                    background: active ? ACCENT : "transparent",
+                    color: active ? "var(--paper)" : "var(--ink-soft)",
+                  }}
+                >
+                  <span className="font-sans text-[0.6rem] uppercase tracking-[0.1em] opacity-80">
+                    {d.toLocaleDateString("en-US", { weekday: "short" })}
+                  </span>
+                  <span className="font-sans text-sm numeral">
+                    {d.toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Time slots for the chosen day */}
+          {selectedDate && (
+            <div className="mb-2">
+              <p className="label mb-2">Pick a time · Eastern</p>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                {TIME_SLOTS.map((t) => {
+                  const active = selectedTime === t;
+                  return (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => setSelectedTime(t)}
+                      className="rounded-[6px] border px-2 py-2 font-sans text-sm numeral transition-colors"
+                      style={{
+                        borderColor: active ? ACCENT : "var(--rule)",
+                        background: active ? ACCENT : "transparent",
+                        color: active ? "var(--paper)" : "var(--ink-soft)",
+                      }}
+                    >
+                      {t}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {error && <p className="mt-4 font-sans text-sm text-earth">{error}</p>}
+
+          <div className="mt-8 flex items-center justify-between">
+            {backBtn(1)}
+            {primaryBtn(submitting ? "Booking…" : "Confirm booking", submit, !canConfirm || submitting)}
+          </div>
+        </>
+      );
+    }
+
+    // Step 3 — confirmation
+    return (
+      <div className="py-4 text-center">
+        <span
+          className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full"
+          style={{ background: ACCENT_SOFT }}
+        >
+          <svg className="h-7 w-7" fill="none" stroke={ACCENT} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M5 13l4 4L19 7" />
+          </svg>
+        </span>
+        <p className="eyebrow mb-2" style={{ color: ACCENT }}>You&rsquo;re booked</p>
+        <h3 className="headline mb-3 text-[1.6rem]">See you soon</h3>
+        {selectedDate && selectedTime && (
+          <p className="font-sans text-sm text-ink-soft">
+            {formatLong(selectedDate)} at {selectedTime} ·{" "}
+            {contactPref === "video" ? "Video call" : "Text follow-up"}
+          </p>
         )}
+        <p className="label normal-case tracking-normal mt-2">
+          A confirmation is on its way to {form.email}.
+        </p>
+        <button
+          type="button"
+          onClick={reset}
+          className="btn mt-7"
+          style={{ borderColor: ACCENT, color: ACCENT }}
+        >
+          Book another
+        </button>
       </div>
+    );
+  }
+
+  const frontVisible = !flipped;
+
+  return (
+    <div className="mx-auto max-w-lg">
+      <div style={{ perspective: "1800px" }}>
+        <div
+          className="relative"
+          style={{
+            transformStyle: "preserve-3d",
+            transform: `rotateY(${flipped ? 180 : 0}deg)`,
+            transition: "transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1), height 0.4s cubic-bezier(0.2, 0.7, 0.2, 1)",
+            height,
+          }}
+        >
+          {/* Front face */}
+          <div
+            className="absolute left-0 top-0 w-full"
+            style={{ backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", pointerEvents: frontVisible ? "auto" : "none" }}
+            aria-hidden={!frontVisible}
+          >
+            <div
+              ref={frontRef}
+              className="surface p-7 sm:p-8"
+              style={{ boxShadow: `inset 0 2px 0 0 ${ACCENT}` }}
+            >
+              {renderStep(frontStep)}
+            </div>
+          </div>
+
+          {/* Back face */}
+          <div
+            className="absolute left-0 top-0 w-full"
+            style={{ backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", transform: "rotateY(180deg)", pointerEvents: frontVisible ? "none" : "auto" }}
+            aria-hidden={frontVisible}
+          >
+            <div
+              ref={backRef}
+              className="surface p-7 sm:p-8"
+              style={{ boxShadow: `inset 0 2px 0 0 ${ACCENT}` }}
+            >
+              {renderStep(backStep)}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p className="label normal-case tracking-normal mt-6 text-center">
+        Prefer email?{" "}
+        <a href="mailto:Josh@plusntrust.org" className="link-underline">
+          Josh@plusntrust.org
+        </a>
+      </p>
     </div>
   );
 }

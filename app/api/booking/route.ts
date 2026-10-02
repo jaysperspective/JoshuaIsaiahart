@@ -10,7 +10,7 @@ function parseTime12h(time: string): { hour: number; minute: number } | null {
 }
 
 // Minimal ICS for a 30-minute consultation, Eastern time
-function buildIcs(ymd: string, time: string, name: string): string | null {
+function buildIcs(ymd: string, time: string, name: string, pref: ContactPref): string | null {
   const t = parseTime12h(time);
   const d = ymd.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (!t || !d) return null;
@@ -20,6 +20,13 @@ function buildIcs(ymd: string, time: string, name: string): string | null {
   const endMinutes = t.hour * 60 + t.minute + 30;
   const end = `${d[1]}${d[2]}${d[3]}T${pad(Math.floor(endMinutes / 60))}${pad(endMinutes % 60)}00`;
   const stamp = new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+
+  const summary = pref === "text"
+    ? "Consultation (text follow-up) — Joshua Isaiah"
+    : "Consultation — Joshua Isaiah";
+  const desc = pref === "text"
+    ? "30-minute consultation with Joshua Isaiah — a text follow-up.\\nQuestions: joshualharrington@gmail.com"
+    : "30-minute Google Meet consultation with Joshua Isaiah. The meeting link will be sent before the call.\\nQuestions: joshualharrington@gmail.com";
 
   return [
     "BEGIN:VCALENDAR",
@@ -31,13 +38,15 @@ function buildIcs(ymd: string, time: string, name: string): string | null {
     `DTSTAMP:${stamp}`,
     `DTSTART;TZID=America/New_York:${start}`,
     `DTEND;TZID=America/New_York:${end}`,
-    "SUMMARY:Consultation — Joshua Isaiah",
-    `DESCRIPTION:30-minute Google Meet consultation with Joshua Isaiah. The meeting link will be sent before the call.\\nQuestions: joshualharrington@gmail.com`,
+    `SUMMARY:${summary}`,
+    `DESCRIPTION:${desc}`,
     `ATTENDEE;CN=${name.replace(/[,;]/g, "")}:mailto:noreply@joshuaisaiah.art`,
     "END:VEVENT",
     "END:VCALENDAR",
   ].join("\r\n");
 }
+
+type ContactPref = "video" | "text";
 
 async function sendEmail(payload: Record<string, unknown>) {
   const res = await fetch("https://api.resend.com/emails", {
@@ -56,15 +65,31 @@ async function sendEmail(payload: Record<string, unknown>) {
 
 export async function POST(request: Request) {
   try {
-    const { date, dateYmd, time, name, phone, email, description } = await request.json();
+    const { date, dateYmd, time, name, phone, email, description, contactPref, company } =
+      await request.json();
 
-    if (!date || !time || !name || !phone || !email || !description) {
+    // Honeypot: real visitors never fill `company`. Pretend success, send nothing.
+    if (typeof company === "string" && company.trim().length > 0) {
+      return NextResponse.json({ success: true });
+    }
+
+    const pref: ContactPref = contactPref === "text" ? "text" : "video";
+
+    // Phone is optional — but required for a text follow-up.
+    if (!date || !time || !name || !email || !description) {
       return NextResponse.json(
-        { error: "All fields are required" },
+        { error: "Name, email, inquiry, date and time are required" },
+        { status: 400 }
+      );
+    }
+    if (pref === "text" && (!phone || !String(phone).trim())) {
+      return NextResponse.json(
+        { error: "A phone number is required for a text follow-up" },
         { status: 400 }
       );
     }
 
+    const channelLabel = pref === "text" ? "Text follow-up" : "Video call (Google Meet)";
     const bookingDate = new Date(date);
     const formattedDate = bookingDate.toLocaleDateString("en-US", {
       weekday: "long",
@@ -86,13 +111,17 @@ export async function POST(request: Request) {
             <td style="padding: 8px 0; color: #333;">${time} (30 minutes)</td>
           </tr>
           <tr>
+            <td style="padding: 8px 0; color: #888;">Follow-up</td>
+            <td style="padding: 8px 0; color: #547890; font-weight: 600;">${channelLabel}</td>
+          </tr>
+          <tr>
             <td style="padding: 8px 0; color: #888;">Name</td>
             <td style="padding: 8px 0; color: #333;">${name}</td>
           </tr>
-          <tr>
+          ${phone && String(phone).trim() ? `<tr>
             <td style="padding: 8px 0; color: #888;">Phone</td>
             <td style="padding: 8px 0; color: #333;">${phone}</td>
-          </tr>
+          </tr>` : ""}
           <tr>
             <td style="padding: 8px 0; color: #888;">Email</td>
             <td style="padding: 8px 0; color: #333;"><a href="mailto:${email}">${email}</a></td>
@@ -116,18 +145,20 @@ export async function POST(request: Request) {
 
     // Confirmation to the client with a calendar invite — best effort
     try {
-      const ics = dateYmd ? buildIcs(dateYmd, time, name) : null;
+      const ics = dateYmd ? buildIcs(dateYmd, time, name, pref) : null;
+      const channelLine = pref === "text"
+        ? `I'll text you${phone && String(phone).trim() ? ` at <strong>${phone}</strong>` : ""} around then — no video needed.`
+        : `It'll be a Google Meet — the link will come your way before the call.`;
       const clientHtml = `
         <div style="font-family: Georgia, serif; max-width: 560px; margin: 0 auto; color: #18201c;">
-          <h2 style="font-weight: 500; color: #284139;">You're booked.</h2>
+          <h2 style="font-weight: 500; color: #547890;">You're booked.</h2>
           <p>Hi ${name},</p>
           <p>Your 30-minute consultation with Joshua Isaiah is confirmed for
-          <strong>${formattedDate} at ${time}</strong> (Eastern). It'll be a Google Meet —
-          the link will come your way before the call.</p>
+          <strong>${formattedDate} at ${time}</strong> (Eastern). ${channelLine}</p>
           <p>The attached calendar file adds it to your calendar in one click.
           Need to reschedule? Just reply to this email.</p>
           <p style="margin-top: 28px;">— Joshua<br/>
-          <a href="https://joshuaisaiah.art" style="color: #b86830;">joshuaisaiah.art</a></p>
+          <a href="https://joshuaisaiah.art" style="color: #547890;">joshuaisaiah.art</a></p>
         </div>
       `;
       await sendEmail({
@@ -151,6 +182,22 @@ export async function POST(request: Request) {
       // Don't fail the booking if the confirmation can't send
       console.error("Client confirmation email failed:", e);
     }
+
+    // Persist the booking — best effort. No-ops safely until the Booking table exists.
+    try {
+      await (prisma as any).booking.create({
+        data: {
+          date: bookingDate,
+          dateYmd: dateYmd ?? null,
+          time,
+          name,
+          email,
+          phone: phone && String(phone).trim() ? String(phone) : null,
+          description,
+          contactPref: pref,
+        },
+      });
+    } catch {}
 
     // Analytics: count the conversion
     try {
