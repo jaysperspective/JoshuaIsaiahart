@@ -25,7 +25,9 @@ export async function GET(request: NextRequest) {
   let rows: PrintCustomer[];
   try {
     const res = await fetch(`${apiBase}/shop/customers`, {
-      headers: { "x-internal-secret": secret },
+      // X-Forwarded-Proto: Sovereign forces HTTPS in prod and 301-redirects
+      // plain HTTP even on loopback; this direct call must assert the proto.
+      headers: { "x-internal-secret": secret, "X-Forwarded-Proto": "https" },
       cache: "no-store",
     });
     if (!res.ok) throw new Error(`Sovereign responded ${res.status}`);

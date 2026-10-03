@@ -37,6 +37,10 @@ export async function POST(request: NextRequest) {
       headers: {
         "Content-Type": "application/json",
         "x-internal-secret": secret,
+        // Sovereign forces HTTPS in prod and 301-redirects plain HTTP — even on
+        // loopback. This server-to-server call goes direct (not through nginx),
+        // so we assert the proto ourselves to avoid the redirect.
+        "X-Forwarded-Proto": "https",
       },
       body: JSON.stringify({
         title: product.title,
