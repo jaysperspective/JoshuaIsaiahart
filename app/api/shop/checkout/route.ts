@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
+import { SITE_URL } from "@/app/lib/contact";
 
 // POST /api/shop/checkout  (public)
 // Starts a real card checkout for a print. The portfolio never talks to Stripe
@@ -26,11 +27,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Checkout is temporarily unavailable" }, { status: 503 });
     }
 
-    const origin = request.nextUrl.origin;
-    const successUrl = `${origin}/shop/${product.id}?paid=1`;
-    const cancelUrl = `${origin}/shop/${product.id}`;
-    // Canonical public link for this print (used on the Stripe receipt metadata).
-    const productUrl = `https://joshuaisaiah.art/shop/${product.id}`;
+    // Build Stripe return URLs from the canonical public site, NOT the request
+    // origin — behind nginx the server sees the internal host (localhost:3005),
+    // which would send buyers to a dead localhost URL. Fall back to the request
+    // origin only in dev (where checkout is a no-op 503 anyway).
+    const base = process.env.NODE_ENV === "production" ? SITE_URL : request.nextUrl.origin;
+    const successUrl = `${base}/shop/${product.id}?paid=1`;
+    const cancelUrl = `${base}/shop/${product.id}`;
+    const productUrl = `${SITE_URL}/shop/${product.id}`;
 
     const res = await fetch(`${apiBase}/shop/checkout`, {
       method: "POST",
