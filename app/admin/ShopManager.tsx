@@ -26,6 +26,7 @@ interface Order {
   id: string;
   name: string;
   email: string;
+  status: string;
   createdAt: string;
   product: { title: string; dimensions: string; price: number } | null;
 }
@@ -404,32 +405,59 @@ export default function ShopManager() {
 
       {/* Customer records */}
       <div className="card card-white p-10">
-        <h2 className="font-heading text-xl font-bold mb-1">Customer records ({orders.length})</h2>
+        <div className="mb-1 flex flex-wrap items-center justify-between gap-3">
+          <h2 className="font-heading text-xl font-bold">Activity ({orders.length})</h2>
+          <a
+            href="/api/shop/customers"
+            className="rounded-lg px-4 py-2 font-body text-sm font-semibold text-white transition-opacity hover:opacity-90"
+            style={{ backgroundColor: "#547890" }}
+          >
+            Download customer CSV
+          </a>
+        </div>
         <p className="font-body text-[#6b6b6b] mb-6">
-          Everyone who hit “Purchase” — captured before checkout exists.
+          Checkout starts and legacy inquiries below. The CSV is the ledger of everyone who{" "}
+          <em>completed</em> a print purchase (name + email), pulled from the{" "}
+          <a href="https://joshuaisaiah.art/payment" className="underline" target="_blank" rel="noreferrer">
+            payment dashboard
+          </a>
+          .
         </p>
         {orders.length === 0 ? (
-          <p className="font-body text-gray-400">No inquiries yet.</p>
+          <p className="font-body text-gray-400">No activity yet.</p>
         ) : (
           <div className="space-y-2">
-            {orders.map((o) => (
-              <div
-                key={o.id}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-gray-200 px-4 py-3"
-              >
-                <div>
-                  <span className="font-heading font-bold text-gray-900">{o.name}</span>
-                  <span className="ml-2 font-body text-sm text-gray-500">
-                    <a href={`mailto:${o.email}`} className="underline">
-                      {o.email}
-                    </a>
-                  </span>
+            {orders.map((o) => {
+              const started = o.status === "checkout_started";
+              return (
+                <div
+                  key={o.id}
+                  className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-gray-200 px-4 py-3"
+                >
+                  <div>
+                    {o.name ? (
+                      <>
+                        <span className="font-heading font-bold text-gray-900">{o.name}</span>
+                        {o.email && (
+                          <span className="ml-2 font-body text-sm text-gray-500">
+                            <a href={`mailto:${o.email}`} className="underline">
+                              {o.email}
+                            </a>
+                          </span>
+                        )}
+                      </>
+                    ) : (
+                      <span className="font-body text-sm font-semibold text-[#547890]">
+                        {started ? "Checkout started" : "Inquiry"}
+                      </span>
+                    )}
+                  </div>
+                  <div className="font-body text-sm text-gray-500">
+                    {o.product?.title || "—"} · {fmtDate(o.createdAt)}
+                  </div>
                 </div>
-                <div className="font-body text-sm text-gray-500">
-                  {o.product?.title || "—"} · {fmtDate(o.createdAt)}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

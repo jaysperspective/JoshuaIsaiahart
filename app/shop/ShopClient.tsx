@@ -58,22 +58,17 @@ export default function ShopClient({
   initialProductId?: string;
 }) {
   const [active, setActive] = useState<ShopProductDTO | null>(null);
-  const [buying, setBuying] = useState(false);
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [done, setDone] = useState(false);
+  const [paid, setPaid] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
   // Switch the active print and reset the purchase UI.
   const applyActive = useCallback((p: ShopProductDTO | null) => {
     setActive(p);
-    setBuying(false);
-    setDone(false);
+    setSubmitting(false);
+    setPaid(false);
     setError(null);
-    setName("");
-    setEmail("");
     setCopied(false);
   }, []);
 
@@ -94,11 +89,17 @@ export default function ShopClient({
     }
   }, [applyActive]);
 
-  // Open the deep-linked print on first load (/shop/<id>).
+  // Open the deep-linked print on first load (/shop/<id>). If we're returning
+  // from a completed Stripe checkout (/shop/<id>?paid=1), show the confirmation.
   useEffect(() => {
     if (!initialProductId) return;
     const p = products.find((x) => x.id === initialProductId);
-    if (p) applyActive(p);
+    if (p) {
+      applyActive(p);
+      if (new URLSearchParams(window.location.search).get("paid") === "1") {
+        setPaid(true);
+      }
+    }
     // run once on mount
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -139,29 +140,28 @@ export default function ShopClient({
     };
   }, [active, close]);
 
-  async function submitPurchase() {
+  // Hand off to Stripe (via the Sovereign payment app) and redirect the browser
+  // to the hosted checkout. On success the page navigates away, so we leave the
+  // button in its "Redirecting…" state.
+  async function startCheckout() {
     if (!active) return;
-    if (!name.trim() || !email.trim()) {
-      setError("Please enter your name and email.");
-      return;
-    }
     setSubmitting(true);
     setError(null);
     try {
-      const res = await fetch("/api/shop/order", {
+      const res = await fetch("/api/shop/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ productId: active.id, name, email }),
+        body: JSON.stringify({ productId: active.id }),
       });
-      if (res.ok) {
-        setDone(true);
+      const d = await res.json().catch(() => ({}));
+      if (res.ok && d.url) {
+        window.location.href = d.url;
       } else {
-        const d = await res.json().catch(() => ({}));
-        setError(d.error || "Something went wrong. Please try again.");
+        setError(d.error || "Could not start checkout. Please try again.");
+        setSubmitting(false);
       }
     } catch {
-      setError("Something went wrong. Please try again.");
-    } finally {
+      setError("Could not start checkout. Please try again.");
       setSubmitting(false);
     }
   }
@@ -314,59 +314,29 @@ export default function ShopClient({
 
               {/* Purchase */}
               <div className="mt-8">
-                {done ? (
+                {paid ? (
                   <div className="rounded-sm border border-paper/25 p-5">
-                    <p className="font-display text-xl text-paper">Thank you, {name.split(" ")[0]}.</p>
+                    <p className="font-display text-xl text-paper">Thank you — your order is confirmed.</p>
                     <p className="prose-serif mt-2 text-[0.98rem] text-paper/80">
-                      Your interest in “{active.title}” is recorded. I’ll be in touch at {email} to
-                      arrange the print and payment.
+                      A receipt is on its way to your email. I’ll be in touch about your print of
+                      “{active.title}.”
                     </p>
                   </div>
-                ) : !buying ? (
-                  <button
-                    onClick={() => setBuying(true)}
-                    className="btn btn-shop"
-                    style={{ color: "#fff" }}
-                  >
-                    Purchase this print
-                  </button>
                 ) : (
-                  <div className="space-y-3">
-                    <p className="label text-paper/70">Enter your details to reserve this print</p>
-                    <input
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      placeholder="Full name"
-                      className="w-full rounded-sm border border-paper/30 bg-transparent px-4 py-3 font-sans text-sm text-paper placeholder:text-paper/40 focus:border-paper focus:outline-none"
-                    />
-                    <input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="Email"
-                      className="w-full rounded-sm border border-paper/30 bg-transparent px-4 py-3 font-sans text-sm text-paper placeholder:text-paper/40 focus:border-paper focus:outline-none"
-                    />
-                    {error && <p className="font-sans text-sm text-earth">{error}</p>}
-                    <div className="flex items-center gap-3 pt-1">
-                      <button
-                        onClick={submitPurchase}
-                        disabled={submitting}
-                        className="btn btn-shop"
-                        style={{ color: "#fff" }}
-                      >
-                        {submitting ? "Submitting…" : "Confirm interest"}
-                      </button>
-                      <button
-                        onClick={() => setBuying(false)}
-                        className="font-sans text-sm text-paper/60 hover:text-paper"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                    <p className="font-sans text-xs text-paper/50">
-                      Payment &amp; shipping are arranged personally — this just reserves your piece.
+                  <>
+                    <button
+                      onClick={startCheckout}
+                      disabled={submitting}
+                      className="btn btn-shop"
+                      style={{ color: "#fff" }}
+                    >
+                      {submitting ? "Redirecting…" : "Buy this print"}
+                    </button>
+                    {error && <p className="mt-3 font-sans text-sm text-earth">{error}</p>}
+                    <p className="mt-3 font-sans text-xs text-paper/50">
+                      Secure checkout. Free shipping — you’ll enter your shipping address at payment.
                     </p>
-                  </div>
+                  </>
                 )}
               </div>
             </div>
