@@ -50,7 +50,13 @@ function ProtectedImg({
   );
 }
 
-export default function ShopClient({ products }: { products: ShopProductDTO[] }) {
+export default function ShopClient({
+  products,
+  initialProductId,
+}: {
+  products: ShopProductDTO[];
+  initialProductId?: string;
+}) {
   const [active, setActive] = useState<ShopProductDTO | null>(null);
   const [buying, setBuying] = useState(false);
   const [name, setName] = useState("");
@@ -58,14 +64,64 @@ export default function ShopClient({ products }: { products: ShopProductDTO[] })
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
-  const close = useCallback(() => {
-    setActive(null);
+  // Switch the active print and reset the purchase UI.
+  const applyActive = useCallback((p: ShopProductDTO | null) => {
+    setActive(p);
     setBuying(false);
     setDone(false);
     setError(null);
     setName("");
     setEmail("");
+    setCopied(false);
+  }, []);
+
+  // Open a print and reflect it in the URL (/shop/<id>) so the address bar is
+  // always a shareable deep link.
+  const open = useCallback(
+    (p: ShopProductDTO) => {
+      applyActive(p);
+      window.history.pushState({ shop: p.id }, "", `/shop/${p.id}`);
+    },
+    [applyActive]
+  );
+
+  const close = useCallback(() => {
+    applyActive(null);
+    if (/^\/shop\/.+/.test(window.location.pathname)) {
+      window.history.pushState({}, "", "/shop");
+    }
+  }, [applyActive]);
+
+  // Open the deep-linked print on first load (/shop/<id>).
+  useEffect(() => {
+    if (!initialProductId) return;
+    const p = products.find((x) => x.id === initialProductId);
+    if (p) applyActive(p);
+    // run once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Keep the overlay in sync with browser back/forward.
+  useEffect(() => {
+    const onPop = () => {
+      const m = window.location.pathname.match(/^\/shop\/(.+)$/);
+      const p = m ? products.find((x) => x.id === decodeURIComponent(m[1])) : null;
+      applyActive(p || null);
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, [products, applyActive]);
+
+  const copyLink = useCallback(() => {
+    navigator.clipboard
+      ?.writeText(window.location.href)
+      .then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1800);
+      })
+      .catch(() => {});
   }, []);
 
   // Esc to close + lock body scroll while open.
@@ -140,7 +196,7 @@ export default function ShopClient({ products }: { products: ShopProductDTO[] })
               className="grow-0 basis-[calc((100%-2rem)/2)] sm:basis-[calc((100%-2.5rem)/2)] lg:basis-[calc((100%-7rem)/3)]"
             >
               <button
-                onClick={() => setActive(p)}
+                onClick={() => open(p)}
                 className="group block w-full"
                 aria-label={`View ${p.title}`}
               >
@@ -209,12 +265,21 @@ export default function ShopClient({ products }: { products: ShopProductDTO[] })
               >
                 {active.title}
               </h2>
-              <p
-                className="numeral mt-3 font-sans text-[1.7rem] font-semibold"
-                style={{ color: "#f4ecd2" }}
-              >
-                {price(active.price)}
-              </p>
+              <div className="mt-3 flex items-center gap-4">
+                <p
+                  className="numeral font-sans text-[1.7rem] font-semibold"
+                  style={{ color: "#f4ecd2" }}
+                >
+                  {price(active.price)}
+                </p>
+                <button
+                  onClick={copyLink}
+                  className="font-sans text-xs uppercase tracking-wide transition-colors"
+                  style={{ color: copied ? "#f4ecd2" : "rgba(244,236,210,0.55)" }}
+                >
+                  {copied ? "Link copied ✓" : "Copy link"}
+                </button>
+              </div>
 
               <dl
                 className="mt-6 space-y-2 border-t pt-6"
