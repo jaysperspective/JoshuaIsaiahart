@@ -265,7 +265,7 @@ export default function ShopClient({
               >
                 {active.title}
               </h2>
-              <div className="mt-3 flex items-center gap-4">
+              <div className="mt-3 flex items-center justify-between gap-4">
                 <p
                   className="numeral font-sans text-[1.7rem] font-semibold"
                   style={{ color: "#f4ecd2" }}
