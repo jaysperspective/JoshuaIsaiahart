@@ -178,7 +178,7 @@ export default function ShopClient({ products }: { products: ShopProductDTO[] })
       {/* Detail overlay */}
       {active && (
         <div
-          className="lightbox-enter fixed inset-0 z-50 flex items-center justify-center bg-vigne/95 p-4 sm:p-8"
+          className="lightbox-enter fixed inset-0 z-50 flex items-center justify-center bg-vigne/[0.97] p-4 backdrop-blur-md sm:p-8"
           onClick={close}
         >
           <button
@@ -203,24 +203,48 @@ export default function ShopClient({ products }: { products: ShopProductDTO[] })
 
             {/* Info panel */}
             <div className="text-paper">
-              <h2 className="font-display text-[clamp(1.8rem,4vw,2.8rem)] font-medium leading-tight">
+              <h2
+                className="font-display text-[clamp(1.8rem,4vw,2.8rem)] font-medium leading-tight"
+                style={{ color: "#f4ecd2" }}
+              >
                 {active.title}
               </h2>
-              <p className="label numeral mt-3 text-[1.05rem] text-paper">{price(active.price)}</p>
+              <p
+                className="numeral mt-3 font-sans text-[1.7rem] font-semibold"
+                style={{ color: "#f4ecd2" }}
+              >
+                {price(active.price)}
+              </p>
 
-              <dl className="mt-6 space-y-2 border-t border-paper/20 pt-6">
+              <dl
+                className="mt-6 space-y-2 border-t pt-6"
+                style={{ borderColor: "rgba(244,236,210,0.2)" }}
+              >
                 <div className="flex justify-between gap-4">
-                  <dt className="label text-paper/60">Dimensions</dt>
-                  <dd className="font-sans text-sm text-paper">{active.dimensions}</dd>
+                  <dt className="label" style={{ color: "rgba(244,236,210,0.6)" }}>
+                    Dimensions
+                  </dt>
+                  <dd className="font-sans text-sm" style={{ color: "#f4ecd2" }}>
+                    {active.dimensions}
+                  </dd>
                 </div>
                 <div className="flex justify-between gap-4">
-                  <dt className="label text-paper/60">Paper</dt>
-                  <dd className="font-sans text-sm text-paper">{active.paperType}</dd>
+                  <dt className="label" style={{ color: "rgba(244,236,210,0.6)" }}>
+                    Paper
+                  </dt>
+                  <dd className="font-sans text-sm" style={{ color: "#f4ecd2" }}>
+                    {active.paperType}
+                  </dd>
                 </div>
               </dl>
 
               {active.description && (
-                <p className="prose-serif mt-6 text-[1.02rem] text-paper/85">{active.description}</p>
+                <p
+                  className="prose-serif mt-6 text-[1.05rem] leading-relaxed"
+                  style={{ color: "rgba(244,236,210,0.92)" }}
+                >
+                  {active.description}
+                </p>
               )}
 
               {/* Purchase */}
