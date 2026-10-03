@@ -137,7 +137,7 @@ export default function ShopClient({ products }: { products: ShopProductDTO[] })
             <Reveal
               key={p.id}
               delay={(i % 4) * 70}
-              className="grow-0 basis-[calc((100%-2rem)/2)] sm:basis-[calc((100%-5rem)/3)] lg:basis-[calc((100%-10.5rem)/4)]"
+              className="grow-0 basis-[calc((100%-2rem)/2)] sm:basis-[calc((100%-2.5rem)/2)] lg:basis-[calc((100%-7rem)/3)]"
             >
               <button
                 onClick={() => setActive(p)}
