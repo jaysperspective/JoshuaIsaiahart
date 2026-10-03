@@ -173,19 +173,6 @@ export default async function RateSheet() {
           ))}
         </div>
 
-        {/* Featured client quote */}
-        {quote && (
-          <figure className="mx-auto mt-20 max-w-2xl text-center sm:mt-28">
-            <blockquote className="prose-serif text-[1.15rem] italic">
-              &ldquo;{quote.quote}&rdquo;
-            </blockquote>
-            <figcaption className="mt-5">
-              <span className="label text-ink">{quote.name}</span>
-              {quote.role && <span className="label mt-1 block">{quote.role}</span>}
-            </figcaption>
-          </figure>
-        )}
-
         {/* CTA */}
         <section className="mt-20 sm:mt-28 py-14 border-t border-b border-rule">
           <p className="eyebrow mb-4">Ready to book?</p>
@@ -201,6 +188,19 @@ export default async function RateSheet() {
             </Link>
           </div>
         </section>
+
+        {/* Featured client quote */}
+        {quote && (
+          <figure className="mx-auto mt-12 max-w-lg text-center">
+            <blockquote className="prose-serif text-[0.95rem] italic text-muted">
+              &ldquo;{quote.quote}&rdquo;
+            </blockquote>
+            <figcaption className="mt-4">
+              <span className="label text-ink">{quote.name}</span>
+              {quote.role && <span className="label mt-1 block">{quote.role}</span>}
+            </figcaption>
+          </figure>
+        )}
 
         {/* Footer */}
         <footer className="mt-12">
