@@ -96,6 +96,9 @@ export default async function Home() {
               <Link href="/testimonial" className="btn">
                 Testimonial
               </Link>
+              <Link href="/shop" className="btn btn-shop">
+                Shop Images
+              </Link>
             </div>
 
             {/* Approved client reviews — surfaced as formatted quotes */}

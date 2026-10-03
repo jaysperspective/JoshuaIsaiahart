@@ -122,3 +122,36 @@ model Settings {
   youtubeUrl    String  @default("")
   bookingConfig String? // JSON — booking availability window/hours
 }
+
+// Fine-art print shop. A ShopProduct is one image offered as a printed piece
+// (one size / price / paper per listing). ShopOrder records every customer who
+// hits "Purchase" (name + email) so there's a record even before checkout is
+// wired up. Created manually on prod via psql (see deploy notes) — db push LOCAL
+// only, never prod; `prisma generate` on the box after a schema change.
+model ShopProduct {
+  id          String      @id @default(cuid())
+  title       String
+  description String?
+  imageUrl    String
+  price       Int // price in whole US cents
+  dimensions  String // e.g. "16 × 20 in"
+  paperType   String // e.g. "Archival Matte"
+  displayRatio String     @default("4:3") // frame shape on the grid: "4:3" | "3:4" | "1:1"
+  published   Boolean     @default(true)
+  sortOrder   Int?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  orders      ShopOrder[]
+}
+
+model ShopOrder {
+  id        String      @id @default(cuid())
+  productId String
+  product   ShopProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+  name      String
+  email     String
+  status    String      @default("inquiry")
+  createdAt DateTime    @default(now())
+
+  @@index([createdAt])
+}

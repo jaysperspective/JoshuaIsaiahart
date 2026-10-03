@@ -5,6 +5,7 @@ import AdminAuth from "@/app/components/AdminAuth";
 import PostEditor from "./PostEditor";
 import FileManager from "./FileManager";
 import BookingsPanel from "./BookingsPanel";
+import ShopManager from "./ShopManager";
 import { slugify } from "@/app/lib/slug";
 
 interface Image {
@@ -83,7 +84,7 @@ interface SocialVideo {
   sortOrder: number | null;
 }
 
-type AdminTab = "galleries" | "reels" | "film" | "posts" | "stories" | "bookings" | "files" | "stats" | "settings";
+type AdminTab = "galleries" | "reels" | "film" | "posts" | "stories" | "bookings" | "shop" | "files" | "stats" | "settings";
 
 const ADMIN_TABS: { id: AdminTab; label: string }[] = [
   { id: "galleries", label: "Galleries" },
@@ -92,6 +93,7 @@ const ADMIN_TABS: { id: AdminTab; label: string }[] = [
   { id: "posts", label: "Posts" },
   { id: "stories", label: "Stories" },
   { id: "bookings", label: "Bookings" },
+  { id: "shop", label: "Shop" },
   { id: "files", label: "Jropbox" },
   { id: "stats", label: "Stats" },
   { id: "settings", label: "Settings" },
@@ -2301,6 +2303,8 @@ export default function AdminPage() {
           </>)}
 
           {adminTab === "bookings" && <BookingsPanel />}
+
+          {adminTab === "shop" && <ShopManager />}
 
           {adminTab === "files" && <FileManager />}
 

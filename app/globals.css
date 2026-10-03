@@ -215,6 +215,16 @@ body {
   border-color: var(--accent-deep);
   color: var(--paper);
 }
+.btn-shop {
+  border-color: #547890;
+  color: var(--paper);
+  background: #547890;
+}
+.btn-shop:hover {
+  background: #456275;
+  border-color: #456275;
+  color: var(--paper);
+}
 .btn-ghost {
   border-color: transparent;
   color: var(--muted);
@@ -366,4 +376,43 @@ body {
     opacity: 1;
     transform: scale(1);
   }
+}
+
+/* Shop detail: image + info panel ease in together. */
+.shop-detail-enter {
+  animation: shopDetailIn 0.32s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+}
+@keyframes shopDetailIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .shop-detail-enter,
+  .lightbox-enter,
+  .lightbox-image-enter {
+    animation: none;
+  }
+}
+
+/* Textured gallery wall: base teal + soft top light + fine linen weave +
+   faint grain. CSS-only (data-URI noise) so there's no image asset to load. */
+.shop-wall {
+  background-color: #547890;
+  background-image:
+    /* soft overhead light — like a lamp washing down the wall */
+    radial-gradient(1200px 820px at 50% -14%, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0) 60%),
+    /* gentle darkening toward the base for room depth */
+    linear-gradient(180deg, rgba(0, 0, 0, 0) 55%, rgba(17, 26, 25, 0.18) 100%),
+    /* faint grain so the paint isn't flat */
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: no-repeat, no-repeat, repeat;
+  background-size: 100% 100%, 100% 100%, 240px 240px;
+  background-blend-mode: screen, normal, soft-light;
+  background-attachment: fixed, fixed, scroll;
 }

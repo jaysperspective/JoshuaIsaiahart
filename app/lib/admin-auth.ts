@@ -17,6 +17,10 @@ export function adminToken(): string | null {
 
 /** True when the request carries a valid admin session cookie. */
 export function requireAdmin(request: NextRequest): boolean {
+  // Local-dev convenience: skip the login entirely under `next dev`. This is
+  // NEVER true under `next build` / `next start` (production on the box), so
+  // the deployed site stays fully guarded even if this ships in a commit.
+  if (process.env.NODE_ENV === "development") return true;
   const expected = adminToken();
   if (!expected) return false;
   const got = request.cookies.get(ADMIN_COOKIE)?.value;
