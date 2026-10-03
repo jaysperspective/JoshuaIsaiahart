@@ -49,19 +49,19 @@ const SECTIONS = [
       {
         heading: "Hourly / Day Rates",
         items: [
-          { label: "Hourly", note: "2-hour minimum", price: "$250 / hr" },
-          { label: "Half-Day", note: "up to 4 hours", price: "$850" },
-          { label: "Full Day", note: "up to 8 hours", price: "$1,500" },
-          { label: "Extended Day", note: "8–12 hours", price: "$1,800" },
+          { label: "Hourly", note: "2-hour minimum", price: "$350 / hr" },
+          { label: "Half-Day", note: "up to 4 hours", price: "$1,200" },
+          { label: "Full Day", note: "up to 8 hours", price: "$2,200" },
+          { label: "Extended Day", note: "8–12 hours", price: "$2,800" },
         ],
       },
       {
         heading: "Event Videography",
         subheading: "Delivers organized raw footage via shared drive — shoot, label, hand off.",
         items: [
-          { label: "Conference / Corporate Event", note: "4 hrs", price: "$1,200" },
-          { label: "Conference / Corporate Event", note: "full day", price: "$2,000" },
-          { label: "Highlight Reel", note: "2–3 min., edited — add-on", price: "$500" },
+          { label: "Conference / Corporate Event", note: "4 hrs", price: "from $1,200" },
+          { label: "Conference / Corporate Event", note: "full day", price: "from $2,000" },
+          { label: "Highlight Reel", note: "2–3 min., edited — add-on", price: "from $500" },
           { label: "Same-Week Turnaround", note: "", price: "+$300" },
         ],
       },
@@ -71,7 +71,7 @@ const SECTIONS = [
           {
             label: "Quick Recap",
             note: "2–3 hrs on-site · 60–90 sec edited recap · 5-day delivery",
-            price: "$600",
+            price: "from $600",
           },
         ],
       },
