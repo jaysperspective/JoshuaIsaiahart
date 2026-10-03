@@ -52,7 +52,7 @@ export default async function ShopScreen({
         {/* Title block */}
         <section className="pt-10 text-center sm:pt-14">
           <p className="eyebrow mb-6" style={{ color: "rgba(244,236,210,0.8)" }}>
-            Fine-Art Prints · Washington, DC
+            Fine-Art Prints
           </p>
           <h1 className="display mx-auto max-w-3xl" style={{ color: "#f4ecd2" }}>
             Prints for the <span className="italic font-light">wall</span>
