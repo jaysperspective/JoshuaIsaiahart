@@ -2,7 +2,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { prisma } from "@/app/lib/prisma";
 import KindWords from "./KindWords";
-import SiteFooter from "./components/SiteFooter";
 
 // Approved testimonials are surfaced via ISR — the DB is read at most once
 // per revalidation window instead of on every visit (lets Cloudflare cache).
@@ -126,29 +125,28 @@ export default async function Home() {
               2× Emmy Award winner · NABJ Honors
             </Link>
 
-            {/* Primary actions — lead with the hire path */}
             <div className="mt-8 flex flex-wrap items-center gap-2.5">
-              <Link href="/work#book" className="btn btn-accent">
-                Book a Session
+              <Link href="/work" className="btn btn-accent">
+                View Work
                 <ArrowIcon className="-mr-1" />
               </Link>
-              <Link href="/work" className="btn">
-                View Work
+              <Link href="/work#book" className="btn">
+                Book a Session
               </Link>
-            </div>
-            {/* Secondary links — subordinate to the primary CTAs */}
-            <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2">
-              <Link href="/rate-sheet" className="label link-underline">
+              <Link href="/rate-sheet" className="btn">
                 Rate Sheet
               </Link>
-              <Link href="/shop" className="label link-underline">
-                Shop Images
-              </Link>
-              <Link href="/about" className="label link-underline">
+              <Link href="/about" className="btn">
                 About
               </Link>
-              <Link href="/testimonial#reviews" className="label link-underline">
-                Reviews
+              <Link href="/work?tab=photography" className="btn">
+                Editorial
+              </Link>
+              <Link href="/testimonial" className="btn">
+                Testimonial
+              </Link>
+              <Link href="/shop" className="btn btn-shop">
+                Shop Images
               </Link>
             </div>
 
@@ -179,8 +177,6 @@ export default async function Home() {
           </span>
         </Link>
       </div>
-
-      <SiteFooter />
     </main>
   );
 }

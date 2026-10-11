@@ -27,7 +27,7 @@ const geist = localFont({
 export const metadata: Metadata = {
   metadataBase: new URL("https://joshuaisaiah.art"),
   title: {
-    default: "Joshua Isaiah — Virginia Photographer & Filmmaker",
+    default: "Joshua Isaiah — Virginia & DMV Photographer & Filmmaker",
     template: "%s — Joshua Isaiah",
   },
   description:
@@ -45,7 +45,7 @@ export const metadata: Metadata = {
   ],
   alternates: { canonical: "/" },
   openGraph: {
-    title: "Joshua Isaiah — Virginia Photographer & Filmmaker",
+    title: "Joshua Isaiah — Virginia & DMV Photographer & Filmmaker",
     description:
       "Photographer & filmmaker in the Washington, DC metro area. Available for hire — events, portraits, editorial, and social-first video.",
     url: "https://joshuaisaiah.art",
@@ -56,7 +56,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Joshua Isaiah — Virginia Photographer & Filmmaker",
+    title: "Joshua Isaiah — Virginia & DMV Photographer & Filmmaker",
     description:
       "Photographer & filmmaker in the Washington, DC metro area. Available for hire — events, portraits, editorial, and social-first video.",
     images: ["/og-image.jpg"],

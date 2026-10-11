@@ -571,8 +571,8 @@ export default function ContactClient() {
 
       <p className="label normal-case tracking-normal mt-6 text-center">
         Prefer email?{" "}
-        <a href="mailto:Josh@plusntrust.org" className="link-underline">
-          Josh@plusntrust.org
+        <a href="mailto:joshualharrington@gmail.com" className="link-underline">
+          joshualharrington@gmail.com
         </a>
       </p>
     </div>
