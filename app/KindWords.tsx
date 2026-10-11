@@ -10,7 +10,7 @@ interface HomeTestimonial {
   role: string | null;
 }
 
-const PER_PAGE = 2;
+const PER_PAGE = 1;
 const ROTATE_MS = 8000;
 const FADE_MS = 600;
 
