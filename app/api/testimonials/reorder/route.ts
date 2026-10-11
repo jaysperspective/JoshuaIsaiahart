@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
 
     await Promise.all(
       ids.map((id: string, index: number) =>
-        (prisma as any).testimonial.update({
+        prisma.testimonial.update({
           where: { id },
           data: { sortOrder: index },
         })

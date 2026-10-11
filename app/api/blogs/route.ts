@@ -5,7 +5,7 @@ import { requireAdmin, unauthorized } from "@/app/lib/admin-auth";
 export async function GET() {
   try {
     // Note: Blog model pending schema migration
-    const blogs = await (prisma as any).blog.findMany({
+    const blogs = await prisma.blog.findMany({
       orderBy: { createdAt: "desc" },
     });
     return NextResponse.json(blogs);
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Note: Blog model pending schema migration
-    const blog = await (prisma as any).blog.create({
+    const blog = await prisma.blog.create({
       data: {
         title: title.trim(),
         content: content.trim(),

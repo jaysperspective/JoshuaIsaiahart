@@ -11,7 +11,7 @@ export async function PUT(
     const { id } = await params;
     const { quote, name, role, approved } = await request.json();
 
-    const testimonial = await (prisma as any).testimonial.update({
+    const testimonial = await prisma.testimonial.update({
       where: { id },
       data: {
         ...(quote !== undefined && { quote }),
@@ -35,7 +35,7 @@ export async function DELETE(
   if (!requireAdmin(request)) return unauthorized();
   try {
     const { id } = await params;
-    await (prisma as any).testimonial.delete({ where: { id } });
+    await prisma.testimonial.delete({ where: { id } });
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Failed to delete testimonial:", error);

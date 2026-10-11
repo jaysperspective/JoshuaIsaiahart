@@ -4,14 +4,17 @@ import { slugify } from "@/app/lib/slug";
 
 const BASE = "https://joshuaisaiah.art";
 
-export const dynamic = "force-dynamic";
+// Regenerate daily rather than on every crawler hit.
+export const revalidate = 86400;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: `${BASE}/`, changeFrequency: "monthly", priority: 1 },
     { url: `${BASE}/work`, changeFrequency: "weekly", priority: 0.9 },
+    { url: `${BASE}/shop`, changeFrequency: "weekly", priority: 0.8 },
     { url: `${BASE}/rate-sheet`, changeFrequency: "monthly", priority: 0.8 },
     { url: `${BASE}/about`, changeFrequency: "monthly", priority: 0.7 },
+    { url: `${BASE}/faq`, changeFrequency: "monthly", priority: 0.6 },
     { url: `${BASE}/cv`, changeFrequency: "monthly", priority: 0.6 },
     { url: `${BASE}/card`, changeFrequency: "monthly", priority: 0.5 },
   ];

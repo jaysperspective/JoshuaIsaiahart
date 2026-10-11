@@ -15,7 +15,7 @@ export async function PUT(
     const body = await request.json();
     const { caption, sourceUrl, thumbnailUrl } = body;
 
-    const socialVideo = await (prisma as any).socialVideo.update({
+    const socialVideo = await prisma.socialVideo.update({
       where: { id },
       data: {
         ...(caption !== undefined && { caption }),
@@ -42,9 +42,9 @@ export async function DELETE(
   try {
     const { id } = await params;
 
-    const video = await (prisma as any).socialVideo.findUnique({ where: { id } });
+    const video = await prisma.socialVideo.findUnique({ where: { id } });
 
-    await (prisma as any).socialVideo.delete({
+    await prisma.socialVideo.delete({
       where: { id },
     });
 

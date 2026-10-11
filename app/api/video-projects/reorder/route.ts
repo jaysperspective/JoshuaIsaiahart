@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     // Update sortOrder for each video project based on position in array
     await Promise.all(
       projectIds.map((id: string, index: number) =>
-        (prisma as any).videoProject.update({
+        prisma.videoProject.update({
           where: { id },
           data: { sortOrder: index },
         })

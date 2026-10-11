@@ -67,6 +67,12 @@ model Booking {
 
   @@index([date])
   @@index([createdAt])
+  // NOTE: a PARTIAL unique index guards against concurrent double-booking:
+  //   CREATE UNIQUE INDEX "Booking_active_slot_unique" ON "Booking"
+  //     ("dateYmd","time") WHERE "dateYmd" IS NOT NULL AND status <> 'cancelled';
+  // Prisma can't express partial unique indexes, so it's applied via raw SQL
+  // (local + prod). The POST /api/booking handler treats a P2002 violation as
+  // a 409 "slot taken". Do NOT `prisma db push` this DB — only `prisma generate`.
 }
 
 model SocialVideo {

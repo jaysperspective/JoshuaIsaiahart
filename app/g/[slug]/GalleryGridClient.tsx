@@ -150,7 +150,7 @@ export default function GalleryGridClient({ gallery }: GalleryGridClientProps) {
                   >
                     <Image
                       src={image.path}
-                      alt={image.caption || image.filename}
+                      alt={image.caption || `${gallery.title} — photograph by Joshua Isaiah`}
                       fill
                       sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
                       className="object-cover transition-transform duration-500 group-hover:scale-105"
@@ -263,7 +263,7 @@ export default function GalleryGridClient({ gallery }: GalleryGridClientProps) {
           <img
             key={lightboxImage.id}
             src={lightboxImage.path}
-            alt={lightboxImage.caption || lightboxImage.filename}
+            alt={lightboxImage.caption || `${gallery.title} — photograph by Joshua Isaiah`}
             className="max-h-[85vh] max-w-[85vw] object-contain lightbox-image-enter"
             onClick={(e) => e.stopPropagation()}
           />

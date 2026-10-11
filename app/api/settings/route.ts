@@ -6,14 +6,16 @@ import { requireAdmin, unauthorized } from "@/app/lib/admin-auth";
 export async function GET() {
   try {
     // Note: Settings model pending schema migration
-    let settings = await (prisma as any).settings.findFirst();
+    let settings = await prisma.settings.findFirst();
 
     if (!settings) {
       // Return defaults if no settings exist
       settings = {
+        id: "",
         instagramUrl: "",
         linkedinUrl: "",
         youtubeUrl: "",
+        bookingConfig: null,
       };
     }
 
@@ -37,10 +39,10 @@ export async function PUT(request: NextRequest) {
 
     // Note: Settings model pending schema migration
     // Upsert: create if not exists, update if exists
-    let settings = await (prisma as any).settings.findFirst();
+    let settings = await prisma.settings.findFirst();
 
     if (settings) {
-      settings = await (prisma as any).settings.update({
+      settings = await prisma.settings.update({
         where: { id: settings.id },
         data: {
           instagramUrl: instagramUrl ?? "",
@@ -49,7 +51,7 @@ export async function PUT(request: NextRequest) {
         },
       });
     } else {
-      settings = await (prisma as any).settings.create({
+      settings = await prisma.settings.create({
         data: {
           instagramUrl: instagramUrl ?? "",
           linkedinUrl: linkedinUrl ?? "",

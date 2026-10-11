@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
 
     await Promise.all(
       videoIds.map((id: string, index: number) =>
-        (prisma as any).socialVideo.update({
+        prisma.socialVideo.update({
           where: { id },
           data: { sortOrder: index },
         })

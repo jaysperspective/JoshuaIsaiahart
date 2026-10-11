@@ -4,7 +4,7 @@ import { requireAdmin, unauthorized } from "@/app/lib/admin-auth";
 
 export async function GET() {
   try {
-    const videoProjects = await (prisma as any).videoProject.findMany({
+    const videoProjects = await prisma.videoProject.findMany({
       orderBy: [
         { sortOrder: "asc" },
         { createdAt: "asc" },
@@ -41,13 +41,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Get the highest current sortOrder to place new project at the end
-    const lastProject = await (prisma as any).videoProject.findFirst({
+    const lastProject = await prisma.videoProject.findFirst({
       orderBy: { sortOrder: "desc" },
       select: { sortOrder: true },
     });
     const nextSortOrder = (lastProject?.sortOrder ?? -1) + 1;
 
-    const videoProject = await (prisma as any).videoProject.create({
+    const videoProject = await prisma.videoProject.create({
       data: {
         title,
         description: description || null,

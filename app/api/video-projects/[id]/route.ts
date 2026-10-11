@@ -8,7 +8,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const videoProject = await (prisma as any).videoProject.findUnique({
+    const videoProject = await prisma.videoProject.findUnique({
       where: { id },
     });
 
@@ -39,7 +39,7 @@ export async function PUT(
     const body = await request.json();
     const { title, description, videoUrl, thumbnailUrl } = body;
 
-    const videoProject = await (prisma as any).videoProject.update({
+    const videoProject = await prisma.videoProject.update({
       where: { id },
       data: {
         ...(title !== undefined && { title }),
@@ -67,7 +67,7 @@ export async function DELETE(
   try {
     const { id } = await params;
 
-    await (prisma as any).videoProject.delete({
+    await prisma.videoProject.delete({
       where: { id },
     });
 

@@ -45,7 +45,7 @@ export interface CardSocials {
 /** Read socials from the Settings record, falling back to constants above. */
 export async function getSocials(): Promise<CardSocials> {
   try {
-    const s = await (prisma as any).settings.findFirst();
+    const s = await prisma.settings.findFirst();
     return {
       instagram: s?.instagramUrl || FALLBACK_INSTAGRAM,
       linkedin: s?.linkedinUrl || FALLBACK_LINKEDIN,

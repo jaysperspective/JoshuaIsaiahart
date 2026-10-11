@@ -7,7 +7,7 @@ import { resolveConfig, generateSlots, DEFAULT_BOOKING_CONFIG } from "@/app/lib/
 export async function GET() {
   let cfg = DEFAULT_BOOKING_CONFIG;
   try {
-    const settings = await (prisma as any).settings.findFirst();
+    const settings = await prisma.settings.findFirst();
     if (settings?.bookingConfig) {
       cfg = resolveConfig(JSON.parse(settings.bookingConfig));
     }
@@ -23,7 +23,7 @@ export async function GET() {
   try {
     const since = new Date();
     since.setDate(since.getDate() - 1);
-    const rows = await (prisma as any).booking.findMany({
+    const rows = await prisma.booking.findMany({
       where: { date: { gte: since }, status: { not: "cancelled" } },
       select: { dateYmd: true, time: true },
     });

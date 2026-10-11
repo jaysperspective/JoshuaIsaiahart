@@ -175,6 +175,14 @@ export default function VideographyClient({ videoProjects }: VideographyClientPr
             </div>
           );
         })}
+
+        {/* Inquiry CTA */}
+        <Reveal>
+          <div className="mt-6 border-t border-rule pt-10 text-center">
+            <p className="prose-serif mb-5">Like what you see?</p>
+            <Link href="/work#book" className="btn btn-accent">Book a session</Link>
+          </div>
+        </Reveal>
       </div>
 
       {/* Video Lightbox */}

@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
       } catch {}
     }
 
-    await (prisma as any).metric.create({
+    await prisma.metric.create({
       data: { type, path: path.slice(0, 200), referrer: ref, visitor, device },
     });
 

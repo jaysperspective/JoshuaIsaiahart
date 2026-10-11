@@ -69,12 +69,12 @@ async function processVideo(tmpPath: string, caption: string | null) {
       thumbnailUrl = `/reels/${base}.jpg`;
     }
 
-    const lastVideo = await (prisma as any).socialVideo.findFirst({
+    const lastVideo = await prisma.socialVideo.findFirst({
       orderBy: { sortOrder: "desc" },
       select: { sortOrder: true },
     });
 
-    await (prisma as any).socialVideo.create({
+    await prisma.socialVideo.create({
       data: {
         sourceUrl,
         thumbnailUrl,

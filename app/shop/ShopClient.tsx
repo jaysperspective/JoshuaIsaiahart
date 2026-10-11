@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
 import Reveal from "@/app/work/Reveal";
 
 export interface ShopProductDTO {
@@ -41,6 +42,8 @@ function ProtectedImg({
         src={src}
         alt=""
         draggable={false}
+        loading="lazy"
+        decoding="async"
         onContextMenu={(e) => e.preventDefault()}
         onDragStart={(e) => e.preventDefault()}
         className={`pointer-events-none select-none ${className}`}
@@ -186,6 +189,13 @@ export default function ShopClient({
           <p className="prose-serif mt-3" style={{ color: "rgba(244,236,210,0.8)" }}>
             Check back later for new items.
           </p>
+          <Link
+            href="/work#book"
+            className="mt-7 inline-block font-sans text-sm uppercase tracking-wide underline-offset-4 transition-opacity hover:opacity-80"
+            style={{ color: "#f4ecd2" }}
+          >
+            Request a custom print →
+          </Link>
         </div>
       ) : (
         <div className="flex flex-wrap justify-center gap-8 sm:gap-10 lg:gap-14">

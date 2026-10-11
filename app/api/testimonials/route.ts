@@ -6,7 +6,7 @@ export async function GET(request: NextRequest) {
   try {
     // ?all=1 (admin) includes pending submissions; public gets approved only
     const includeAll = new URL(request.url).searchParams.get("all") === "1";
-    const testimonials = await (prisma as any).testimonial.findMany({
+    const testimonials = await prisma.testimonial.findMany({
       ...(includeAll ? {} : { where: { approved: true } }),
       orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
     });
@@ -26,12 +26,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Quote and name are required" }, { status: 400 });
     }
 
-    const last = await (prisma as any).testimonial.findFirst({
+    const last = await prisma.testimonial.findFirst({
       orderBy: { sortOrder: "desc" },
       select: { sortOrder: true },
     });
 
-    const testimonial = await (prisma as any).testimonial.create({
+    const testimonial = await prisma.testimonial.create({
       data: {
         quote: quote.trim(),
         name: name.trim(),

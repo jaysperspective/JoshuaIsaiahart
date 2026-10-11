@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, type ReactNode } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { parseVideoUrl, getEmbedUrl, getThumbnailUrl } from "@/app/lib/video-utils";
 import { showcases, type Showcase, type ShowcaseImage } from "@/app/lib/creative-director";
 import Reveal from "./Reveal";
@@ -41,8 +42,7 @@ function BrandSystem({ showcase }: { showcase: Showcase }) {
           <div className="flex flex-col items-start gap-6 bg-card p-8 sm:p-10">
             <span className="label" style={{ letterSpacing: "0.2em" }}>Identity</span>
             {brand.mark ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={brand.mark} alt={`${showcase.client} mark`} className="h-[92px] w-auto object-contain" />
+              <Image src={brand.mark} alt={`${showcase.client} mark`} width={400} height={400} sizes="92px" className="h-[92px] w-auto object-contain" />
             ) : (
               <PlusMark color={brand.primary} />
             )}
@@ -397,13 +397,11 @@ export default function CreativeDirectorClient() {
                       </div>
                       {/* Copy + QR + download */}
                       <div>
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={s.app.logo ?? "/creative-director/plusntrust/logos/pnt-logo-plusone.png"} alt={s.app.name} className="h-9 w-auto object-contain" />
+                        <Image src={s.app.logo ?? "/creative-director/plusntrust/logos/pnt-logo-plusone.png"} alt={s.app.name} width={392} height={140} sizes="120px" className="h-9 w-auto object-contain" />
                         <p className="prose-serif mt-4" style={{ color: BODY }}>{s.app.description}</p>
                         <div className="mt-6 flex items-center gap-5">
                           <div className="shrink-0 rounded-[10px] bg-white p-2.5">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={s.app.qr} alt={`Scan to download ${s.app.name}`} className="h-28 w-28" />
+                            <Image src={s.app.qr} alt={`Scan to download ${s.app.name}`} width={540} height={540} sizes="112px" className="h-28 w-28" />
                           </div>
                           <div>
                             <p className="label" style={{ fontFamily: MONO, letterSpacing: "0.08em", color: MUT }}>Scan to download</p>
@@ -470,6 +468,19 @@ export default function CreativeDirectorClient() {
             </section>
           );
         })}
+
+        {/* Inquiry CTA */}
+        <Reveal>
+          <div className="mt-16 border-t pb-20 pt-12 text-center" style={{ borderColor: HAIR }}>
+            <p className="prose-serif mb-5" style={{ color: BODY }}>Have a world that needs building?</p>
+            <Link href="/work#book" className="btn" style={{ borderColor: "#e3d9ac", color: PAPER, fontFamily: MONO }}>
+              Book a session
+              <svg className="-mr-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5.5 14.5L14.5 5.5M14.5 5.5H7.5M14.5 5.5V12.5" />
+              </svg>
+            </Link>
+          </div>
+        </Reveal>
       </div>
 
       {/* Lightbox */}

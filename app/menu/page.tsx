@@ -1,5 +1,10 @@
 import Link from "next/link";
 
+export const metadata = {
+  title: "Menu",
+  robots: { index: false, follow: false },
+};
+
 export default function Menu() {
   return (
     <main className="min-h-screen bg-paper text-ink">

@@ -4,7 +4,9 @@ import type { Metadata } from "next";
 import { CARD, getSocials, SITE_URL } from "@/app/lib/contact";
 import ShareButton from "./ShareButton";
 
-export const dynamic = "force-dynamic";
+// Socials come from the Settings record; ISR (hourly) keeps the card
+// edge-cacheable rather than dynamic per request.
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: "Digital Card",

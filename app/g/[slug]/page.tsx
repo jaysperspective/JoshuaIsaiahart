@@ -12,19 +12,28 @@ export const dynamic = "force-dynamic";
 
 async function getGallery(slug: string) {
   try {
-    const galleries = await prisma.gallery.findMany({
-      include: {
-        images: {
-          orderBy: { order: "asc" },
-        },
-      },
-    });
+    // Fast path: stored unique slug (the common case) — one indexed lookup
+    // with just this gallery's images, not every gallery's.
+    let gallery: any = null;
+    try {
+      gallery = await prisma.gallery.findUnique({
+        where: { slug },
+        include: { images: { orderBy: { order: "asc" } } },
+      });
+    } catch {
+      gallery = null; // client may predate the slug column — fall back below
+    }
 
-    // Match stored slug first; fall back to slugified title for
-    // galleries created before slugs existed
-    const gallery = galleries.find(
-      (g) => (g as any).slug === slug || slugify(g.title) === slug
-    );
+    // Fall back to a full scan for legacy galleries created before slugs
+    // existed (matched by slugified title).
+    if (!gallery) {
+      const galleries = await prisma.gallery.findMany({
+        include: { images: { orderBy: { order: "asc" } } },
+      });
+      gallery = galleries.find(
+        (g) => (g as any).slug === slug || slugify(g.title) === slug
+      );
+    }
     if (!gallery) return null;
 
     return {
@@ -36,7 +45,7 @@ async function getGallery(slug: string) {
       downloadable: gallery.downloadable,
       pin: ((gallery as any).pin as string | null) || null,
       slug: (gallery as any).slug || slugify(gallery.title),
-      images: gallery.images.map((image) => ({
+      images: gallery.images.map((image: any) => ({
         id: image.id,
         filename: image.filename,
         path: image.path,
@@ -110,14 +119,26 @@ export default async function GalleryPage({
 
   const jsonLd = {
     "@context": "https://schema.org",
-    "@type": "ImageGallery",
-    name: gallery.title,
-    description: gallery.description || undefined,
-    url: `https://joshuaisaiah.art/g/${gallery.slug}`,
-    author: { "@id": "https://joshuaisaiah.art/#joshua" },
-    image: gallery.images
-      .slice(0, 10)
-      .map((img) => `https://joshuaisaiah.art${img.path}`),
+    "@graph": [
+      {
+        "@type": "ImageGallery",
+        name: gallery.title,
+        description: gallery.description || undefined,
+        url: `https://joshuaisaiah.art/g/${gallery.slug}`,
+        author: { "@id": "https://joshuaisaiah.art/#joshua" },
+        image: gallery.images
+          .slice(0, 10)
+          .map((img: any) => `https://joshuaisaiah.art${img.path}`),
+      },
+      {
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: "Home", item: "https://joshuaisaiah.art" },
+          { "@type": "ListItem", position: 2, name: "Work", item: "https://joshuaisaiah.art/work" },
+          { "@type": "ListItem", position: 3, name: gallery.title, item: `https://joshuaisaiah.art/g/${gallery.slug}` },
+        ],
+      },
+    ],
   };
 
   return (

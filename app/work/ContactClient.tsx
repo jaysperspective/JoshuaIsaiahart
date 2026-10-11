@@ -281,9 +281,15 @@ export default function ContactClient() {
           {stepHeader(0)}
           <div className="space-y-5">
             <div>
-              <label className="block label mb-2">Name</label>
+              <label className="block label mb-2">
+                Name{" "}
+                <span className="text-accent" aria-hidden="true">
+                  *
+                </span>
+              </label>
               <input
                 type="text"
+                aria-required="true"
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
                 className="field"
@@ -291,9 +297,15 @@ export default function ContactClient() {
               />
             </div>
             <div>
-              <label className="block label mb-2">Email</label>
+              <label className="block label mb-2">
+                Email{" "}
+                <span className="text-accent" aria-hidden="true">
+                  *
+                </span>
+              </label>
               <input
                 type="email"
+                aria-required="true"
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
                 className="field"
@@ -336,8 +348,14 @@ export default function ContactClient() {
         <>
           {stepHeader(1)}
           <div>
-            <label className="block label mb-2">What are you looking for?</label>
+            <label className="block label mb-2">
+              What are you looking for?{" "}
+              <span className="text-accent" aria-hidden="true">
+                *
+              </span>
+            </label>
             <textarea
+              aria-required="true"
               rows={5}
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}

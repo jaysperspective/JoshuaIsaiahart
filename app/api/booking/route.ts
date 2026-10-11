@@ -119,10 +119,13 @@ export async function POST(request: Request) {
       );
     }
 
-    // Double-booking guard — reject if this exact slot is already taken.
+    const bookingDate = date ? new Date(date) : new Date();
+
+    // Double-booking guard — reject early if this exact slot is already taken
+    // (friendly fast path before we attempt the insert).
     if (dateYmd) {
       try {
-        const clash = await (prisma as any).booking.findFirst({
+        const clash = await prisma.booking.findFirst({
           where: { dateYmd, time, status: { not: "cancelled" } },
           select: { id: true },
         });
@@ -138,8 +141,38 @@ export async function POST(request: Request) {
       }
     }
 
+    // Persist BEFORE sending any confirmation. A partial unique index on
+    // (dateYmd, time) WHERE status <> 'cancelled' is the authoritative guard
+    // against a concurrent double-book: a real conflict (P2002) returns 409
+    // and no emails go out. Any OTHER failure is logged but doesn't block the
+    // lead — we still send the confirmations (best-effort persistence).
+    try {
+      await prisma.booking.create({
+        data: {
+          date: bookingDate,
+          dateYmd: scheduled ? (dateYmd ?? null) : null,
+          time: scheduled ? time : "Text follow-up",
+          name,
+          email,
+          phone: phone && String(phone).trim() ? String(phone) : null,
+          description,
+          contactPref: pref,
+        },
+      });
+    } catch (err) {
+      if ((err as { code?: string })?.code === "P2002") {
+        return NextResponse.json(
+          { error: "That time was just taken — please pick another." },
+          { status: 409 }
+        );
+      }
+      console.error(
+        "Booking persistence failed (non-conflict) — sending confirmations anyway so the lead isn't lost; NO Booking row was created, so this slot is invisible to the double-booking guard and the admin Bookings tab:",
+        err
+      );
+    }
+
     const channelLabel = pref === "text" ? "Text follow-up" : "Video call (Google Meet)";
-    const bookingDate = date ? new Date(date) : new Date();
     const formattedDate = scheduled
       ? bookingDate.toLocaleDateString("en-US", {
           weekday: "long",
@@ -255,30 +288,9 @@ export async function POST(request: Request) {
       console.error("Client confirmation email failed:", e);
     }
 
-    // Persist the booking — best effort. No-ops safely until the Booking table exists.
-    try {
-      await (prisma as any).booking.create({
-        data: {
-          date: bookingDate,
-          dateYmd: scheduled ? (dateYmd ?? null) : null,
-          time: scheduled ? time : "Text follow-up",
-          name,
-          email,
-          phone: phone && String(phone).trim() ? String(phone) : null,
-          description,
-          contactPref: pref,
-        },
-      });
-    } catch (err) {
-      console.error(
-        "Booking persistence failed — confirmation emails were sent but NO Booking row was created; this slot is invisible to the double-booking guard and the admin Bookings tab:",
-        err
-      );
-    }
-
     // Analytics: count the conversion
     try {
-      await (prisma as any).metric.create({
+      await prisma.metric.create({
         data: { type: "booking", path: "/work#book" },
       });
     } catch (err) {

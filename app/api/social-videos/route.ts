@@ -5,7 +5,7 @@ import { requireAdmin, unauthorized } from "@/app/lib/admin-auth";
 
 export async function GET() {
   try {
-    const socialVideos = await (prisma as any).socialVideo.findMany({
+    const socialVideos = await prisma.socialVideo.findMany({
       orderBy: [
         { sortOrder: "asc" },
         { createdAt: "asc" },
@@ -70,13 +70,13 @@ export async function POST(request: NextRequest) {
 
     const thumbnail = thumbnailUrl || (await autoThumbnail(sourceUrl));
 
-    const lastVideo = await (prisma as any).socialVideo.findFirst({
+    const lastVideo = await prisma.socialVideo.findFirst({
       orderBy: { sortOrder: "desc" },
       select: { sortOrder: true },
     });
     const nextSortOrder = (lastVideo?.sortOrder ?? -1) + 1;
 
-    const socialVideo = await (prisma as any).socialVideo.create({
+    const socialVideo = await prisma.socialVideo.create({
       data: {
         sourceUrl,
         caption: caption || null,

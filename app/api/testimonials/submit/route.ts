@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Light flood guard: cap pending submissions
-    const pending = await (prisma as any).testimonial.count({
+    const pending = await prisma.testimonial.count({
       where: { approved: false },
     });
     if (pending >= 50) {
@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    await (prisma as any).testimonial.create({
+    await prisma.testimonial.create({
       data: {
         quote: quote.trim(),
         name: name.trim(),

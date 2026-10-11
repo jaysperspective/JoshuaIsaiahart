@@ -54,9 +54,15 @@ export default function SubmitForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-7">
       <div>
-        <label className="block label mb-2">Your experience *</label>
+        <label className="block label mb-2">
+          Your experience{" "}
+          <span className="text-accent" aria-hidden="true">
+            *
+          </span>
+        </label>
         <textarea
           required
+          aria-required="true"
           rows={5}
           maxLength={1200}
           value={quote}
@@ -68,10 +74,16 @@ export default function SubmitForm() {
 
       <div className="grid grid-cols-1 gap-7 sm:grid-cols-2">
         <div>
-          <label className="block label mb-2">Your name *</label>
+          <label className="block label mb-2">
+            Your name{" "}
+            <span className="text-accent" aria-hidden="true">
+              *
+            </span>
+          </label>
           <input
             type="text"
             required
+            aria-required="true"
             maxLength={120}
             value={name}
             onChange={(e) => setName(e.target.value)}

@@ -6,7 +6,7 @@ import { requireAdmin, unauthorized } from "@/app/lib/admin-auth";
 export async function GET(request: NextRequest) {
   if (!requireAdmin(request)) return unauthorized();
   try {
-    const bookings = await (prisma as any).booking.findMany({
+    const bookings = await prisma.booking.findMany({
       orderBy: { date: "desc" },
       take: 500,
     });
@@ -25,7 +25,7 @@ export async function PATCH(request: NextRequest) {
     if (!id || !["new", "done", "cancelled"].includes(status)) {
       return NextResponse.json({ error: "Invalid id or status" }, { status: 400 });
     }
-    const updated = await (prisma as any).booking.update({
+    const updated = await prisma.booking.update({
       where: { id },
       data: { status },
     });
@@ -43,7 +43,7 @@ export async function DELETE(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
     if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
-    await (prisma as any).booking.delete({ where: { id } });
+    await prisma.booking.delete({ where: { id } });
     return NextResponse.json({ success: true });
   } catch (e) {
     console.error("Failed to delete booking:", e);

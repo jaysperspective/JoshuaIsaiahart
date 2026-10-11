@@ -11,6 +11,7 @@ const pixel = Press_Start_2P({
 export const metadata = {
   title: "Uraenis — A Universe",
   description: "An interactive 8-bit star field. Explore it.",
+  alternates: { canonical: "/Uraenis" },
 };
 
 export default function Uraenis() {

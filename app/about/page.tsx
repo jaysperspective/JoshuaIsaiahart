@@ -3,7 +3,9 @@ import Image from "next/image";
 import { prisma } from "@/app/lib/prisma";
 import Markdown from "@/app/components/Markdown";
 
-export const dynamic = "force-dynamic";
+// Bio + blogs are read from the DB; refresh hourly via ISR instead of on
+// every request so the page can be edge-cached.
+export const revalidate = 3600;
 
 export const metadata = {
   title: "About",
@@ -52,7 +54,7 @@ interface Settings {
 
 async function getBlogs(): Promise<Blog[]> {
   try {
-    const blogs = await (prisma as any).blog.findMany({
+    const blogs = await prisma.blog.findMany({
       orderBy: { createdAt: "desc" },
     });
     return blogs.map((blog: any) => ({
@@ -68,7 +70,7 @@ async function getBlogs(): Promise<Blog[]> {
 
 async function getSettings(): Promise<Settings> {
   try {
-    const settings = await (prisma as any).settings.findFirst();
+    const settings = await prisma.settings.findFirst();
     return {
       instagramUrl: settings?.instagramUrl || "",
       linkedinUrl: settings?.linkedinUrl || "",

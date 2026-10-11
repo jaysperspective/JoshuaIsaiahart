@@ -1,6 +1,8 @@
 import ShopScreen from "./ShopScreen";
 
-export const dynamic = "force-dynamic";
+// Published products are read via ISR — the DB is hit at most once per window
+// instead of on every visit (the page reads no per-request input).
+export const revalidate = 1800;
 
 const SHOP_DESC =
   "Fine-art archival photographic prints by Joshua Isaiah — hand-selected images, printed to order and shipped.";

@@ -49,7 +49,7 @@ export async function POST(
   try {
     const { id } = await params;
 
-    const video = await (prisma as any).socialVideo.findUnique({ where: { id } });
+    const video = await prisma.socialVideo.findUnique({ where: { id } });
     if (!video) {
       return NextResponse.json({ error: "Reel not found" }, { status: 404 });
     }
@@ -83,7 +83,7 @@ export async function POST(
       await deleteFromSpaces(video.thumbnailUrl);
     }
 
-    const updated = await (prisma as any).socialVideo.update({
+    const updated = await prisma.socialVideo.update({
       where: { id },
       data: { thumbnailUrl },
     });

@@ -2,8 +2,8 @@ import Link from "next/link";
 import SubmitForm from "./SubmitForm";
 import { prisma } from "@/app/lib/prisma";
 
-// Approved reviews are read at request time.
-export const dynamic = "force-dynamic";
+// Approved reviews are read via ISR (hourly) so the page is edge-cacheable.
+export const revalidate = 3600;
 
 async function getApprovedTestimonials() {
   try {

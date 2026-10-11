@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { prisma } from "@/app/lib/prisma";
 
-// Pulls the featured client quote from the database
-export const dynamic = "force-dynamic";
+// Pulls the featured client quote from the database; ISR (hourly) so the
+// page is edge-cacheable instead of rendered per request.
+export const revalidate = 3600;
 
 async function getFeaturedQuote() {
   try {
-    return await (prisma as any).testimonial.findFirst({
+    return await prisma.testimonial.findFirst({
       where: { approved: true },
       orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
     });
@@ -187,6 +188,11 @@ export default async function RateSheet() {
               View Work
             </Link>
           </div>
+          <p className="label mt-6">
+            <Link href="/faq" className="link-underline">
+              Questions? Read the FAQ →
+            </Link>
+          </p>
         </section>
 
         {/* Featured client quote */}

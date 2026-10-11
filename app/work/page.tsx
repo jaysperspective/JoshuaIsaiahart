@@ -2,8 +2,10 @@ import { Suspense } from "react";
 import { prisma } from "@/app/lib/prisma";
 import WorkClient from "./WorkClient";
 
-// Mark as dynamic to avoid prerendering (requires database)
-export const dynamic = "force-dynamic";
+// Data comes from the DB, but nothing per-request is read here (the ?tab=
+// param is handled client-side in WorkClient). Serve via ISR so the HTML is
+// edge-cacheable instead of rendered on every request.
+export const revalidate = 10800; // 3h
 
 export const metadata = {
   title: "Work — Photography, Film & Social",
@@ -53,7 +55,7 @@ async function getGalleries() {
 
 async function getVideoProjects() {
   try {
-    const videoProjects = await (prisma as any).videoProject.findMany({
+    const videoProjects = await prisma.videoProject.findMany({
       orderBy: [
         { sortOrder: "asc" },
         { createdAt: "asc" },
@@ -76,7 +78,7 @@ async function getVideoProjects() {
 
 async function getSocialVideos() {
   try {
-    const socialVideos = await (prisma as any).socialVideo.findMany({
+    const socialVideos = await prisma.socialVideo.findMany({
       orderBy: [
         { sortOrder: "asc" },
         { createdAt: "asc" },
@@ -98,7 +100,7 @@ async function getSocialVideos() {
 
 async function getTestimonials() {
   try {
-    const testimonials = await (prisma as any).testimonial.findMany({
+    const testimonials = await prisma.testimonial.findMany({
       where: { approved: true },
       orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
     });

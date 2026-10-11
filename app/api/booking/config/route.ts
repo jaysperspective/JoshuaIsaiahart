@@ -7,7 +7,7 @@ import { resolveConfig, DEFAULT_BOOKING_CONFIG } from "@/app/lib/booking-config"
 export async function GET(request: NextRequest) {
   if (!requireAdmin(request)) return unauthorized();
   try {
-    const settings = await (prisma as any).settings.findFirst();
+    const settings = await prisma.settings.findFirst();
     const cfg = settings?.bookingConfig
       ? resolveConfig(JSON.parse(settings.bookingConfig))
       : DEFAULT_BOOKING_CONFIG;
@@ -25,14 +25,14 @@ export async function PUT(request: NextRequest) {
     const cfg = resolveConfig(body);
     const json = JSON.stringify(cfg);
 
-    const existing = await (prisma as any).settings.findFirst();
+    const existing = await prisma.settings.findFirst();
     if (existing) {
-      await (prisma as any).settings.update({
+      await prisma.settings.update({
         where: { id: existing.id },
         data: { bookingConfig: json },
       });
     } else {
-      await (prisma as any).settings.create({
+      await prisma.settings.create({
         data: {
           instagramUrl: "",
           linkedinUrl: "",

@@ -11,7 +11,7 @@ export async function DELETE(
     const { id } = await params;
 
     // Note: Blog model pending schema migration
-    await (prisma as any).blog.delete({
+    await prisma.blog.delete({
       where: { id },
     });
 

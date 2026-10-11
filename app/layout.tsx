@@ -150,11 +150,14 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${fraunces.variable} ${geist.variable} antialiased`}>
+        <a href="#main-content" className="skip-link">
+          Skip to content
+        </a>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }}
         />
-        {children}
+        <div id="main-content">{children}</div>
         <FloatingBook />
         <Tracker />
       </body>

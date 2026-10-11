@@ -151,6 +151,14 @@ export default function SocialClient({ socialVideos }: SocialClientProps) {
         })}
       </div>
 
+      {/* Inquiry CTA */}
+      <Reveal>
+        <div className="mx-auto mt-12 max-w-5xl border-t border-rule pt-10 text-center">
+          <p className="prose-serif mb-5">Like what you see?</p>
+          <Link href="/work#book" className="btn btn-accent">Book a session</Link>
+        </div>
+      </Reveal>
+
       {/* 9:16 modal player */}
       {activeVideo && (
         <div

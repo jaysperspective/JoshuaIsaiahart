@@ -5,8 +5,8 @@ import { slugify } from "@/app/lib/slug";
 import { parseVideoUrl, getThumbnailUrl } from "@/app/lib/video-utils";
 import FilmView from "./FilmView";
 
-// Requires the database at request time
-export const dynamic = "force-dynamic";
+// Reads from the DB but nothing per-request — serve via ISR (edge-cacheable).
+export const revalidate = 10800; // 3h
 
 interface FilmData {
   id: string;
@@ -89,14 +89,26 @@ export default async function FilmPage({
 
   const jsonLd = {
     "@context": "https://schema.org",
-    "@type": "VideoObject",
-    name: film.title,
-    description: film.description || undefined,
-    thumbnailUrl: previewImage(film),
-    uploadDate: film.createdAt,
-    contentUrl: film.videoUrl,
-    url: `https://joshuaisaiah.art/film/${film.slug}`,
-    author: { "@id": "https://joshuaisaiah.art/#joshua" },
+    "@graph": [
+      {
+        "@type": "VideoObject",
+        name: film.title,
+        description: film.description || undefined,
+        thumbnailUrl: previewImage(film),
+        uploadDate: film.createdAt,
+        contentUrl: film.videoUrl,
+        url: `https://joshuaisaiah.art/film/${film.slug}`,
+        author: { "@id": "https://joshuaisaiah.art/#joshua" },
+      },
+      {
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: "Home", item: "https://joshuaisaiah.art" },
+          { "@type": "ListItem", position: 2, name: "Work", item: "https://joshuaisaiah.art/work" },
+          { "@type": "ListItem", position: 3, name: film.title, item: `https://joshuaisaiah.art/film/${film.slug}` },
+        ],
+      },
+    ],
   };
 
   return (
