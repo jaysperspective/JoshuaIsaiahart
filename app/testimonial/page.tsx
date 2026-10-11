@@ -1,5 +1,26 @@
 import Link from "next/link";
 import SubmitForm from "./SubmitForm";
+import { prisma } from "@/app/lib/prisma";
+
+// Approved reviews are read at request time.
+export const dynamic = "force-dynamic";
+
+async function getApprovedTestimonials() {
+  try {
+    const rows = await prisma.testimonial.findMany({
+      where: { approved: true },
+      orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+    });
+    return rows.map((t) => ({
+      id: t.id,
+      quote: t.quote,
+      name: t.name,
+      role: t.role ?? null,
+    }));
+  } catch {
+    return [];
+  }
+}
 
 export const metadata = {
   title: "Testimonial",
@@ -21,7 +42,8 @@ export const metadata = {
   },
 };
 
-export default function TestimonialPage() {
+export default async function TestimonialPage() {
+  const testimonials = await getApprovedTestimonials();
   return (
     <main className="min-h-screen bg-paper text-ink">
       <div className="mx-auto w-full max-w-2xl px-5 sm:px-8">
@@ -34,20 +56,50 @@ export default function TestimonialPage() {
         </header>
         <hr className="rule mt-5" />
 
-        {/* Title */}
-        <section className="pt-12 pb-10 text-center sm:pt-16">
-          <p className="eyebrow mb-5">In Your Words</p>
-          <h1 className="display text-[clamp(2.2rem,7vw,4rem)]">
-            Share your <span className="italic font-light">story</span>
-          </h1>
-          <p className="prose-serif mx-auto mt-6 max-w-lg">
-            If we&apos;ve worked together, a few honest sentences about the
-            experience helps others know what to expect. Joshua reads and
-            approves every story before it goes on the site.
-          </p>
-        </section>
+        {/* Social proof first — approved reviews */}
+        {testimonials.length > 0 && (
+          <section className="pt-20 pb-4 sm:pt-28">
+            <h2 className="display mb-12 text-center text-[clamp(1.9rem,5.5vw,3rem)]">
+              Kind <span className="italic font-light">words</span>
+            </h2>
+            <div className="space-y-10">
+              {testimonials.map((t) => (
+                <figure key={t.id} className="relative pl-7">
+                  <span
+                    aria-hidden
+                    className="absolute left-0 -top-3 font-display text-5xl leading-none text-accent/50"
+                  >
+                    &ldquo;
+                  </span>
+                  <blockquote className="prose-serif text-[1.05rem] italic leading-relaxed">
+                    {t.quote}
+                  </blockquote>
+                  <figcaption className="mt-3 flex flex-wrap items-baseline gap-x-2">
+                    <span className="label text-ink">{t.name}</span>
+                    {t.role && <span className="label">· {t.role}</span>}
+                  </figcaption>
+                </figure>
+              ))}
+            </div>
+          </section>
+        )}
 
-        <SubmitForm />
+        {/* Invitation + submission form */}
+        <section className="pt-16">
+          <hr className="rule" />
+          <div className="pt-12 pb-10 text-center">
+            <p className="eyebrow mb-5">In Your Words</p>
+            <h1 className="display text-[clamp(2.2rem,7vw,4rem)]">
+              Share your <span className="italic font-light">story</span>
+            </h1>
+            <p className="prose-serif mx-auto mt-6 max-w-lg">
+              If we&apos;ve worked together, a few honest sentences about the
+              experience helps others know what to expect. Joshua reads and
+              approves every story before it goes on the site.
+            </p>
+          </div>
+          <SubmitForm />
+        </section>
 
         {/* Footer */}
         <footer className="mt-16 pb-16">
