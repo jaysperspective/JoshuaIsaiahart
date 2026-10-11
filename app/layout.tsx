@@ -77,7 +77,7 @@ const JSON_LD = {
         "Photographer, filmmaker, and creative director in the Washington, DC metro area.",
       url: "https://joshuaisaiah.art",
       image: "https://joshuaisaiah.art/og-image.jpg",
-      email: "mailto:joshualharrington@gmail.com",
+      email: "mailto:josh@plusntrust.org",
       sameAs: [
         "https://instagram.com/fototrophic",
         "https://www.linkedin.com/in/jharringtonphoto/",
@@ -101,7 +101,7 @@ const JSON_LD = {
       url: "https://joshuaisaiah.art",
       image: "https://joshuaisaiah.art/og-image.jpg",
       telephone: "+1-434-489-3932",
-      email: "joshualharrington@gmail.com",
+      email: "josh@plusntrust.org",
       priceRange: "$$",
       sameAs: [
         "https://instagram.com/fototrophic",

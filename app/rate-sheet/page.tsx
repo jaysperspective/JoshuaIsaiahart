@@ -206,7 +206,7 @@ export default async function RateSheet() {
         <footer className="mt-12">
           <div className="flex flex-wrap items-center justify-between gap-4 py-10">
             <Link href="/" className="link-underline font-sans text-sm">← Home</Link>
-            <p className="label numeral">joshualharrington@gmail.com · (434) 489-3932</p>
+            <p className="label numeral">josh@plusntrust.org · (434) 489-3932</p>
           </div>
         </footer>
 

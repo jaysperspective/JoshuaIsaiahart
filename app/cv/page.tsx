@@ -184,7 +184,7 @@ export default function CV() {
           <hr className="rule" />
           <div className="flex flex-wrap items-center justify-between gap-4 py-10 print:py-4">
             <Link href="/about" className="link-underline font-sans text-sm print:hidden">← About</Link>
-            <p className="label numeral">joshualharrington@gmail.com · (434) 489-3932</p>
+            <p className="label numeral">josh@plusntrust.org · (434) 489-3932</p>
           </div>
         </footer>
 

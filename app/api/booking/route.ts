@@ -36,8 +36,8 @@ function buildIcs(ymd: string, time: string, name: string, pref: ContactPref): s
     ? "Consultation (text follow-up) — Joshua Isaiah"
     : "Consultation — Joshua Isaiah";
   const desc = pref === "text"
-    ? "30-minute consultation with Joshua Isaiah — a text follow-up.\\nQuestions: joshualharrington@gmail.com"
-    : "30-minute Google Meet consultation with Joshua Isaiah. The meeting link will be sent before the call.\\nQuestions: joshualharrington@gmail.com";
+    ? "30-minute consultation with Joshua Isaiah — a text follow-up.\\nQuestions: josh@plusntrust.org"
+    : "30-minute Google Meet consultation with Joshua Isaiah. The meeting link will be sent before the call.\\nQuestions: josh@plusntrust.org";
 
   return [
     "BEGIN:VCALENDAR",

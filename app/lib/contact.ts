@@ -22,7 +22,7 @@ export const CARD = {
   org: "Joshua Isaiah — Photography & Film",
   location: "Washington, DC Metro Area",
   // Featured contact points
-  email: "joshualharrington@gmail.com",
+  email: "josh@plusntrust.org",
   // E.164 for tel:/sms: links, plus a human-readable version
   phone: "+14344893932",
   phoneDisplay: "(434) 489-3932",

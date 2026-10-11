@@ -83,7 +83,7 @@ export default async function ShopScreen({
               ← Home
             </Link>
             <p className="label numeral" style={{ color: "rgba(244,236,210,0.6)" }}>
-              joshualharrington@gmail.com · (434) 489-3932
+              josh@plusntrust.org · (434) 489-3932
             </p>
           </div>
         </footer>
