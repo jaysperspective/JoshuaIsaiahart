@@ -40,7 +40,7 @@ const FAQS: FaqItem[] = [
   },
   {
     q: "How do I book you?",
-    a: "Start with Book a Session. It begins with a 30-minute consultation — either a Google Meet video call at a time you pick, or a text follow-up. For video calls, the meeting link is sent before the call, so we can talk through your project before anything is scheduled.",
+    a: "Start with Book a Session. It begins with a free 30-minute consultation — either a Google Meet video call at a time you pick, or a text follow-up. For video calls, the meeting link is sent before the call, so we can talk through your project before anything is scheduled.",
     link: { href: "/work#book", label: "Book a session" },
   },
   {
@@ -50,7 +50,7 @@ const FAQS: FaqItem[] = [
   },
   {
     q: "How soon will I get my photos or video?",
-    a: "Turnaround depends on the project. A same-day social-media gallery of 25 curated images is available as an add-on, networking and social recaps are delivered in about five days, and same-week turnaround can be added to event videography. Event footage is delivered as organized, labeled raw files via a shared drive.",
+    a: "Turnaround depends on the project. Edited photo galleries are typically delivered in 4–10 days. A same-day social-media gallery of 25 curated images is available as an add-on, networking and social recaps are delivered in about five days, and same-week turnaround can be added to event videography. Event footage is delivered as organized, labeled raw files via a shared drive.",
   },
   {
     q: "What's included, and what are the add-ons?",
@@ -59,7 +59,7 @@ const FAQS: FaqItem[] = [
   },
   {
     q: "Do you sell prints?",
-    a: "Yes. The Print Shop offers a selection of images as archival fine-art prints, each printed to order — select a piece to see its size, paper, and details. Checkout is secure and shipping is free; you'll enter your shipping address at payment.",
+    a: "Yes. The Print Shop offers a selection of images as archival fine-art prints, each printed to order — select a piece to see its size, paper, and details. Checkout is secure and shipping is included in the print price; you'll enter your shipping address at payment.",
     link: { href: "/shop", label: "Visit the shop" },
   },
   {
