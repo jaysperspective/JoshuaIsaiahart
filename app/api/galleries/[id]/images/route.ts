@@ -8,9 +8,6 @@ import { Readable } from "stream";
 import { spacesConfigured, uploadToSpaces, deleteFromSpaces } from "@/app/lib/storage";
 import { requireAdmin, unauthorized } from "@/app/lib/admin-auth";
 
-// Disable Next.js body parsing — we handle the stream ourselves
-export const config = { api: { bodyParser: false } };
-
 async function compress(buffer: Buffer): Promise<Buffer> {
   return sharp(buffer)
     .resize(2400, 2400, { fit: "inside", withoutEnlargement: true })

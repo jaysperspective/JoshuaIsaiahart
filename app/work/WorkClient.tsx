@@ -250,6 +250,16 @@ export default function WorkClient({ galleries, videoProjects, socialVideos, tes
                       if (el) galleryRefs.current.set(gallery.id, el);
                     }}
                     onClick={() => toggleGallery(gallery)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        toggleGallery(gallery);
+                      }
+                    }}
+                    role="button"
+                    tabIndex={0}
+                    aria-expanded={isExpanded}
+                    aria-label={`${gallery.title} gallery, ${gallery.images.length} frames`}
                     className="group cursor-pointer scroll-mt-8"
                   >
                     <Reveal delay={(gIndex % 3) * 60}>
@@ -301,10 +311,12 @@ export default function WorkClient({ galleries, videoProjects, socialVideos, tes
                       {otherImages.length > 0 && (
                         <div className="grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-3 lg:grid-cols-4">
                           {otherImages.map((image, index) => (
-                            <div
+                            <button
+                              type="button"
                               key={image.id}
-                              className="group/img cursor-pointer"
+                              className="group/img block w-full cursor-pointer"
                               onClick={(e) => openLightbox(image, e)}
+                              aria-label={`View image: ${image.caption || image.filename}`}
                               style={{
                                 animationDelay: `${index * 50}ms`,
                                 animation: "fadeInUp 0.3s ease forwards",
@@ -319,7 +331,7 @@ export default function WorkClient({ galleries, videoProjects, socialVideos, tes
                                   className="object-cover transition-transform duration-500 group-hover/img:scale-105"
                                 />
                               </div>
-                            </div>
+                            </button>
                           ))}
                         </div>
                       )}
@@ -421,6 +433,7 @@ export default function WorkClient({ galleries, videoProjects, socialVideos, tes
           {/* Close button */}
           <button
             onClick={closeLightbox}
+            aria-label="Close"
             className="absolute top-6 right-6 text-paper/50 hover:text-paper transition-colors z-10"
           >
             <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -438,6 +451,7 @@ export default function WorkClient({ galleries, videoProjects, socialVideos, tes
           {/* Previous */}
           <button
             onClick={(e) => { e.stopPropagation(); navigateLightbox("prev"); }}
+            aria-label="Previous image"
             className="absolute left-4 sm:left-6 text-paper/40 hover:text-paper transition-colors z-10"
           >
             <svg className="w-8 h-8 sm:w-10 sm:h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -448,6 +462,7 @@ export default function WorkClient({ galleries, videoProjects, socialVideos, tes
           {/* Next */}
           <button
             onClick={(e) => { e.stopPropagation(); navigateLightbox("next"); }}
+            aria-label="Next image"
             className="absolute right-4 sm:right-6 text-paper/40 hover:text-paper transition-colors z-10"
           >
             <svg className="w-8 h-8 sm:w-10 sm:h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">

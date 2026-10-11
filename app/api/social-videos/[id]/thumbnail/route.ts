@@ -8,8 +8,6 @@ import { Readable } from "stream";
 import { spacesConfigured, uploadToSpaces, deleteFromSpaces } from "@/app/lib/storage";
 import { requireAdmin, unauthorized } from "@/app/lib/admin-auth";
 
-export const config = { api: { bodyParser: false } };
-
 async function compress(buffer: Buffer): Promise<Buffer> {
   return sharp(buffer)
     .resize(900, 1600, { fit: "inside", withoutEnlargement: true })

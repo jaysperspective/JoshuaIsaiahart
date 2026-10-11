@@ -1,5 +1,16 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
+import { rateLimit, clientIp } from "@/app/lib/ratelimit";
+
+// Escape user-supplied values before interpolating into HTML email bodies.
+function escapeHtml(s: string): string {
+  return String(s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
 
 function parseTime12h(time: string): { hour: number; minute: number } | null {
   const m = time.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
@@ -40,7 +51,7 @@ function buildIcs(ymd: string, time: string, name: string, pref: ContactPref): s
     `DTEND;TZID=America/New_York:${end}`,
     `SUMMARY:${summary}`,
     `DESCRIPTION:${desc}`,
-    `ATTENDEE;CN=${name.replace(/[,;]/g, "")}:mailto:noreply@joshuaisaiah.art`,
+    `ATTENDEE;CN=${name.replace(/[,;\r\n]/g, "")}:mailto:noreply@joshuaisaiah.art`,
     "END:VEVENT",
     "END:VCALENDAR",
   ].join("\r\n");
@@ -56,6 +67,7 @@ async function sendEmail(payload: Record<string, unknown>) {
       Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
     },
     body: JSON.stringify(payload),
+    signal: AbortSignal.timeout(10000),
   });
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
@@ -65,6 +77,17 @@ async function sendEmail(payload: Record<string, unknown>) {
 
 export async function POST(request: Request) {
   try {
+    // Rate limit by IP before any email/DB work — booking sends two emails per
+    // request, so this is a cost/spam guard on top of the honeypot below.
+    const ip = clientIp(request);
+    const rl = rateLimit(`booking:${ip}`, { limit: 5, windowMs: 10 * 60_000 });
+    if (!rl.ok) {
+      return NextResponse.json(
+        { error: "Too many requests. Please try again shortly." },
+        { status: 429, headers: { "Retry-After": String(Math.ceil(rl.retryAfterMs / 1000)) } }
+      );
+    }
+
     const { date, dateYmd, time, name, phone, email, description, contactPref, company } =
       await request.json();
 
@@ -109,8 +132,9 @@ export async function POST(request: Request) {
             { status: 409 }
           );
         }
-      } catch {
+      } catch (err) {
         // Table missing — skip the guard.
+        console.error("Double-booking guard query failed (continuing without it):", err);
       }
     }
 
@@ -125,6 +149,13 @@ export async function POST(request: Request) {
         })
       : null;
 
+    // Escaped copies of every user-supplied field for safe HTML interpolation.
+    const nameEsc = escapeHtml(name);
+    const emailEsc = escapeHtml(email);
+    const descEsc = escapeHtml(description);
+    const timeEsc = time ? escapeHtml(String(time)) : "";
+    const phoneEsc = phone ? escapeHtml(String(phone)) : "";
+
     const emailHtml = `
       <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #333;">${scheduled ? "New Consultation Booking" : "New Text Follow-up Request"}</h2>
@@ -135,7 +166,7 @@ export async function POST(request: Request) {
           </tr>
           <tr>
             <td style="padding: 8px 0; color: #888;">Time</td>
-            <td style="padding: 8px 0; color: #333;">${time} (30 minutes)</td>
+            <td style="padding: 8px 0; color: #333;">${timeEsc} (30 minutes)</td>
           </tr>` : ""}
           <tr>
             <td style="padding: 8px 0; color: #888;">Follow-up</td>
@@ -143,19 +174,19 @@ export async function POST(request: Request) {
           </tr>
           <tr>
             <td style="padding: 8px 0; color: #888;">Name</td>
-            <td style="padding: 8px 0; color: #333;">${name}</td>
+            <td style="padding: 8px 0; color: #333;">${nameEsc}</td>
           </tr>
           ${phone && String(phone).trim() ? `<tr>
             <td style="padding: 8px 0; color: #888;">Phone</td>
-            <td style="padding: 8px 0; color: #333;">${phone}</td>
+            <td style="padding: 8px 0; color: #333;">${phoneEsc}</td>
           </tr>` : ""}
           <tr>
             <td style="padding: 8px 0; color: #888;">Email</td>
-            <td style="padding: 8px 0; color: #333;"><a href="mailto:${email}">${email}</a></td>
+            <td style="padding: 8px 0; color: #333;"><a href="mailto:${emailEsc}">${emailEsc}</a></td>
           </tr>
           <tr>
             <td style="padding: 8px 0; color: #888; vertical-align: top;">Description</td>
-            <td style="padding: 8px 0; color: #333;">${description}</td>
+            <td style="padding: 8px 0; color: #333;">${descEsc}</td>
           </tr>
         </table>
       </div>
@@ -179,9 +210,9 @@ export async function POST(request: Request) {
         ? `
         <div style="font-family: Georgia, serif; max-width: 560px; margin: 0 auto; color: #18201c;">
           <h2 style="font-weight: 500; color: #547890;">You're booked.</h2>
-          <p>Hi ${name},</p>
+          <p>Hi ${nameEsc},</p>
           <p>Your 30-minute consultation with Joshua Isaiah is confirmed for
-          <strong>${formattedDate} at ${time}</strong> (Eastern). It'll be a Google Meet —
+          <strong>${formattedDate} at ${timeEsc}</strong> (Eastern). It'll be a Google Meet —
           the link will come your way before the call.</p>
           <p>The attached calendar file adds it to your calendar in one click.
           Need to reschedule? Just reply to this email.</p>
@@ -192,9 +223,9 @@ export async function POST(request: Request) {
         : `
         <div style="font-family: Georgia, serif; max-width: 560px; margin: 0 auto; color: #18201c;">
           <h2 style="font-weight: 500; color: #547890;">Got your note.</h2>
-          <p>Hi ${name},</p>
+          <p>Hi ${nameEsc},</p>
           <p>Thanks for reaching out — your message is with Joshua and he'll follow up
-          by text${phone && String(phone).trim() ? ` at <strong>${phone}</strong>` : ""} shortly.</p>
+          by text${phone && String(phone).trim() ? ` at <strong>${phoneEsc}</strong>` : ""} shortly.</p>
           <p>Need anything sooner? Just reply to this email.</p>
           <p style="margin-top: 28px;">— Joshua<br/>
           <a href="https://joshuaisaiah.art" style="color: #547890;">joshuaisaiah.art</a></p>
@@ -238,14 +269,21 @@ export async function POST(request: Request) {
           contactPref: pref,
         },
       });
-    } catch {}
+    } catch (err) {
+      console.error(
+        "Booking persistence failed — confirmation emails were sent but NO Booking row was created; this slot is invisible to the double-booking guard and the admin Bookings tab:",
+        err
+      );
+    }
 
     // Analytics: count the conversion
     try {
       await (prisma as any).metric.create({
         data: { type: "booking", path: "/work#book" },
       });
-    } catch {}
+    } catch (err) {
+      console.error("Booking conversion metric write failed:", err);
+    }
 
     return NextResponse.json({ success: true });
   } catch (error: any) {

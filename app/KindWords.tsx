@@ -28,6 +28,13 @@ export default function KindWords({
 
   useEffect(() => {
     if (pages <= 1) return;
+    // Respect users who prefer reduced motion — no auto-advance for them.
+    if (
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
+      return;
+    }
     const interval = setInterval(() => {
       setVisible(false);
       const swap = setTimeout(() => {

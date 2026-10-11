@@ -2,9 +2,11 @@ import Link from "next/link";
 import Image from "next/image";
 import { prisma } from "@/app/lib/prisma";
 import KindWords from "./KindWords";
+import SiteFooter from "./components/SiteFooter";
 
-// Approved testimonials are fetched at request time.
-export const dynamic = "force-dynamic";
+// Approved testimonials are surfaced via ISR — the DB is read at most once
+// per revalidation window instead of on every visit (lets Cloudflare cache).
+export const revalidate = 1800;
 
 interface HomeTestimonial {
   id: string;
@@ -54,8 +56,31 @@ function ArrowIcon({ className = "" }: { className?: string }) {
 
 export default async function Home() {
   const testimonials = await getApprovedTestimonials();
+
+  // Review structured data (no fabricated star ratings — these aren't
+  // collected yet). Lets search engines read the client testimonials.
+  const reviewLd =
+    testimonials.length > 0
+      ? {
+          "@context": "https://schema.org",
+          "@graph": testimonials.map((t) => ({
+            "@type": "Review",
+            itemReviewed: { "@id": "https://joshuaisaiah.art/#business" },
+            author: { "@type": "Person", name: t.name },
+            reviewBody: t.quote,
+            ...(t.role ? { name: t.role } : {}),
+          })),
+        }
+      : null;
+
   return (
     <main className="relative min-h-screen overflow-hidden bg-paper text-ink">
+      {reviewLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(reviewLd) }}
+        />
+      )}
       <div className="grid grid-cols-1 md:grid-cols-[1.4fr_1fr] lg:grid-cols-[1.5fr_1fr]">
         {/* Left — decorative circle + hero text */}
         <div className="flex min-h-screen items-center justify-center gap-8 px-6 py-12 sm:px-10 lg:gap-14">
@@ -66,6 +91,21 @@ export default async function Home() {
           />
 
           <div className="max-w-[38rem]">
+            {/* Mobile-only portrait — the brand moment phones would otherwise miss */}
+            <Link
+              href="/about"
+              aria-label="About Joshua Isaiah"
+              className="relative mb-8 block h-60 w-full md:hidden"
+            >
+              <Image
+                src="/joshua-home.webp"
+                alt="Joshua Isaiah holding a film camera"
+                fill
+                sizes="100vw"
+                className="object-contain object-center"
+              />
+            </Link>
+
             <p className="eyebrow mb-5">Creative Director · Photographer · Filmmaker</p>
             <h1 className="display">
               Joshua
@@ -77,37 +117,47 @@ export default async function Home() {
               and films made with the discipline of a newsroom and the care of
               someone who believes every story deserves to be told honestly.
             </p>
+
+            {/* Substantiate the "award-winning" claim */}
+            <Link
+              href="/cv"
+              className="label link-underline mt-4 inline-block"
+            >
+              2× Emmy Award winner · NABJ Honors
+            </Link>
+
+            {/* Primary actions — lead with the hire path */}
             <div className="mt-8 flex flex-wrap items-center gap-2.5">
-              <Link href="/work" className="btn btn-accent">
-                View Work
+              <Link href="/work#book" className="btn btn-accent">
+                Book a Session
                 <ArrowIcon className="-mr-1" />
               </Link>
-              <Link href="/work#book" className="btn">
-                Book a Session
+              <Link href="/work" className="btn">
+                View Work
               </Link>
-              <Link href="/rate-sheet" className="btn">
+            </div>
+            {/* Secondary links — subordinate to the primary CTAs */}
+            <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2">
+              <Link href="/rate-sheet" className="label link-underline">
                 Rate Sheet
               </Link>
-              <Link href="/about" className="btn">
+              <Link href="/shop" className="label link-underline">
+                Shop Images
+              </Link>
+              <Link href="/about" className="label link-underline">
                 About
               </Link>
-              <Link href="/work?tab=photography" className="btn">
-                Editorial
-              </Link>
-              <Link href="/testimonial" className="btn">
-                Testimonial
-              </Link>
-              <Link href="/shop" className="btn btn-shop">
-                Shop Images
+              <Link href="/testimonial#reviews" className="label link-underline">
+                Reviews
               </Link>
             </div>
 
-            {/* Approved client reviews — two at a time, rotating */}
+            {/* Approved client reviews — rotating */}
             <KindWords testimonials={testimonials} />
           </div>
         </div>
 
-        {/* Right — cut-out portrait, anchored to the bottom edge */}
+        {/* Right — cut-out portrait, anchored to the bottom edge (md+) */}
         <Link
           href="/about"
           aria-label="About Joshua Isaiah"
@@ -129,6 +179,8 @@ export default async function Home() {
           </span>
         </Link>
       </div>
+
+      <SiteFooter />
     </main>
   );
 }

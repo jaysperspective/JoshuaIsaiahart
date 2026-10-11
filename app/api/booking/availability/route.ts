@@ -11,8 +11,9 @@ export async function GET() {
     if (settings?.bookingConfig) {
       cfg = resolveConfig(JSON.parse(settings.bookingConfig));
     }
-  } catch {
+  } catch (err) {
     // defaults
+    console.error("Booking config load failed (using defaults):", err);
   }
 
   const slots = generateSlots(cfg);
@@ -30,8 +31,9 @@ export async function GET() {
       if (!r.dateYmd) continue;
       (taken[r.dateYmd] ??= []).push(r.time);
     }
-  } catch {
+  } catch (err) {
     // table may not exist yet — no conflicts known
+    console.error("Booked-slots query failed (availability shown without conflict blocking):", err);
   }
 
   return NextResponse.json({

@@ -58,7 +58,7 @@ export default async function TestimonialPage() {
 
         {/* Social proof first — approved reviews */}
         {testimonials.length > 0 && (
-          <section className="pt-20 pb-4 sm:pt-28">
+          <section id="reviews" className="scroll-mt-10 pt-20 pb-4 sm:pt-28">
             <h2 className="display mb-12 text-center text-[clamp(1.9rem,5.5vw,3rem)]">
               Kind <span className="italic font-light">words</span>
             </h2>

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { SITE_URL } from "@/app/lib/contact";
+import { rateLimit, clientIp } from "@/app/lib/ratelimit";
 
 // POST /api/shop/checkout  (public)
 // Starts a real card checkout for a print. The portfolio never talks to Stripe
@@ -10,6 +11,16 @@ import { SITE_URL } from "@/app/lib/contact";
 // Stripe Checkout URL for the browser to redirect to.
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit by IP before the outbound Sovereign/Stripe call.
+    const ip = clientIp(request);
+    const rl = rateLimit(`checkout:${ip}`, { limit: 10, windowMs: 10 * 60_000 });
+    if (!rl.ok) {
+      return NextResponse.json(
+        { error: "Too many requests. Please try again shortly." },
+        { status: 429, headers: { "Retry-After": String(Math.ceil(rl.retryAfterMs / 1000)) } }
+      );
+    }
+
     const { productId } = await request.json();
     if (!productId || typeof productId !== "string") {
       return NextResponse.json({ error: "Missing product" }, { status: 400 });
@@ -55,6 +66,7 @@ export async function POST(request: NextRequest) {
         successUrl,
         cancelUrl,
       }),
+      signal: AbortSignal.timeout(10000),
     });
 
     if (!res.ok) {
@@ -73,7 +85,7 @@ export async function POST(request: NextRequest) {
     // this is just a conversion signal in the admin Shop tab. Best-effort.
     prisma.shopOrder
       .create({ data: { productId: product.id, name: "", email: "", status: "checkout_started" } })
-      .catch(() => {});
+      .catch((err) => console.error("shopOrder checkout-started breadcrumb write failed:", err));
 
     return NextResponse.json({ url });
   } catch (error) {

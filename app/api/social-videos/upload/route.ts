@@ -10,8 +10,6 @@ import { spawn } from "child_process";
 import { spacesConfigured, uploadToSpaces } from "@/app/lib/storage";
 import { requireAdmin, unauthorized } from "@/app/lib/admin-auth";
 
-export const config = { api: { bodyParser: false } };
-
 function runFfmpeg(args: string[]): Promise<void> {
   return new Promise((resolve, reject) => {
     const proc = spawn("ffmpeg", args);

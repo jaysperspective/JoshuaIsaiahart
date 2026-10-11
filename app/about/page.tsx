@@ -172,17 +172,17 @@ export default async function About() {
                 <div className="flex items-center gap-5 pt-6">
                   <span className="label">Follow</span>
                   {settings.instagramUrl && (
-                    <a href={settings.instagramUrl} target="_blank" rel="noopener noreferrer" className="text-muted transition-colors hover:text-accent" title="Instagram">
+                    <a href={settings.instagramUrl} target="_blank" rel="noopener noreferrer" className="text-muted transition-colors hover:text-accent" title="Instagram" aria-label="Instagram">
                       <InstagramIcon className="h-5 w-5" />
                     </a>
                   )}
                   {settings.linkedinUrl && (
-                    <a href={settings.linkedinUrl} target="_blank" rel="noopener noreferrer" className="text-muted transition-colors hover:text-accent" title="LinkedIn">
+                    <a href={settings.linkedinUrl} target="_blank" rel="noopener noreferrer" className="text-muted transition-colors hover:text-accent" title="LinkedIn" aria-label="LinkedIn">
                       <LinkedInIcon className="h-5 w-5" />
                     </a>
                   )}
                   {settings.youtubeUrl && (
-                    <a href={settings.youtubeUrl} target="_blank" rel="noopener noreferrer" className="text-muted transition-colors hover:text-accent" title="YouTube">
+                    <a href={settings.youtubeUrl} target="_blank" rel="noopener noreferrer" className="text-muted transition-colors hover:text-accent" title="YouTube" aria-label="YouTube">
                       <YouTubeIcon className="h-5 w-5" />
                     </a>
                   )}
